@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\geral\\FloresFuertes\\FloresFuertes.csproj": {}
+    "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj": {}
   },
   "projects": {
-    "C:\\Users\\geral\\FloresFuertes\\FloresFuertes.csproj": {
+    "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\geral\\FloresFuertes\\FloresFuertes.csproj",
+        "projectUniqueName": "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj",
         "projectName": "FloresFuertes",
-        "projectPath": "C:\\Users\\geral\\FloresFuertes\\FloresFuertes.csproj",
-        "packagesPath": "C:\\Users\\geral\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\geral\\FloresFuertes\\obj\\",
+        "projectPath": "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj",
+        "packagesPath": "/Users/damikastaneer/.nuget/packages/",
+        "outputPath": "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\geral\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/damikastaneer/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -56,6 +56,12 @@
               "target": "Package",
               "version": "[9.0.9, )"
             },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.9, )"
+            },
             "Microsoft.EntityFrameworkCore.SqlServer": {
               "target": "Package",
               "version": "[9.0.9, )"
@@ -84,7 +90,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
