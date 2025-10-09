@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj": {}
+    "C:\\Users\\geral\\Documents\\Dev\\Flores-Fuertes\\FloresFuertes.csproj": {}
   },
   "projects": {
-    "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj": {
+    "C:\\Users\\geral\\Documents\\Dev\\Flores-Fuertes\\FloresFuertes.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj",
+        "projectUniqueName": "C:\\Users\\geral\\Documents\\Dev\\Flores-Fuertes\\FloresFuertes.csproj",
         "projectName": "FloresFuertes",
-        "projectPath": "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj",
-        "packagesPath": "/Users/damikastaneer/.nuget/packages/",
-        "outputPath": "/Users/damikastaneer/Documents/GitHub/Flores-Fuertes/obj/",
+        "projectPath": "C:\\Users\\geral\\Documents\\Dev\\Flores-Fuertes\\FloresFuertes.csproj",
+        "packagesPath": "C:\\Users\\geral\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\geral\\Documents\\Dev\\Flores-Fuertes\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/damikastaneer/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\geral\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -90,7 +90,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
