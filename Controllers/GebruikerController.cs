@@ -33,6 +33,7 @@ namespace FloresFuertes.Controllers
         [HttpPost]
         public async Task<ActionResult<Gebruiker>> Create(Gebruiker gebruiker)
         {
+            gebruiker.Gebruiker_Id = Guid.NewGuid().ToString();
             _context.Gebruikers.Add(gebruiker);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = gebruiker.Gebruiker_Id }, gebruiker);
