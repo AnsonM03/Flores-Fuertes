@@ -5,7 +5,7 @@ namespace FloresFuertes.Models
     public class Gebruiker
     {
         [Key]
-        public string Gebruiker_Id { get; set; } = null!;
+        public string? Gebruiker_Id { get; set; } = null!;
         public string Voornaam { get; set; } = null!;
         public string Achternaam { get; set; } = null!;
         public string Email { get; set; } = null!;
