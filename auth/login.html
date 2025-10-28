@@ -4,12 +4,12 @@
 
 <h1> Login Page</h1>
 
-<form action="/action_page.php" method="post">
+<form id="loginform">
     <label for="Email">Email:</label><br>
-    <input type="text" id="Email" name="Email" required><br><br>
+    <input type="text" id="email" name="email" required><br><br>
 
     <label for="Wachtwoord">Wachtwoord:</label><br>
-    <input type="password" id="Wachtwoord" name="Wachtwoord" required><br><br>
+    <input type="password" id="wachtwoord" name="wachtwoord" required><br><br>
 
     <input type="checkbox" id="aangemeldblijven" name="aangemeldblijven">
     <label for="aangemeldblijven"> Aangemeld Blijven</label><br><br>
@@ -19,6 +19,40 @@
 
 <p>Nog geen account?</p>
 <button onclick="window.location.href='register.html'">Account aanmaken</button>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () =>{
+            const loginform = document.getElementById('loginform');
+
+            loginform.addEventListener('submit', async (event) =>{
+                event.preventDefault();
+                const loginData = {
+                    Email : document.getElementById('email').value,
+                    Wachtwoord : document.getElementById('wachtwoord').value
+                };
+                try {
+                    const response = await fetch ('http://localhost:5281/api/Gebruikers/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(loginData) 
+                    });
+                    if (response.ok) {
+                        const gebruiker = await response.json();
+                        alert('Inloggen gelukt! Je wordt nu doorgestuurd naar de hoofdpagina.');
+                        
+                        window.location.href = 'index.html';
+                    } else {
+                        alert('Inloggen mislukt. Controleer je gegevens en probeer het opnieuw.');
+                }
+                } catch (error) {
+                    console.error('Fout bij inloggen:', error);
+                    alert('Er is een fout opgetreden. Probeer het opnieuw.');
+                }            });
+            })
+    </script>
 
 </body>
 </html>
