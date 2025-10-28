@@ -3,8 +3,22 @@ using FloresFuertes.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- VOEG DIT TOE (DEEL 1) ---
+// Definieer een CORS-beleid
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowMyFrontend",
+        policy =>
+        {
+            // Sta de oorsprong van je VS Code Live Server toe
+            policy.WithOrigins("http://127.0.0.1:5500") 
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+// ------------------------------
 
+// Add services to the container.
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -23,6 +37,12 @@ if (app.Environment.IsDevelopment())
 }
 
 // app.UseHttpsRedirection();
+
+// --- VOEG DIT TOE (DEEL 2) ---
+// Gebruik het CORS-beleid dat je hierboven hebt gedefinieerd
+// DIT MOET VÓÓR UseAuthorization()
+app.UseCors("AllowMyFrontend");
+// ------------------------------
 
 app.UseAuthorization();
 
