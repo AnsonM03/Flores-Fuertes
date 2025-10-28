@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1> Login Page</h1>
+
+<form action="/action_page.php" method="post">
+    <label for="Gebruikersnaam">Gebruikersnaam:</label><br>
+    <input type="text" id="Gebruikersnaam" name="Gebruikersnaam" required><br><br>
+
+    <label for="Wachtwoord">Wachtwoord:</label><br>
+    <input type="password" id="Wachtwoord" name="Wachtwoord" required><br><br>
+
+    <input type="checkbox" id="aangemeldblijven" name="aangemeldblijven">
+    <label for="aangemeldblijven"> Aangemeld Blijven</label><br><br>
+
+    <input type="submit" value="Inloggen">
+</form>
+
+<p>Nog geen account?</p>
+<button onclick="window.location.href='/auth/registreer.html'">Account aanmaken</button>
+
+</body>
+</html>
