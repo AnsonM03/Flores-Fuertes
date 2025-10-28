@@ -58,6 +58,20 @@ namespace FloresFuertes.Controllers
             return CreatedAtAction(nameof(GetAll), new { id = gebruiker.Gebruiker_Id }, gebruiker);
         }
 
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest request)
+        {
+            var gebruiker = _context.Gebruikers
+                .FirstOrDefault(g => g.Email == request.Email && g.Wachtwoord == request.Wachtwoord);
+
+            if (gebruiker == null)
+            {
+                return Unauthorized("Ongeldige inloggegevens.");
+            }
+
+            return Ok(gebruiker);
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, Gebruiker gebruiker)
         {

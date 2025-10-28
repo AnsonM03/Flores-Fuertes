@@ -4325,11 +4325,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/ansonmok/Flores-Fuertes/FloresFuertes.csproj",
+      "projectUniqueName": "/Users/ansonmok/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj",
       "projectName": "FloresFuertes",
-      "projectPath": "/Users/ansonmok/Flores-Fuertes/FloresFuertes.csproj",
+      "projectPath": "/Users/ansonmok/Documents/GitHub/Flores-Fuertes/FloresFuertes.csproj",
       "packagesPath": "/Users/ansonmok/.nuget/packages/",
-      "outputPath": "/Users/ansonmok/Flores-Fuertes/obj/",
+      "outputPath": "/Users/ansonmok/Documents/GitHub/Flores-Fuertes/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/ansonmok/.nuget/NuGet/NuGet.Config"
