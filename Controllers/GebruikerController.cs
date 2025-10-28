@@ -30,12 +30,32 @@ namespace FloresFuertes.Controllers
             return gebruiker;
         }
 
+        // [HttpPost]
+        // public async Task<ActionResult<Gebruiker>> Create(Gebruiker gebruiker)
+        // {
+        //     _context.Gebruikers.Add(gebruiker);
+        //     await _context.SaveChangesAsync();
+        //     return CreatedAtAction(nameof(GetById), new { id = gebruiker.Gebruiker_Id }, gebruiker);
+        // }
+
         [HttpPost]
-        public async Task<ActionResult<Gebruiker>> Create(Gebruiker gebruiker)
+        public async Task<ActionResult<Gebruiker>> Create(GebruikerCreateDto dto)
         {
-            _context.Gebruikers.Add(gebruiker);
+            var gebruiker = new Gebruiker
+            {
+                Voornaam = dto.Voornaam,
+                Achternaam = dto.Achternaam,
+                Email = dto.Email,
+                Adres = dto.Adres,
+                Telefoonnr = dto.Telefoonnr,
+                Woonplaats = dto.Woonplaats,
+                Wachtwoord = dto.Wachtwoord
+            };
+
+            await _context.Gebruikers.AddAsync(gebruiker);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = gebruiker.Gebruiker_Id }, gebruiker);
+
+            return CreatedAtAction(nameof(GetAll), new { id = gebruiker.Gebruiker_Id }, gebruiker);
         }
 
         [HttpPut("{id}")]

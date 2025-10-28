@@ -31,11 +31,26 @@ namespace FloresFuertes.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Klant>> Create(Klant klant)
+        public async Task<ActionResult<Klant>> Create(KlantCreateDto dto)
         {
-            _context.Klanten.Add(klant);
+            var klant = new Klant
+            {
+                Voornaam = dto.Voornaam,
+                Achternaam = dto.Achternaam,
+                Email = dto.Email,
+                Adres = dto.Adres,
+                Telefoonnr = dto.Telefoonnr,
+                Woonplaats = dto.Woonplaats,
+                Wachtwoord = dto.Wachtwoord,
+                Saldo = dto.Saldo
+            };
+
+            await _context.Klanten.AddAsync(klant);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = klant.Gebruiker_Id }, klant);
+
+            return CreatedAtAction(nameof(GetAll),
+                new { id = klant.Gebruiker_Id },
+                klant);
         }
 
         [HttpPut("{id}")]

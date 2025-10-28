@@ -37,24 +37,42 @@ namespace FloresFuertes.Controllers
             return bieding;
         }
 
+        // [HttpPost]
+        // public async Task<ActionResult<Bieding>> Create(Bieding bieding)
+        // {
+        //     // Haal de bestaande Klant en Product op uit de database
+        //     var klant = await _context.Klanten.FindAsync(bieding.Klant_Id);
+        //     var product = await _context.Producten.FindAsync(bieding.Product_Id);
+
+        //     if (klant == null || product == null)
+        //         return BadRequest("Klant of Product bestaat niet.");
+
+        //     // Koppel alleen de foreign keys, geen nieuwe objecten toevoegen
+        //     bieding.Klant = klant;
+        //     bieding.Product = product;
+
+        //     _context.Biedingen.Add(bieding);
+        //     await _context.SaveChangesAsync();
+
+        //     return CreatedAtAction(nameof(GetById), new { id = bieding.Bieding_Id }, bieding);
+        // }
+
         [HttpPost]
-        public async Task<ActionResult<Bieding>> Create(Bieding bieding)
+        public async Task<ActionResult<Bieding>> Create(BiedingCreateDto dto)
         {
-            // Haal de bestaande Klant en Product op uit de database
-            var klant = await _context.Klanten.FindAsync(bieding.Klant_Id);
-            var product = await _context.Producten.FindAsync(bieding.Product_Id);
-
-            if (klant == null || product == null)
-                return BadRequest("Klant of Product bestaat niet.");
-
-            // Koppel alleen de foreign keys, geen nieuwe objecten toevoegen
-            bieding.Klant = klant;
-            bieding.Product = product;
+            var bieding = new Bieding
+            {
+                Bedrag = dto.Bedrag,
+                Klant_Id = dto.Klant_Id,
+                Product_Id = dto.Product_Id,
+                Tijdstip = DateTime.Now
+            };
 
             _context.Biedingen.Add(bieding);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById), new { id = bieding.Bieding_Id }, bieding);
+            return CreatedAtAction(nameof(GetAll), new { id = bieding.Bieding_Id }, bieding);
+        
         }
 
         [HttpPut("{id}")]

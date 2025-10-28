@@ -6,7 +6,7 @@ namespace FloresFuertes.Models
     public class Product
     {
         [Key]
-        public string Product_Id { get; set; }
+        public string Product_Id { get; set; } = Guid.NewGuid().ToString();
         public string Foto { get; set; }
         public string Naam { get; set; }
         public string ArtikelKenmerken { get; set; }

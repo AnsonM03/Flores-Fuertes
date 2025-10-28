@@ -26,11 +26,26 @@ namespace FloresFuertes.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Veiling>> Create(Veiling veiling)
+        public async Task<ActionResult<Veiling>> Create(VeilingCreateDto dto)
         {
+            var veiling = new Veiling
+            {
+                VeilingPrijs = dto.VeilingPrijs,
+                VeilingDatum = dto.VeilingDatum,
+                StartTijd = dto.StartTijd,
+                EindTijd = dto.EindTijd,
+                Kloklocatie = dto.Kloklocatie,
+                Status = dto.Status,
+                Product_Id = dto.Product_Id,
+                Veilingmeester_Id = dto.Veilingmeester_Id
+            };
+
             _context.Veilingen.Add(veiling);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetAll), new { id = veiling.Veiling_Id }, veiling);
+
+            return CreatedAtAction(nameof(GetAll),
+                new { id = veiling.Veiling_Id },
+                veiling);
         }
     }
 }
