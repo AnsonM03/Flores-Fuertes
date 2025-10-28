@@ -23,11 +23,25 @@ namespace FloresFuertes.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Aanvoerder>> Create(Aanvoerder aanvoerder)
+        public async Task<ActionResult<Aanvoerder>> Create(AanvoerderCreateDto dto)
         {
-            _context.Aanvoerders.Add(aanvoerder);
+            var aanvoerder = new Aanvoerder
+            {
+                Voornaam = dto.Voornaam,
+                Achternaam = dto.Achternaam,
+                Email = dto.Email,
+                Adres = dto.Adres,
+                Telefoonnr = dto.Telefoonnr,
+                Woonplaats = dto.Woonplaats,
+                Wachtwoord = dto.Wachtwoord
+            };
+
+            await _context.Aanvoerders.AddAsync(aanvoerder);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetAll), new { id = aanvoerder.Gebruiker_Id }, aanvoerder);
+
+            return CreatedAtAction(nameof(GetAll),
+                new { id = aanvoerder.Gebruiker_Id },
+                aanvoerder);
         }
     }
 }

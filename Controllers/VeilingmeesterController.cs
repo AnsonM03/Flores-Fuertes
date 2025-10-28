@@ -23,11 +23,25 @@ namespace FloresFuertes.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Veilingmeester>> Create(Veilingmeester meester)
+        public async Task<ActionResult<Veilingmeester>> Create(VeilingmeesterCreateDto dto)
         {
-            _context.Veilingmeesters.Add(meester);
+            var veilingmeester = new Veilingmeester
+            {
+                Voornaam = dto.Voornaam,
+                Achternaam = dto.Achternaam,
+                Email = dto.Email,
+                Adres = dto.Adres,
+                Telefoonnr = dto.Telefoonnr,
+                Woonplaats = dto.Woonplaats,
+                Wachtwoord = dto.Wachtwoord
+            };
+
+            await _context.Veilingmeesters.AddAsync(veilingmeester);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetAll), new { id = meester.Gebruiker_Id }, meester);
+
+            return CreatedAtAction(nameof(GetAll),
+                new { id = veilingmeester.Gebruiker_Id },
+                veilingmeester);
         }
     }
 }

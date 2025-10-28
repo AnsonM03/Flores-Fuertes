@@ -23,8 +23,18 @@ namespace FloresFuertes.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Product>> Create(Product product)
+        public async Task<ActionResult<Product>> Create(ProductCreateDto dto)
         {
+            var product = new Product
+            {
+                Foto = dto.Foto,
+                Naam = dto.Naam,
+                ArtikelKenmerken = dto.ArtikelKenmerken,
+                Hoeveelheid = dto.Hoeveelheid,
+                StartPrijs = dto.StartPrijs,
+                Aanvoerder_Id = dto.Aanvoerder_Id,
+            };  
+            
             _context.Producten.Add(product);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetAll), new { id = product.Product_Id }, product);
