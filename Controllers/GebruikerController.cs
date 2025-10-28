@@ -39,37 +39,13 @@ namespace FloresFuertes.Controllers
         // }
 
         [HttpPost]
-        public async Task<ActionResult<Gebruiker>> Create(GebruikerCreateDto dto)
+        public async Task<ActionResult<Gebruiker>> Create(Gebruiker gebruiker)
         {
-            var gebruiker = new Gebruiker
-            {
-                Voornaam = dto.Voornaam,
-                Achternaam = dto.Achternaam,
-                Email = dto.Email,
-                Adres = dto.Adres,
-                Telefoonnr = dto.Telefoonnr,
-                Woonplaats = dto.Woonplaats,
-                Wachtwoord = dto.Wachtwoord
-            };
 
             await _context.Gebruikers.AddAsync(gebruiker);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetAll), new { id = gebruiker.Gebruiker_Id }, gebruiker);
-        }
-
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
-        {
-            var gebruiker = _context.Gebruikers
-                .FirstOrDefault(g => g.Email == request.Email && g.Wachtwoord == request.Wachtwoord);
-
-            if (gebruiker == null)
-            {
-                return Unauthorized("Ongeldige inloggegevens.");
-            }
-
-            return Ok(gebruiker);
         }
 
         [HttpPut("{id}")]

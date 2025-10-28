@@ -32,7 +32,7 @@
                     Wachtwoord : document.getElementById('wachtwoord').value
                 };
                 try {
-                    const response = await fetch ('http://localhost:5281/api/Gebruikers/login', {
+                    const response = await fetch ('http://localhost:5281/api/Auth/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
