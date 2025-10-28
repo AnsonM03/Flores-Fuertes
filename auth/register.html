@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Register</h1>
+    <form id="registerForm">
+    
+        <label for="Voornaam">Voornaam:</label><br>
+        <input type="text"id="voornaam" value=""><br>
+        <label for="Achternaam">Achternaam:</label><br>
+        <input type="text"id="achternaam" value=""><br>
+        <label for="Email">Email:</label><br>
+        <input type="text"id="email" value=""><br>
+        <label for="Adres">Adres:</label><br>
+        <input type="text"id="adres" value=""><br>
+        <label for="Telefoon Nummer">Telefoon Nummer:</label><br>
+        <input type="text"id="telefoonnr" value=""><br>
+        <label for="Woonplaats">Woonplaats:</label><br>
+        <input type="text"id="woonplaats" value=""><br>
+        <label for="Wachtwoord">Wachtwoord:</label><br>
+        <input type="password"id="wachtwoord" value=""><br><br>
+        <input type="submit" value="Register"><br><br>
+        <a href="login.html">Al een account? Log hier in!</a>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () =>{
+            const registerForm = document.getElementById('registerForm');
+
+            registerForm.addEventListener('submit', async (event) =>{
+                event.preventDefault();
+                const gebruikerData = {
+                    Voornaam : document.getElementById('voornaam').value,
+                    Achternaam : document.getElementById('achternaam').value,
+                    Email : document.getElementById('email').value,
+                    Adres : document.getElementById('adres').value,
+                    Telefoonnr : document.getElementById('telefoonnr').value,
+                    Woonplaats : document.getElementById('woonplaats').value,
+                    Wachtwoord : document.getElementById('wachtwoord').value
+                };
+
+                try {
+                    const response = await fetch('http://localhost:5281/api/Gebruikers', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(gebruikerData) 
+                    });
+
+                    if (response.ok) {
+                        alert('Registratie gelukt! Je wordt nu doorgestuurd naar de login pagina.');
+                        
+                        // Stuur de gebruiker naar login.html
+                        window.location.href = 'login.html';
+                    } else {
+                        alert('Registratie mislukt. Probeer het opnieuw.');
+                    }
+                } catch (error) {
+                    console.error('Fout bij registratie:', error);
+                    alert('Er is een fout opgetreden. Probeer het opnieuw.');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
