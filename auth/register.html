@@ -19,7 +19,7 @@
         <label for="Wachtwoord">Wachtwoord:</label><br>
         <input type="password"id="wachtwoord" value=""><br><br>
         <input type="submit" value="Register"><br><br>
-        <a href="">Al een account? Log hier in!</a>
+        <a href="login.html">Al een account? Log hier in!</a>
     </form>
 
     <script>
@@ -50,7 +50,7 @@
                     if (response.ok) {
                         alert('Registratie gelukt! Je wordt nu doorgestuurd naar de login pagina.');
                         
-                        // Stuur de gebruiker naar login.html (in dezelfde map)
+                        // Stuur de gebruiker naar login.html
                         window.location.href = 'login.html';
                     } else {
                         alert('Registratie mislukt. Probeer het opnieuw.');
