@@ -22,6 +22,14 @@ namespace FloresFuertes.Controllers
             return await _context.Aanvoerders.ToListAsync();
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Aanvoerder>> GetById(string id)
+        {
+            var aanvoerder = await _context.Aanvoerders.FindAsync(id);
+            if (aanvoerder == null) return NotFound();
+            return aanvoerder;
+        }
+
         [HttpPost]
         public async Task<ActionResult<Aanvoerder>> Create(AanvoerderCreateDto dto)
         {
