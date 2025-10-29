@@ -1,33 +1,29 @@
 <!doctype html>
 <html lang="nl">
-                                                                                                                                                        <!--header, footer van beginscherm nog geen links herfs mmoet ik aanpassen -->
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Royal Flora Holland — Veilingsplatform</title>
+  <title>Inloggen — Royal Flora Holland</title>
   <link rel="stylesheet" href="stylebp.css">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="auth.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
 </head>
 <body>
   <div class="page">
 
-                                                                                                                                                      <!-- Header -->
+                                                                                      <!-- Header -->
     <header class="site-header">
       <div class="header-inner">
-        <a class="brand" href="#">
-          <img
-            src="https://www.royalfloraholland.com/assets/favicons/favicon-32x32.png"
-            alt="Royal Flora Holland"
-            class="brand-logo"
-          />
+        <a class="brand" href="beginpagina.html">
+          <img src="https://www.royalfloraholland.com/assets/favicons/favicon-32x32.png" alt="Royal Flora Holland" class="brand-logo" />
           <span class="brand-text">Royal<br>Flora<br>Holland</span>
         </a>
 
         <nav class="nav" id="nav">
-          <a href="#" class="nav-link">Home</a>
-          <a href="#" class="nav-link is-active">Login</a>
-          <a href="#" class="nav-link">Registreren</a>
+          <a href="beginpagina.html" class="nav-link">Home</a>
+          <a href="login.html" class="nav-link is-active">Login</a>
+          <a href="registreer.html" class="nav-link">Registreren</a>
           <a href="#" class="nav-link">Veilingen</a>
         </nav>
 
@@ -36,6 +32,78 @@
         </button>
       </div>
     </header>
-</div>
+
+                                                                                          <!-- Main -->
+    <main class="main auth">
+      <section class="auth-wrap">
+        <div class="auth-card">
+          <div class="auth-media">
+            <img src="images/loginFH.png" alt="Login visual">
+          </div>
+
+                                                                                  <!-- Loginformulier -->
+          <div class="auth-form">
+            <h2>Inloggen</h2>
+
+            <form action="/action_page.php" method="post" novalidate>
+              <label for="Gebruikersnaam">Gebruikersnaam*</label>
+              <input type="text" id="Gebruikersnaam" name="Gebruikersnaam" required>
+
+              <label for="Wachtwoord">Wachtwoord*</label>
+              <input type="password" id="Wachtwoord" name="Wachtwoord" required>
+
+              <div class="checkbox-row">
+                <input type="checkbox" id="aangemeldblijven" name="aangemeldblijven">
+                <label for="aangemeldblijven">Aangemeld blijven</label>
+              </div>
+
+              <button type="submit" class="btn">Inloggen</button>
+            </form>
+
+            <a class="auth-cta" href="registreer.html" aria-label="Klik hier om te registreren">
+              <span><strong>Nog geen account?</strong><br>Account aanmaken</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+                                                                                          <!-- Footer -->
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <p>© <span id="y"></span> Royal Flora Holland — Alle rechten voorbehouden.</p>
+        <nav class="footer-nav">
+          <a href="#">Privacy</a>
+          <a href="#">Cookies</a>
+          <a href="#">Contact</a>
+        </nav>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+    const burger = document.querySelector('.hamburger');
+    const nav = document.getElementById('nav');
+    burger.addEventListener('click', () => {
+      const open = burger.classList.toggle('open');
+      nav.classList.toggle('open', open);
+      burger.setAttribute('aria-expanded', String(open));
+    });
+
+    const header = document.querySelector('.site-header');
+    let lastY = window.scrollY;
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY, down = y > lastY;
+      if (y > 10) header.classList.add('peek'); else header.classList.remove('peek');
+      if (down && y > 90) header.classList.add('hide'); else header.classList.remove('hide');
+      lastY = y;
+    }, { passive: true });
+  </script>
 </body>
 </html>
+
