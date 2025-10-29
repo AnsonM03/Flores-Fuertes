@@ -1,6 +1,11 @@
+// app/layout.js
+
 import { Geist, Geist_Mono } from "next/font/google";
 import Nav from "./components/Nav";
 import "./globals.css";
+
+// 1. IMPORTEER DE AUTH PROVIDER
+import { AuthProvider } from "./context/AuthContext"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,8 +26,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Nav />
-          {children}
+        {/* 2. WIKKEL ALLES IN DE PROVIDER */}
+        <AuthProvider>
+          <Nav /> {/* Je Nav component staat nu BINNEN de provider */}
+          <main>
+            {children} {/* Je paginas staan nu BINNEN de provider */}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );
