@@ -777,3 +777,6 @@ C:\Users\geral\Documents\Dev\Flores-Fuertes\obj\Debug\net9.0\staticwebassets.bui
 C:\Users\geral\Documents\Dev\Flores-Fuertes\obj\Debug\net9.0\FloresFu.EA315ACF.Up2Date
 C:\Users\geral\Documents\Dev\Flores-Fuertes\obj\Debug\net9.0\FloresFuertes.genruntimeconfig.cache
 C:\Users\geral\Documents\Dev\Flores-Fuertes\obj\Debug\net9.0\ref\FloresFuertes.dll
+C:\Users\geral\Documents\Dev\Flores-Fuertes\bin\Debug\net9.0\frontend\package-lock.json
+C:\Users\geral\Documents\Dev\Flores-Fuertes\bin\Debug\net9.0\frontend\package.json
+C:\Users\geral\Documents\Dev\Flores-Fuertes\bin\Debug\net9.0\frontend\tsconfig.json

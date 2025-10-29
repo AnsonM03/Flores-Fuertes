@@ -11,7 +11,7 @@ builder.Services.AddCors(options =>
         policy =>
         {
             // Sta de oorsprong van je VS Code Live Server toe
-            policy.WithOrigins("http://127.0.0.1:5500") 
+            policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:3000")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
