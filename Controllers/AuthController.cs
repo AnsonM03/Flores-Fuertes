@@ -41,13 +41,13 @@ namespace FloresFuertes.Controllers
                     gebruiker.LockoutEndTime = DateTime.Now.AddMinutes(15);
                     gebruiker.FailedLoginAttempts = 0; // Reset after lockout
                 }
-                await _context.SaveChangesAsync();
+                _context.SaveChanges();
                 return Unauthorized("Ongeldig wachtwoord.");
             }
 
             gebruiker.FailedLoginAttempts = 0;
             gebruiker.LockoutEndTime = null;
-            await _context.SaveChangesAsync();
+            _context.SaveChanges();
 
             return Ok(gebruiker);
         }

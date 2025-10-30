@@ -7,6 +7,7 @@ import Link from "next/link";
 export default function Register() {
   const router = useRouter();
 
+  // Je state management (ongewijzigd)
   const [formData, setFormData] = useState({
     Voornaam: "",
     Achternaam: "",
@@ -17,6 +18,7 @@ export default function Register() {
     Wachtwoord: "",
   });
 
+  // Je handleChange (ongewijzigd)
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -24,6 +26,7 @@ export default function Register() {
     });
   };
 
+  // Je handleSubmit (ongewijzigd)
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -38,18 +41,12 @@ export default function Register() {
         alert("Registratie gelukt!");
         router.push("/login");
       } else {
-        // --- AANGEPASTE FOUTAFHANDELING ---
-        
-        // Vang de '409 Conflict' specifiek af
         if (response.status === 409) {
-            // Vraag de tekst op die de C# server heeft gestuurd
-            const errorMessage = await response.text(); 
-            alert(errorMessage); // Toont "Een account met dit e-mailadres bestaat al."
+          const errorMessage = await response.text();
+          alert(errorMessage);
         } else {
-            // Voor alle andere fouten
-            alert("Registratie mislukt. Probeer opnieuw.");
+          alert("Registratie mislukt. Probeer opnieuw.");
         }
-        // --- EINDE AANPASSING ---
       }
     } catch (error) {
       console.error("Fout bij registratie:", error);
@@ -57,37 +54,73 @@ export default function Register() {
     }
   };
 
+  // --- START VAN DE AANGEPASTE JSX ---
   return (
-    <div style={{ padding: "40px" }}>
-      <h1>Register</h1>
+    // 1. Buitenste container (van login.js)
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-blue-200">
+      
+      {/* 2. Formulier-kaart (van login.js) */}
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+        
+        {/* 3. Titel (gestyled zoals login.js) */}
+        <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
+          Register
+        </h1>
 
-      <form id="registerForm" onSubmit={handleSubmit}>
-        {[
-          { id: "Voornaam", label: "Voornaam" },
-          { id: "Achternaam", label: "Achternaam" },
-          { id: "Email", label: "Email" },
-          { id: "Adres", label: "Adres" },
-          { id: "Telefoonnr", label: "Telefoon Nummer" },
-          { id: "Woonplaats", label: "Woonplaats" },
-          { id: "Wachtwoord", label: "Wachtwoord", type: "password" }
-        ].map((field) => (
-          <div key={field.id}>
-            <label htmlFor={field.id}>{field.label}:</label><br />
-            <input
-              type={field.type || "text"}
-              id={field.id}
-              value={formData[field.id]}
-              onChange={handleChange}
-              required
-            /><br /><br />
-          </div>
-        ))}
+        {/* 4. Formulier (gestyled zoals login.js) */}
+        <form id="registerForm" onSubmit={handleSubmit} className="space-y-5">
+          
+          {/* 5. Je velden-map, nu met styling */}
+          {[
+            { id: "Voornaam", label: "Voornaam" },
+            { id: "Achternaam", label: "Achternaam" },
+            { id: "Email", label: "Email" },
+            { id: "Adres", label: "Adres" },
+            { id: "Telefoonnr", label: "Telefoon Nummer" },
+            { id: "Woonplaats", label: "Woonplaats" },
+            { id: "Wachtwoord", label: "Wachtwoord", type: "password" }
+          ].map((field) => (
+            <div key={field.id}>
+              {/* Label (gestyled zoals login.js) */}
+              <label
+                htmlFor={field.id}
+                className="block text-sm font-medium text-gray-700"
+              >
+                {field.label}
+              </label>
+              
+              {/* Input (gestyled zoals login.js) */}
+              <input
+                type={field.type || "text"}
+                id={field.id}
+                value={formData[field.id]}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          ))}
 
-        <button type="submit">Register</button>
-      </form>
+          {/* 6. Submit knop (gestyled zoals login.js) */}
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Register
+          </button>
+        </form>
 
-      <br />
-      <Link href="/login">Al een account? Log hier in!</Link>
+        {/* 7. Link onderaan (gestyled zoals login.js) */}
+        <p className="text-center text-sm text-gray-600 mt-6">
+          Al een account?{" "}
+          <Link
+            href="/login"
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Log hier in!
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
