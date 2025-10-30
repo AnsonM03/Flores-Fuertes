@@ -67,8 +67,8 @@ export default function Dashboard() {
         eindTijd: eind.toISOString(),
         kloklocatie: randomLocatie,
         status: "open",
-        product_Id: "ce01670c-bc94-4dc3-8864-ddb756996006",
-        veilingmeester_Id: "47fea64c-55e4-4a68-a89f-90bee7e2ec23",
+        product_Id: "f6e70347-55ed-41f2-9209-3591afe70d52",
+        veilingmeester_Id: "c23f953d-7fc1-4b1f-9fb9-f9a51b4d1075",
       };
 
       const res = await fetch("http://localhost:5281/api/Veilingen", {
