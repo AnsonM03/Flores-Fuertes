@@ -10,3 +10,8 @@
 # Ignore sensitive configuration files
 # It's better to track appsettings.json but ignore your local secrets
 appsettings.Development.json
+/bin/Debug/net9.0
+/bin/Debug
+*.dll
+*.dll
+*.json

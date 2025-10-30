@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FloresFuertes")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cf6cbdb3353fdafeb24ff575cdea64ee4acc129e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+88833cf9262a35b707283d732aebb00d1d33f261")]
 [assembly: System.Reflection.AssemblyProductAttribute("FloresFuertes")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FloresFuertes")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

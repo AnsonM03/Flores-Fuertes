@@ -17,7 +17,7 @@ namespace FloresFuertes.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -67,10 +67,16 @@ namespace FloresFuertes.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("int");
+
                     b.Property<string>("GebruikerType")
                         .IsRequired()
                         .HasMaxLength(21)
                         .HasColumnType("nvarchar(21)");
+
+                    b.Property<DateTime?>("LockoutEndTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Telefoonnr")
                         .IsRequired()

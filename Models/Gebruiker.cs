@@ -13,5 +13,7 @@ namespace FloresFuertes.Models
         public string Telefoonnr { get; set; } = null!;
         public string Woonplaats { get; set; } = null!;
         public string Wachtwoord { get; set; } = null!;
+        public int FailedLoginAttempts { get; set; } = 0;
+        public DateTime? LockoutEndTime { get; set; } = null;
     }
 }
