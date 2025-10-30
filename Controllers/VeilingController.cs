@@ -75,6 +75,21 @@ namespace FloresFuertes.Controllers
             return CreatedAtAction(nameof(GetById), new { id = completeVeiling.Veiling_Id }, completeVeiling);
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteVeiling(string id)
+        {
+            var veiling = await _context.Veilingen.FindAsync(id);
+            if (veiling == null)
+            {
+                return NotFound(new { message = "Veiling niet gevonden" });
+            }
+
+            _context.Veilingen.Remove(veiling);
+            await _context.SaveChangesAsync();
+
+            return NoContent(); // 204 betekent: succesvol verwijderd, geen content terug
+        }
+
         // [HttpPost]
         // public async Task<ActionResult<Veiling>> CreateVeiling([FromBody] VeilingCreateDto dto)
         // {

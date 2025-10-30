@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import VeilingKlok from "../components/Veilingklok";
+import KoperRij from "../components/Koperrij";
 
 export default function Dashboard() {
   const [veilingen, setVeilingen] = useState([]);
+  const [selectedVeiling, setSelectedVeiling] = useState(null);
   const [error, setError] = useState(null);
   const [klanten, setKlanten] = useState([]);
 
@@ -28,7 +30,9 @@ export default function Dashboard() {
             }
           })
         );
+
         setVeilingen(updated);
+        if (updated.length > 0) setSelectedVeiling(updated[0]);
       } catch (err) {
         console.error(err);
         setError("Kon veilingen niet ophalen");
@@ -51,6 +55,25 @@ export default function Dashboard() {
     }
     fetchKlanten();
   }, []);
+
+
+async function handleKlantVerwijderen(klantId) {
+  if (!confirm("Weet je zeker dat je deze koper wilt verwijderen?")) return;
+
+  try {
+    const res = await fetch(`http://localhost:5281/api/Klanten/${klantId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    setKlanten((prev) => prev.filter((k) => k.klant_Id !== klantId));
+    alert("🗑️ Koper succesvol verwijderd");
+  } catch (err) {
+    console.error("❌ Fout bij verwijderen van koper:", err);
+    alert("Er ging iets mis bij het verwijderen van de koper");
+  }
+}
 
   async function maakRandomVeiling() {
     try {
@@ -80,6 +103,7 @@ export default function Dashboard() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setVeilingen((prev) => [data, ...prev]);
+      setSelectedVeiling(data);
       alert(`✅ Nieuwe veiling aangemaakt in ${randomLocatie} — €${randomPrijs}`);
     } catch (err) {
       console.error("Kon willekeurige veiling niet aanmaken:", err);
@@ -87,10 +111,38 @@ export default function Dashboard() {
     }
   }
 
-  return (
+useEffect(() => {
+  const interval = setInterval(() => {
+    const nu = new Date();
+    setVeilingen((prev) =>
+      prev.map((v) => {
+        const eind = new Date(v.eindTijd);
+        let status = v.status;
+
+        if (nu < eind && nu >= new Date(v.startTijd)) {
+          status = "actief";
+        } else if (nu >= eind) {
+          status = "afgelopen";
+        } else {
+          status = "wachten";
+        }
+
+        return { ...v, status };
+      })
+    );
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, []);
+
+
+/////////////////////////////////
+
+return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       <div className="grid grid-cols-2 gap-6">
         <div className="flex flex-col gap-6">
+          {/* --- VEILINGEN --- */}
           <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-800">Aankomende Veilingen</h2>
@@ -123,7 +175,12 @@ export default function Dashboard() {
                     {veilingen.map((v) => (
                       <tr
                         key={v.veiling_Id}
-                        className="hover:bg-blue-50 transition-colors cursor-pointer"
+                        onClick={() => setSelectedVeiling(v)}
+                        className={`cursor-pointer transition-colors ${
+                          selectedVeiling?.veiling_Id === v.veiling_Id
+                            ? "bg-blue-100"
+                            : "hover:bg-blue-50"
+                        }`}
                       >
                         <td className="px-4 py-2 font-medium">{v.product?.naam ?? "Geen naam"}</td>
                         <td className="px-4 py-2">
@@ -143,8 +200,23 @@ export default function Dashboard() {
                             minute: "2-digit",
                           })}
                         </td>
-                        <td className="px-4 py-2 text-right font-semibold text-gray-800">
-                          €{v.veilingPrijs.toFixed(2)}
+                        <td className="px-4 py-2 text-right font-semibold text-gray-800 flex justify-end items-center gap-2">
+                          <span>€{v.veilingPrijs.toFixed(2)}</span>
+                          {v.status === "actief" && (
+                            <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded">
+                              Actief
+                            </span>
+                          )}
+                          {v.status === "wachten" && (
+                            <span className="bg-yellow-100 text-yellow-700 text-xs font-medium px-2 py-1 rounded">
+                              Wachten
+                            </span>
+                          )}
+                          {v.status === "afgelopen" && (
+                            <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded">
+                              Afgelopen
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -154,7 +226,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Sectie: Kopers */}
+          {/* --- KOPERS --- */}
           <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
 
@@ -167,19 +239,16 @@ export default function Dashboard() {
                     <tr>
                       <th className="px-4 py-2">Naam</th>
                       <th className="px-4 py-2">Woonplaats</th>
+                      <th className="px-4 py-2 text-right">Acties</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {klanten.map((k) => (
-                      <tr
-                        key={k.klant_Id}
-                        className="hover:bg-blue-50 transition-colors"
-                      >
-                        <td className="px-4 py-2 font-medium">
-                          {k.voornaam} {k.achternaam}
-                        </td>
-                        <td className="px-4 py-2">{k.woonplaats ?? "Onbekend"}</td>
-                      </tr>
+                      <KoperRij
+                        key={k.gebruiker_Id}
+                        klant={k}
+                        onDelete={() => handleKlantVerwijderen(k.gebruiker_Id)}
+                      />
                     ))}
                   </tbody>
                 </table>
@@ -188,11 +257,12 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* --- VEILINGKLOK --- */}
         <div className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col items-center justify-center p-6">
-          {veilingen.length > 0 ? (
-            <VeilingKlok veiling={veilingen[0]} />
+          {selectedVeiling ? (
+            <VeilingKlok veiling={selectedVeiling} />
           ) : (
-            <p className="text-gray-500 italic">Geen veilingen beschikbaar</p>
+            <p className="text-gray-500 italic">Geen actieve veilingen</p>
           )}
         </div>
       </div>
