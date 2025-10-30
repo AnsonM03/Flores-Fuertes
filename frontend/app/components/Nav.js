@@ -48,6 +48,7 @@ export default function Nav() {
             <>
               <Link href="/veilingen" className="nav-link">Veilingen</Link>
               <Link href="/account" className="nav-link">Account</Link>
+              <Link href="/dashboard" className="nav-link">Dashboard</Link>
               <li>
                 <button onClick={handleLogout} className="nav-link-button">Uitloggen</button>
               </li>
@@ -56,7 +57,6 @@ export default function Nav() {
             <>
               <Link href="/login" className="nav-link">Login</Link>
               <Link href="/register" className="nav-link">Registreren</Link>
-              <Link href="/veilingen" className="nav-link">Veilingen</Link>
             </>
           )}
         </nav>
