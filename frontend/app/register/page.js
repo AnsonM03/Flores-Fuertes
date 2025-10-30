@@ -36,9 +36,20 @@ export default function Register() {
 
       if (response.ok) {
         alert("Registratie gelukt!");
-        router.push("/login"); // Navigate to Next.js login page ✅
+        router.push("/login");
       } else {
-        alert("Registratie mislukt. Probeer opnieuw.");
+        // --- AANGEPASTE FOUTAFHANDELING ---
+        
+        // Vang de '409 Conflict' specifiek af
+        if (response.status === 409) {
+            // Vraag de tekst op die de C# server heeft gestuurd
+            const errorMessage = await response.text(); 
+            alert(errorMessage); // Toont "Een account met dit e-mailadres bestaat al."
+        } else {
+            // Voor alle andere fouten
+            alert("Registratie mislukt. Probeer opnieuw.");
+        }
+        // --- EINDE AANPASSING ---
       }
     } catch (error) {
       console.error("Fout bij registratie:", error);

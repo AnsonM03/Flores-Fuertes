@@ -41,6 +41,15 @@ namespace FloresFuertes.Controllers
         [HttpPost]
         public async Task<ActionResult<Gebruiker>> Create(Gebruiker gebruiker)
         {
+            bool emailBestaatAl = await _context.Gebruikers
+                                      .AnyAsync(g => g.Email == gebruiker.Email);
+        
+            if (emailBestaatAl)
+            {
+                // 2. STUUR EEN '409 CONFLICT' FOUT TERUG
+                // Dit is de standaard manier om "duplicate" aan te geven.
+                return Conflict("Een account met dit e-mailadres bestaat al.");
+            }
 
             await _context.Gebruikers.AddAsync(gebruiker);
             await _context.SaveChangesAsync();
