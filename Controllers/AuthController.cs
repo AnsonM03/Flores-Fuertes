@@ -27,10 +27,27 @@ namespace FloresFuertes.Controllers
                 return NotFound("Gebruiker niet gevonden.");
             }
 
+            if(gebruiker.LockoutEndTime != null && gebruiker.LockoutEndTime > DateTime.Now)
+            {
+                return StatusCode(423, "Account is geblokkeerd. Probeer het later opnieuw.");
+            }
+
             if (gebruiker.Wachtwoord != loginModel.Wachtwoord)
             {
+                gebruiker.FailedLoginAttempts += 1;
+
+                if (gebruiker.FailedLoginAttempts >= 5)
+                {
+                    gebruiker.LockoutEndTime = DateTime.Now.AddMinutes(15);
+                    gebruiker.FailedLoginAttempts = 0; // Reset after lockout
+                }
+                await _context.SaveChangesAsync();
                 return Unauthorized("Ongeldig wachtwoord.");
             }
+
+            gebruiker.FailedLoginAttempts = 0;
+            gebruiker.LockoutEndTime = null;
+            await _context.SaveChangesAsync();
 
             return Ok(gebruiker);
         }

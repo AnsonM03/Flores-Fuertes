@@ -25,11 +25,31 @@ namespace FloresFuertes.Controllers
                 .ToListAsync();
         }
 
-        [HttpPost]
-        public async Task<ActionResult<Veiling>> Create(VeilingCreateDto dto)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Veiling>> GetById(string id)
         {
-            var veiling = new Veiling
+            var veiling = await _context.Veilingen
+                .Include(v => v.Product)
+                .Include(v => v.Veilingmeester)
+                .FirstOrDefaultAsync(v => v.Veiling_Id == id);
+
+            if (veiling == null)
             {
+                return NotFound();
+            }
+
+            return Ok(veiling);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Veiling>> CreateVeiling([FromBody] VeilingCreateDto dto)
+        {
+            if (dto == null)
+                return BadRequest("Ongeldige invoer");
+
+            var nieuweVeiling = new Veiling
+            {
+                Veiling_Id = Guid.NewGuid().ToString(),
                 VeilingPrijs = dto.VeilingPrijs,
                 VeilingDatum = dto.VeilingDatum,
                 StartTijd = dto.StartTijd,
@@ -40,12 +60,68 @@ namespace FloresFuertes.Controllers
                 Veilingmeester_Id = dto.Veilingmeester_Id
             };
 
-            _context.Veilingen.Add(veiling);
+            _context.Veilingen.Add(nieuweVeiling);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetAll),
-                new { id = veiling.Veiling_Id },
-                veiling);
+            // ✅ Haal de volledige veiling opnieuw op met relaties
+            var completeVeiling = await _context.Veilingen
+                .Include(v => v.Product)
+                .Include(v => v.Veilingmeester)
+                .FirstOrDefaultAsync(v => v.Veiling_Id == nieuweVeiling.Veiling_Id);
+
+            if (completeVeiling == null)
+                return NotFound("Veiling niet gevonden na aanmaken");
+
+            return CreatedAtAction(nameof(GetById), new { id = completeVeiling.Veiling_Id }, completeVeiling);
         }
+
+        // [HttpPost]
+        // public async Task<ActionResult<Veiling>> CreateVeiling([FromBody] VeilingCreateDto dto)
+        // {
+        //     if (dto == null)
+        //         return BadRequest("Ongeldige invoer");
+
+        //     var nieuweVeiling = new Veiling
+        //     {
+        //         Veiling_Id = Guid.NewGuid().ToString(),
+        //         VeilingPrijs = dto.VeilingPrijs,
+        //         VeilingDatum = dto.VeilingDatum,
+        //         StartTijd = dto.StartTijd,
+        //         EindTijd = dto.EindTijd,
+        //         Kloklocatie = dto.Kloklocatie,
+        //         Status = dto.Status,
+        //         Product_Id = dto.Product_Id,
+        //         Veilingmeester_Id = dto.Veilingmeester_Id
+        //     };
+
+        //     _context.Veilingen.Add(nieuweVeiling);
+        //     await _context.SaveChangesAsync();
+
+        //     // 201 Created met het nieuwe object als response
+        //     return CreatedAtAction(nameof(GetById), new { id = nieuweVeiling.Veiling_Id }, nieuweVeiling);
+        // }
+
+        // [HttpPost]
+        // public async Task<ActionResult<Veiling>> Create(VeilingCreateDto dto)
+        // {
+        //     var veiling = new Veiling
+        //     {
+        //         VeilingPrijs = dto.VeilingPrijs,
+        //         VeilingDatum = dto.VeilingDatum,
+        //         StartTijd = dto.StartTijd,
+        //         EindTijd = dto.EindTijd,
+        //         Kloklocatie = dto.Kloklocatie,
+        //         Status = dto.Status,
+        //         Product_Id = dto.Product_Id,
+        //         Veilingmeester_Id = dto.Veilingmeester_Id
+        //     };
+
+        //     _context.Veilingen.Add(veiling);
+        //     await _context.SaveChangesAsync();
+
+        //     return CreatedAtAction(nameof(GetAll),
+        //         new { id = veiling.Veiling_Id },
+        //         veiling);
+        // }
     }
 }

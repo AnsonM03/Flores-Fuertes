@@ -1,58 +1,201 @@
 "use client";
-
 import { useEffect, useState } from "react";
+import VeilingKlok from "../components/Veilingklok";
 
 export default function Dashboard() {
-  const [aanvoerder, setAanvoerder] = useState(null);
+  const [veilingen, setVeilingen] = useState([]);
   const [error, setError] = useState(null);
-
-  const aanvoerderId = "c73127aa-4cc1-4656-be32-9740ddc9750c"; 
-  // Zet hier echte GUID vanuit database
+  const [klanten, setKlanten] = useState([]);
 
   useEffect(() => {
-    fetch(`http://localhost:5281/api/Aanvoerders/${aanvoerderId}`)
-      .then((res) => {
+    async function fetchVeilingenMetAanvoerders() {
+      try {
+        const res = await fetch("http://localhost:5281/api/Veilingen");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => setAanvoerder(data))
-      .catch((err) => setError("Gebruiker niet gevonden"));
+        const data = await res.json();
+
+        const updated = await Promise.all(
+          data.map(async (v) => {
+            const aanvoerderId = v.product?.aanvoerder_Id;
+            if (!aanvoerderId) return v;
+            try {
+              const r2 = await fetch(`http://localhost:5281/api/Aanvoerders/${aanvoerderId}`);
+              if (!r2.ok) return v;
+              const aanvoerder = await r2.json();
+              return { ...v, aanvoerder };
+            } catch {
+              return v;
+            }
+          })
+        );
+        setVeilingen(updated);
+      } catch (err) {
+        console.error(err);
+        setError("Kon veilingen niet ophalen");
+      }
+    }
+
+    fetchVeilingenMetAanvoerders();
   }, []);
 
+  useEffect(() => {
+    async function fetchKlanten() {
+      try {
+        const res = await fetch("http://localhost:5281/api/Klanten");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setKlanten(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchKlanten();
+  }, []);
+
+  async function maakRandomVeiling() {
+    try {
+      const start = new Date();
+      const eind = new Date(start.getTime() + (Math.random() * 10 + 5) * 60 * 1000);
+      const randomPrijs = Math.floor(Math.random() * 100) + 20;
+      const locaties = ["Aalsmeer", "Almere", "Rijnsburg", "Naaldwijk"];
+      const randomLocatie = locaties[Math.floor(Math.random() * locaties.length)];
+
+      const nieuweVeiling = {
+        veilingPrijs: randomPrijs,
+        veilingDatum: new Date().toISOString().split("T")[0],
+        startTijd: start.toISOString(),
+        eindTijd: eind.toISOString(),
+        kloklocatie: randomLocatie,
+        status: "open",
+        product_Id: "f6e70347-55ed-41f2-9209-3591afe70d52",
+        veilingmeester_Id: "c23f953d-7fc1-4b1f-9fb9-f9a51b4d1075",
+      };
+
+      const res = await fetch("http://localhost:5281/api/Veilingen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nieuweVeiling),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setVeilingen((prev) => [data, ...prev]);
+      alert(`✅ Nieuwe veiling aangemaakt in ${randomLocatie} — €${randomPrijs}`);
+    } catch (err) {
+      console.error("Kon willekeurige veiling niet aanmaken:", err);
+      alert("❌ Er ging iets mis bij het aanmaken van de veiling");
+    }
+  }
+
   return (
-    <div style={{ padding: "30px" }}>
-      <h1>Gebruikers Dashboard</h1>
+    <div className="min-h-screen bg-gray-100 p-6 font-sans">
+      <div className="grid grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Aankomende Veilingen</h2>
+              <button
+                onClick={maakRandomVeiling}
+                className="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
+              >
+                + Nieuwe Veiling
+              </button>
+            </div>
 
-      <div className="dashboard"></div>
-      <div className="veilingklok"></div>
-      <div className="ronde"></div>
-      <div className="prijs"></div>
-      <div className="koper"></div>
-      <div className="aantal"></div>
+            {error && <p className="text-red-600">{error}</p>}
+            {!error && veilingen.length === 0 && (
+              <p className="text-gray-500 italic">Geen veilingen gevonden...</p>
+            )}
 
-      <div className="aankomende-veilingen">Aankomende veilingen</div>
-      <label id="aanvoerders">Aanvoerders</label>
-      <label id="producten">Producten</label>
+            {veilingen.length > 0 && (
+              <div className="overflow-auto rounded-md border border-gray-200">
+                <table className="min-w-full text-sm text-left text-gray-700">
+                  <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
+                    <tr>
+                      <th className="px-4 py-2">Product</th>
+                      <th className="px-4 py-2">Aanvoerder</th>
+                      <th className="px-4 py-2">Start</th>
+                      <th className="px-4 py-2">Einde</th>
+                      <th className="px-4 py-2 text-right">Prijs (€)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {veilingen.map((v) => (
+                      <tr
+                        key={v.veiling_Id}
+                        className="hover:bg-blue-50 transition-colors cursor-pointer"
+                      >
+                        <td className="px-4 py-2 font-medium">{v.product?.naam ?? "Geen naam"}</td>
+                        <td className="px-4 py-2">
+                          {v.aanvoerder
+                            ? `${v.aanvoerder.voornaam} ${v.aanvoerder.achternaam}`
+                            : "Aanvoerder laden..."}
+                        </td>
+                        <td className="px-4 py-2">
+                          {new Date(v.startTijd).toLocaleTimeString("nl-NL", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="px-4 py-2">
+                          {new Date(v.eindTijd).toLocaleTimeString("nl-NL", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="px-4 py-2 text-right font-semibold text-gray-800">
+                          €{v.veilingPrijs.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-      <div className="actieve-veiling"></div>
+          {/* Sectie: Kopers */}
+          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
 
-      <label id="aanvoerderNaam">
-        {error
-          ? error
-          : aanvoerder
-          ? `${aanvoerder.voornaam} ${aanvoerder.achternaam}`
-          : "Laden..."}
-      </label>
-      <br />
-      <label id="aanvoerderId">
-        {aanvoerder ? aanvoerder.gebruiker_Id : "Laden..."}
-      </label>
+            {klanten.length === 0 ? (
+              <p className="text-gray-500 italic">Kopers worden geladen...</p>
+            ) : (
+              <div className="overflow-auto rounded-md border border-gray-200">
+                <table className="min-w-full text-sm text-left text-gray-700">
+                  <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
+                    <tr>
+                      <th className="px-4 py-2">Naam</th>
+                      <th className="px-4 py-2">Woonplaats</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {klanten.map((k) => (
+                      <tr
+                        key={k.klant_Id}
+                        className="hover:bg-blue-50 transition-colors"
+                      >
+                        <td className="px-4 py-2 font-medium">
+                          {k.voornaam} {k.achternaam}
+                        </td>
+                        <td className="px-4 py-2">{k.woonplaats ?? "Onbekend"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
 
-      <div className="product_naam"></div>
-      <div className="menu"></div>
-      <div className="kopers"></div>
-
-      {/* Actieve veiling API wordt later uitgebreid ✅ */}
+        <div className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col items-center justify-center p-6">
+          {veilingen.length > 0 ? (
+            <VeilingKlok veiling={veilingen[0]} />
+          ) : (
+            <p className="text-gray-500 italic">Geen veilingen beschikbaar</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
