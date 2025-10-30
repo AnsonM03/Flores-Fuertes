@@ -3,9 +3,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
-import "./globals.css";
+import "./globals.css"; // Je globals.css (met @tailwind directives)
 
-// 1. IMPORTEER DE AUTH PROVIDER
+// 1. IMPORTEER DE AUTH PROVIDER (dit was al correct)
 import { AuthProvider } from "./context/AuthContext"; 
 
 const geistSans = Geist({
@@ -18,22 +18,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// 2. METADATA BIJGEWERKT
 export const Metadata = {
-  title: "Royal Flora Holland — Veilingsplatform",
+  title: "Flores Fuertes — Veilingsplatform",
   description: "Het grootste internationale bloemen veilingsplatform",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body>
+    // 3. FONT VARIABELEN TOEGEVOEGD AAN <html>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      
+      {/* 4. TAILWIND KLASSEN VOOR EEN "STICKY FOOTER" LAYOUT */}
+      <body className="flex flex-col min-h-screen">
         <AuthProvider>
           <Nav /> {/* Je Header/Nav component */}
           
-          {/* children is de content van je pagina (bv. app/page.js) */}
-          {children} 
+          {/* 5. <main> TAG MET "flex-1" LAAT DE INHOUD GROEIEN */}
+          <main className="flex-1">
+            {children} 
+          </main>
 
-          <Footer /> {/* 2. Voeg de Footer toe */}
+          <Footer /> {/* Je Footer component */}
         </AuthProvider>
       </body>
     </html>
