@@ -1,14 +1,36 @@
 "use client";
 import { useEffect, useState } from "react";
+import VeilingenLijst from "../components/VeilingenLijst";
 import VeilingKlok from "../components/Veilingklok";
 import KoperRij from "../components/Koperrij";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  // ------------------------
+  // USESTATES
+  // ------------------------
   const [veilingen, setVeilingen] = useState([]);
   const [selectedVeiling, setSelectedVeiling] = useState(null);
   const [error, setError] = useState(null);
   const [klanten, setKlanten] = useState([]);
+  const [gebruiker, setGebruiker] = useState(null);
+  const router = useRouter();
 
+  // ------------------------
+  // Auth check
+  // ------------------------
+  useEffect(() => {
+    const stored = localStorage.getItem("gebruiker");
+    if (!stored) {
+      router.push("/login");
+      return;
+    }
+    setGebruiker(JSON.parse(stored));
+  }, [router]);
+
+  // ------------------------
+  // Veilingen ophalen
+  // ------------------------
   useEffect(() => {
     async function fetchVeilingenMetAanvoerders() {
       try {
@@ -16,6 +38,7 @@ export default function Dashboard() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
+        // Koppel aanvoerders aan veilingen
         const updated = await Promise.all(
           data.map(async (v) => {
             const aanvoerderId = v.product?.aanvoerder_Id;
@@ -42,6 +65,9 @@ export default function Dashboard() {
     fetchVeilingenMetAanvoerders();
   }, []);
 
+  // ------------------------
+  // Klanten ophalen
+  // ------------------------
   useEffect(() => {
     async function fetchKlanten() {
       try {
@@ -56,25 +82,48 @@ export default function Dashboard() {
     fetchKlanten();
   }, []);
 
+  // ------------------------
+  // Verwijderfuncties
+  // ------------------------
+  async function handleKlantVerwijderen(klantId) {
+    if (!confirm("Weet je zeker dat je deze koper wilt verwijderen?")) return;
 
-async function handleKlantVerwijderen(klantId) {
-  if (!confirm("Weet je zeker dat je deze koper wilt verwijderen?")) return;
+    try {
+      const res = await fetch(`http://localhost:5281/api/Klanten/${klantId}`, {
+        method: "DELETE",
+      });
 
-  try {
-    const res = await fetch(`http://localhost:5281/api/Klanten/${klantId}`, {
-      method: "DELETE",
-    });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    setKlanten((prev) => prev.filter((k) => k.klant_Id !== klantId));
-    alert("🗑️ Koper succesvol verwijderd");
-  } catch (err) {
-    console.error("❌ Fout bij verwijderen van koper:", err);
-    alert("Er ging iets mis bij het verwijderen van de koper");
+      setKlanten((prev) => prev.filter((k) => k.gebruiker_Id !== klantId));
+      alert("🗑️ Koper succesvol verwijderd");
+    } catch (err) {
+      console.error("❌ Fout bij verwijderen van koper:", err);
+      alert("Er ging iets mis bij het verwijderen van de koper");
+    }
   }
-}
 
+  async function handleVeilingVerwijderen(veilingId) {
+    if (!confirm("Weet je zeker dat je deze veiling wilt verwijderen?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:5281/api/Veilingen/${veilingId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      setVeilingen((prev) => prev.filter((v) => v.veiling_Id !== veilingId));
+      alert("🗑️ Veiling succesvol verwijderd");
+    } catch (err) {
+      console.error("❌ Fout bij verwijderen van veiling:", err);
+      alert("Er ging iets mis bij het verwijderen van de veiling");
+    }
+  }
+
+  // ------------------------
+  // Willekeurige veiling maken
+  // ------------------------
   async function maakRandomVeiling() {
     try {
       const start = new Date();
@@ -90,8 +139,8 @@ async function handleKlantVerwijderen(klantId) {
         eindTijd: eind.toISOString(),
         kloklocatie: randomLocatie,
         status: "open",
-        product_Id: "f6e70347-55ed-41f2-9209-3591afe70d52",
-        veilingmeester_Id: "c23f953d-7fc1-4b1f-9fb9-f9a51b4d1075",
+        product_Id: "ce01670c-bc94-4dc3-8864-ddb756996006",
+        veilingmeester_Id: "403676f3-4ab2-475c-bb8c-86cbc9b0d668",
       };
 
       const res = await fetch("http://localhost:5281/api/Veilingen", {
@@ -111,120 +160,50 @@ async function handleKlantVerwijderen(klantId) {
     }
   }
 
-useEffect(() => {
-  const interval = setInterval(() => {
-    const nu = new Date();
-    setVeilingen((prev) =>
-      prev.map((v) => {
-        const eind = new Date(v.eindTijd);
-        let status = v.status;
+  // ------------------------
+  // Live status updates
+  // ------------------------
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const nu = new Date();
+      setVeilingen((prev) =>
+        prev.map((v) => {
+          const eind = new Date(v.eindTijd);
+          let status = v.status;
 
-        if (nu < eind && nu >= new Date(v.startTijd)) {
-          status = "actief";
-        } else if (nu >= eind) {
-          status = "afgelopen";
-        } else {
-          status = "wachten";
-        }
+          if (nu < eind && nu >= new Date(v.startTijd)) {
+            status = "actief";
+          } else if (nu >= eind) {
+            status = "afgelopen";
+          } else {
+            status = "wachten";
+          }
 
-        return { ...v, status };
-      })
-    );
-  }, 1000);
+          return { ...v, status };
+        })
+      );
+    }, 1000);
 
-  return () => clearInterval(interval);
-}, []);
+    return () => clearInterval(interval);
+  }, []);
 
-
-/////////////////////////////////
-
-return (
+  // ------------------------
+  // UI
+  // ------------------------
+  return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       <div className="grid grid-cols-2 gap-6">
         <div className="flex flex-col gap-6">
+
           {/* --- VEILINGEN --- */}
-          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Aankomende Veilingen</h2>
-              <button
-                onClick={maakRandomVeiling}
-                className="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
-              >
-                + Nieuwe Veiling
-              </button>
-            </div>
-
-            {error && <p className="text-red-600">{error}</p>}
-            {!error && veilingen.length === 0 && (
-              <p className="text-gray-500 italic">Geen veilingen gevonden...</p>
-            )}
-
-            {veilingen.length > 0 && (
-              <div className="overflow-auto rounded-md border border-gray-200">
-                <table className="min-w-full text-sm text-left text-gray-700">
-                  <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
-                    <tr>
-                      <th className="px-4 py-2">Product</th>
-                      <th className="px-4 py-2">Aanvoerder</th>
-                      <th className="px-4 py-2">Start</th>
-                      <th className="px-4 py-2">Einde</th>
-                      <th className="px-4 py-2 text-right">Prijs (€)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {veilingen.map((v) => (
-                      <tr
-                        key={v.veiling_Id}
-                        onClick={() => setSelectedVeiling(v)}
-                        className={`cursor-pointer transition-colors ${
-                          selectedVeiling?.veiling_Id === v.veiling_Id
-                            ? "bg-blue-100"
-                            : "hover:bg-blue-50"
-                        }`}
-                      >
-                        <td className="px-4 py-2 font-medium">{v.product?.naam ?? "Geen naam"}</td>
-                        <td className="px-4 py-2">
-                          {v.aanvoerder
-                            ? `${v.aanvoerder.voornaam} ${v.aanvoerder.achternaam}`
-                            : "Aanvoerder laden..."}
-                        </td>
-                        <td className="px-4 py-2">
-                          {new Date(v.startTijd).toLocaleTimeString("nl-NL", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </td>
-                        <td className="px-4 py-2">
-                          {new Date(v.eindTijd).toLocaleTimeString("nl-NL", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </td>
-                        <td className="px-4 py-2 text-right font-semibold text-gray-800 flex justify-end items-center gap-2">
-                          <span>€{v.veilingPrijs.toFixed(2)}</span>
-                          {v.status === "actief" && (
-                            <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded">
-                              Actief
-                            </span>
-                          )}
-                          {v.status === "wachten" && (
-                            <span className="bg-yellow-100 text-yellow-700 text-xs font-medium px-2 py-1 rounded">
-                              Wachten
-                            </span>
-                          )}
-                          {v.status === "afgelopen" && (
-                            <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded">
-                              Afgelopen
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          <VeilingenLijst
+            veilingen={veilingen}
+            error={error}
+            selectedVeiling={selectedVeiling}
+            onSelect={setSelectedVeiling}
+            onDelete={handleVeilingVerwijderen}
+            onAdd={maakRandomVeiling}
+          />
 
           {/* --- KOPERS --- */}
           <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">

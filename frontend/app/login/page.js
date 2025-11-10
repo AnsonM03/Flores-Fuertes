@@ -30,18 +30,31 @@ export default function Login() {
 
       if (response.ok) {
         const gebruiker = await response.json();
+
+        localStorage.setItem("gebruiker", JSON.stringify(gebruiker));
         login(gebruiker);
 
         alert("Inloggen gelukt! Je wordt nu doorgestuurd.");
-        router.push("/");
-      } else {
-        alert("Inloggen mislukt. Controleer je gegevens.");
+
+        // Gebruik nu de 'Rol' property van de backend
+        if (gebruiker.Rol === "Klant") {
+          router.push("/klant/dashboard");
+        } else if (gebruiker.Rol === "Aanvoerder") {
+          router.push("/aanvoerder/dashboard");
+        } else if (gebruiker.Rol === "Veilingmeester") {
+          router.push("/veilingmeester/dashboard");
+        } else {
+          router.push("/");
+        }
+
+        } else {
+          alert("Inloggen mislukt. Controleer je gegevens.");
+        }
+      } catch (error) {
+        console.error("Fout bij inloggen:", error);
+        alert("Er is een fout opgetreden. Probeer het opnieuw.");
       }
-    } catch (error) {
-      console.error("Fout bij inloggen:", error);
-      alert("Er is een fout opgetreden. Probeer het opnieuw.");
-    }
-  };
+    };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-blue-200">
