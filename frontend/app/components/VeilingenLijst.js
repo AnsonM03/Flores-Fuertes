@@ -1,5 +1,6 @@
 "use client";
 import VeilingRij from "./VeilingRij";
+
 export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSelect, onDelete, onAdd }) {
   return (
     <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
