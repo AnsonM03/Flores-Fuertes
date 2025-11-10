@@ -49,7 +49,15 @@ namespace FloresFuertes.Controllers
             gebruiker.LockoutEndTime = null;
             await _context.SaveChangesAsync();
 
-            return Ok(gebruiker);
+            // return Ok(gebruiker);
+            return Ok(new
+            {
+                GebruikerId = gebruiker.Gebruiker_Id,
+                Email = gebruiker.Email,
+                Voornaam = gebruiker.Voornaam,
+                Achternaam = gebruiker.Achternaam,
+                Rol = gebruiker.GebruikerType
+            });
         }
     }
 }
