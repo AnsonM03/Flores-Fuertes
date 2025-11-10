@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-export default function VeilingKlok({ veiling }) {
+export default function VeilingKlok({ veiling, gebruikerRol}) {
   const [status, setStatus] = useState("wachten"); // wachten | actief | afgelopen
   const [huidigePrijs, setHuidigePrijs] = useState(veiling?.veilingPrijs || 100);
 
@@ -107,7 +107,8 @@ export default function VeilingKlok({ veiling }) {
         </div>
       </div>
 
-      {/* Koopknop */}
+      {/* Koopknop (alleen voor klanten aanwezig)*/}
+      {gebruikerRol === "klant" && (
       <button
         onClick={handleKoopNu}
         disabled={status !== "actief"}
@@ -119,6 +120,7 @@ export default function VeilingKlok({ veiling }) {
       >
         {status === "actief" ? "Koop nu" : "Verkocht"}
       </button>
+      )}
     </div>
   );
 }

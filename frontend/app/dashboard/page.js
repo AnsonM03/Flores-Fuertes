@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [klanten, setKlanten] = useState([]);
   const [gebruiker, setGebruiker] = useState(null);
   const router = useRouter();
+  const rol = gebruiker?.rol?.toLowerCase();
 
   // ------------------------
   // Auth check
@@ -195,51 +196,55 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-6">
         <div className="flex flex-col gap-6">
 
-          {/* --- VEILINGEN --- */}
-          <VeilingenLijst
-            veilingen={veilingen}
-            error={error}
-            selectedVeiling={selectedVeiling}
-            onSelect={setSelectedVeiling}
-            onDelete={handleVeilingVerwijderen}
-            onAdd={maakRandomVeiling}
-          />
+          {/* --- VEILINGEN (voor aanvoerder & veilingmeester)--- */}
+          {(rol === "veilingmeester" || rol === "aanvoerder") && (
+            <VeilingenLijst
+              veilingen={veilingen}
+              error={error}
+              selectedVeiling={selectedVeiling}
+              onSelect={setSelectedVeiling}
+              onDelete={handleVeilingVerwijderen}
+              onAdd={maakRandomVeiling}
+            />
+          )}
 
-          {/* --- KOPERS --- */}
-          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
+          {/* --- KOPERS (alleen voor veilingmeester) --- */}
+          {rol === "veilingmeester" && (
+            <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
 
-            {klanten.length === 0 ? (
-              <p className="text-gray-500 italic">Kopers worden geladen...</p>
-            ) : (
-              <div className="overflow-auto rounded-md border border-gray-200">
-                <table className="min-w-full text-sm text-left text-gray-700">
-                  <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
-                    <tr>
-                      <th className="px-4 py-2">Naam</th>
-                      <th className="px-4 py-2">Woonplaats</th>
-                      <th className="px-4 py-2 text-right">Acties</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {klanten.map((k) => (
-                      <KoperRij
-                        key={k.gebruiker_Id}
-                        klant={k}
-                        onDelete={() => handleKlantVerwijderen(k.gebruiker_Id)}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+              {klanten.length === 0 ? (
+                <p className="text-gray-500 italic">Kopers worden geladen...</p>
+              ) : (
+                <div className="overflow-auto rounded-md border border-gray-200">
+                  <table className="min-w-full text-sm text-left text-gray-700">
+                    <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
+                      <tr>
+                        <th className="px-4 py-2">Naam</th>
+                        <th className="px-4 py-2">Woonplaats</th>
+                        <th className="px-4 py-2 text-right">Acties</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {klanten.map((k) => (
+                        <KoperRij
+                          key={k.gebruiker_Id}
+                          klant={k}
+                          onDelete={() => handleKlantVerwijderen(k.gebruiker_Id)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* --- VEILINGKLOK --- */}
+        {/* --- VEILINGKLOK (alle rollen zien dit, klant alleen "koop nu") --- */}
         <div className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col items-center justify-center p-6">
           {selectedVeiling ? (
-            <VeilingKlok veiling={selectedVeiling} />
+            <VeilingKlok veiling={selectedVeiling} gebruikerRol={rol} />
           ) : (
             <p className="text-gray-500 italic">Geen actieve veilingen</p>
           )}
