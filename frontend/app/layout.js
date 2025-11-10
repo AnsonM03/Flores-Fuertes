@@ -1,24 +1,12 @@
 // app/layout.js
 
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
-import "./globals.css"; // Je globals.css (met @tailwind directives)
-
-// 1. IMPORTEER DE AUTH PROVIDER (dit was al correct)
+import "./globals.css"; 
 import { AuthProvider } from "./context/AuthContext"; 
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// 2. METADATA BIJGEWERKT
 export const Metadata = {
   title: "Flores Fuertes — Veilingsplatform",
   description: "Het grootste internationale bloemen veilingsplatform",
@@ -26,20 +14,18 @@ export const Metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    // 3. FONT VARIABELEN TOEGEVOEGD AAN <html>
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    // 1. VOEG 'suppressHydrationWarning' TOE.
+    //    De font-klassen zijn hier verwijderd.
+    <html lang="en" suppressHydrationWarning>
       
-      {/* 4. TAILWIND KLASSEN VOOR EEN "STICKY FOOTER" LAYOUT */}
-      <body className="flex flex-col min-h-screen">
+      {/* 2. VOEG DE FONT-KLASSEN TOE AAN DE 'body' TAG. */}
+      <body className={`flex flex-col min-h-screen ${GeistSans.variable} ${GeistMono.variable}`}>
         <AuthProvider>
-          <Nav /> {/* Je Header/Nav component */}
-          
-          {/* 5. <main> TAG MET "flex-1" LAAT DE INHOUD GROEIEN */}
+          <Nav /> 
           <main className="flex-1">
             {children} 
           </main>
-
-          <Footer /> {/* Je Footer component */}
+          <Footer /> 
         </AuthProvider>
       </body>
     </html>

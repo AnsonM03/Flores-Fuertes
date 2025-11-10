@@ -41,7 +41,7 @@ export default function Register() {
         alert("Registratie gelukt!");
         router.push("/login");
       } else {
-        if (response.status === 409) {
+        if (response.status === 409) { 
           const errorMessage = await response.text();
           alert(errorMessage);
         } else {
