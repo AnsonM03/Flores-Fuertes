@@ -1,12 +1,9 @@
 // app/layout.js
-
 import { Geist, Geist_Mono } from "next/font/google";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
-import "./globals.css"; // Je globals.css (met @tailwind directives)
-
-// 1. IMPORTEER DE AUTH PROVIDER (dit was al correct)
-import { AuthProvider } from "./context/AuthContext"; 
+import "./globals.css";
+import { AuthProvider } from "./context/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,28 +15,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// 2. METADATA BIJGEWERKT
-export const Metadata = {
-  title: "Flores Fuertes — Veilingsplatform",
+export const metadata = {
+  title: "Royal Flora Holland — Veilingsplatform",
   description: "Het grootste internationale bloemen veilingsplatform",
 };
 
 export default function RootLayout({ children }) {
   return (
-    // 3. FONT VARIABELEN TOEGEVOEGD AAN <html>
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      
-      {/* 4. TAILWIND KLASSEN VOOR EEN "STICKY FOOTER" LAYOUT */}
-      <body className="flex flex-col min-h-screen">
+    <html lang="nl" className={`${geistSans.variable} ${geistMono.variable}`}>
+      {/* Voeg Tailwind classes toe aan body */}
+      <body className="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-50 font-sans min-h-screen">
+        <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only absolute top-2 left-2 bg-blue-600 text-white px-3 py-2 rounded"
+      >
+        Sla navigatie over
+      </a>
         <AuthProvider>
-          <Nav /> {/* Je Header/Nav component */}
-          
-          {/* 5. <main> TAG MET "flex-1" LAAT DE INHOUD GROEIEN */}
-          <main className="flex-1">
-            {children} 
+          <Nav />
+          <main id="main-content" className="flex-1">
+            {children}
           </main>
-
-          <Footer /> {/* Je Footer component */}
+          <Footer />
         </AuthProvider>
       </body>
     </html>
