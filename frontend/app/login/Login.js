@@ -14,7 +14,7 @@ export default function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const loginData = { Email: email, Wachtwoord: wachtwoord };
+    const loginData = { email: email, wachtwoord: wachtwoord };
 
     try {
       const response = await fetch("http://localhost:5281/api/Auth/login", {
@@ -23,13 +23,16 @@ export default function Login() {
         body: JSON.stringify(loginData),
       });
 
+      const text = await response.text();
+      console.log("Response text:", response.status, "body:", text); // Log de response tekst voor debugging
+
       if (response.ok) {
-        const gebruiker = await response.json();
+        const gebruiker = JSON.parse(text);
         login(gebruiker);
         alert("Inloggen gelukt! Je wordt nu doorgestuurd.");
         router.push("/");
       } else {
-        alert("Inloggen mislukt. Controleer je gegevens.");
+        alert(`Inloggen mislukt: ${text}`);
       }
     } catch (error) {
       console.error("Fout bij inloggen:", error);
