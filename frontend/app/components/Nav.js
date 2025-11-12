@@ -25,28 +25,43 @@ export default function Nav() {
     <header className="bg-green-900 text-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 lg:px-8 flex justify-between items-center h-20">
         
-        {/* Merk (Logo en Naam) */}
-        <Link className="flex items-center gap-3" href="/">
-          <Image
-            src="/flores-fuertes-logo.png" // Pad naar je logo in /public
-            alt="Flores Fuertes Logo"
-            width={50} // Aangepaste breedte
-            height={50} // Aangepaste hoogte
-            className="rounded-md" // Licht afgeronde hoeken
-            priority // Laad dit belangrijke element als eerste
-          />
-          <span className="font-bold text-xl leading-tight hidden sm:block">
-            Flores<br />Fuertes
-          </span>
-        </Link>
+        {/* Logo + Naam + Gebruiker */}
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/flores-fuertes-logo.png"
+              alt="Flores Fuertes Logo"
+              width={50}
+              height={50}
+              className="rounded-md"
+              priority
+            />
+            <span className="font-bold text-xl leading-tight hidden sm:block">
+              Flores<br />Fuertes
+            </span>
+          </Link>
+          
+          {/* Hallo, gebruiker */}
+          {isLoggedIn && (
+            <span className="hidden sm:inline-block text-white font-medium">
+              Welkom, {" "}
+              {[
+                user?.voornaam || user?.voornaam || "",
+                user?.achternaam || user?.achternaam || "",
+              ]
+                .filter(Boolean)
+                .join(" ") || "Gebruiker"}
+            </span>
+          )}
+        </div>
 
         {/* Desktop Navigatie */}
         <nav className="hidden lg:flex items-center gap-8">
           <Link href="/" className="hover:text-green-200 transition-colors">Home</Link>
-          
+          <Link href="/veilingen" className="hover:text-green-200 transition-colors">Veilingen</Link>
+
           {isLoggedIn ? (
             <>
-              <Link href="/veilingen" className="hover:text-green-200 transition-colors">Veilingen</Link>
               <Link href="/account" className="hover:text-green-200 transition-colors">Account</Link>
               <Link href="/dashboard" className="hover:text-green-200 transition-colors">Dashboard</Link>
               <button 
@@ -58,11 +73,10 @@ export default function Nav() {
             </>
           ) : (
             <>
-              <Link href="/veilingen" className="hover:text-green-200 transition-colors">Veilingen</Link>
               <Link href="/login" className="hover:text-green-200 transition-colors">Login</Link>
               <Link 
                 href="/register" 
-                className="bg-green text-green-900 px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition-colors"
+                className="bg-white text-green-900 px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition-colors"
               >
                 Registreren
               </Link>
@@ -70,23 +84,21 @@ export default function Nav() {
           )}
         </nav>
 
-        {/* Hamburger Knop (zichtbaar op mobiel) */}
+        {/* Hamburger Knop Mobiel */}
         <button
           className="lg:hidden z-20"
           aria-label="Open menu"
           onClick={toggleMenu}
         >
-          {/* Icoon (3 streepjes) */}
           <div className="space-y-1.5">
             <span className="block w-6 h-0.5 bg-white"></span>
             <span className="block w-6 h-0.5 bg-white"></span>
             <span className="block w-6 h-0.5 bg-white"></span>
           </div>
         </button>
-
       </div>
 
-      {/* Mobiel Menu (verschuift of verschijnt) */}
+      {/* Mobiel Menu */}
       <div 
         className={`
           lg:hidden absolute top-0 left-0 w-full h-screen bg-green-900 
@@ -96,11 +108,13 @@ export default function Nav() {
         `}
       >
         <Link href="/" className="hover:text-green-200" onClick={toggleMenu}>Home</Link>
-        
+        <Link href="/veilingen" className="hover:text-green-200" onClick={toggleMenu}>Veilingen</Link>
+
         {isLoggedIn ? (
           <>
-            <Link href="/veilingen" className="hover:text-green-200" onClick={toggleMenu}>Veilingen</Link>
-            <Link href="/account" className="hover:text-green-200" onClick={toggleMenu}>Account</Link>
+            <Link href="/account" className="hover:text-green-200" onClick={toggleMenu}>
+              Account ({user?.voornaam || "Gebruiker"})
+            </Link>
             <Link href="/dashboard" className="hover:text-green-200" onClick={toggleMenu}>Dashboard</Link>
             <button 
               onClick={handleLogout} 
@@ -111,7 +125,6 @@ export default function Nav() {
           </>
         ) : (
           <>
-            <Link href="/veilingen" className="hover:text-green-200" onClick={toggleMenu}>Veilingen</Link>
             <Link href="/login" className="hover:text-green-200" onClick={toggleMenu}>Login</Link>
             <Link 
               href="/register" 

@@ -17,7 +17,7 @@ export function AuthProvider( {children} ) {
 
     const  login = (userData) => {
             setUser(userData);
-            localStorage.setItem("user", JSON.stringify(userData));
+            localStorage.setItem("user", JSON.stringify(userData)); // slaat op in LocalStorage
         };
 
         const logout = () => {
