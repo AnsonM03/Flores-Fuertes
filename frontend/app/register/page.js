@@ -41,7 +41,7 @@ export default function Register() {
         alert("Registratie gelukt!");
         router.push("/login");
       } else {
-        if (response.status === 409) { 
+        if (response.status === 409) {
           const errorMessage = await response.text();
           alert(errorMessage);
         } else {
@@ -96,7 +96,7 @@ export default function Register() {
                 value={formData[field.id]}
                 onChange={handleChange}
                 required
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-black placeholdeer-gray-600"
               />
             </div>
           ))}
