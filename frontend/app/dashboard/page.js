@@ -97,13 +97,14 @@ export default function Dashboard() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       setKlanten((prev) => prev.filter((k) => k.gebruiker_Id !== klantId));
-      alert("🗑️ Koper succesvol verwijderd");
+      alert("Koper succesvol verwijderd");
     } catch (err) {
       console.error("❌ Fout bij verwijderen van koper:", err);
       alert("Er ging iets mis bij het verwijderen van de koper");
     }
   }
 
+  // Veiling verwijderen
   async function handleVeilingVerwijderen(veilingId) {
     if (!confirm("Weet je zeker dat je deze veiling wilt verwijderen?")) return;
 
@@ -115,7 +116,7 @@ export default function Dashboard() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       setVeilingen((prev) => prev.filter((v) => v.veiling_Id !== veilingId));
-      alert("🗑️ Veiling succesvol verwijderd");
+      alert("Veiling succesvol verwijderd");
     } catch (err) {
       console.error("❌ Fout bij verwijderen van veiling:", err);
       alert("Er ging iets mis bij het verwijderen van de veiling");
@@ -197,7 +198,7 @@ export default function Dashboard() {
         <div className="flex flex-col gap-6">
 
           {/* --- VEILINGEN (voor aanvoerder & veilingmeester)--- */}
-          {(rol === "veilingmeester" || rol === "aanvoerder") && (
+          {rol === "veilingmeester" ? (
             <VeilingenLijst
               veilingen={veilingen}
               error={error}
@@ -206,10 +207,15 @@ export default function Dashboard() {
               onDelete={handleVeilingVerwijderen}
               onAdd={maakRandomVeiling}
             />
-          )}
+          ) : <VeilingenLijst
+              veilingen={veilingen}
+              error={error}
+              selectedVeiling={selectedVeiling}
+              onSelect={setSelectedVeiling}
+            />}
 
           {/* --- KOPERS (alleen voor veilingmeester) --- */}
-          {rol === "veilingmeester" && (
+          {(rol === "veilingmeester" || rol === "aanvoerder") && (
             <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
 
@@ -230,7 +236,7 @@ export default function Dashboard() {
                         <KoperRij
                           key={k.gebruiker_Id}
                           klant={k}
-                          onDelete={() => handleKlantVerwijderen(k.gebruiker_Id)}
+                          onDelete={rol === "veilingmeester" ? () => handleKlantVerwijderen(k.gebruiker_Id) : undefined}
                         />
                       ))}
                     </tbody>

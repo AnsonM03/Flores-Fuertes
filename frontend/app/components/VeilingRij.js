@@ -1,5 +1,24 @@
 "use client";
+import { useState, useEffect} from "react";
+
 export default function VeilingRij({ veiling, isSelected, onSelect, onDelete }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [rol, setRol] = useState(null);
+
+
+  // Haal rol op uit localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("gebruiker");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setRol(parsed.rol?.toLowerCase());
+      } catch {
+        console.error("Kon gebruiker niet parsen uit localStorage");
+      }
+    }
+  }, []);
+
   return (
     <tr
       onClick={() => onSelect(veiling)}
@@ -44,22 +63,36 @@ export default function VeilingRij({ veiling, isSelected, onSelect, onDelete }) 
           </span>
         )}
 
-        <div className="relative group">
-          <button onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-800 px-2">
-            ⋯
-          </button>
-          <div className="absolute right-0 top-full mt-1 hidden group-hover:block bg-white border border-gray-200 shadow-md rounded-md text-sm z-10 min-w-[120px]">
+
+        {/* --- Alleen veilingmeester ziet dit menu --- */}
+        {rol === "veilingmeester" && (
+          <div className="relative">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete(veiling.veiling_Id);
+                setMenuOpen((prev) => !prev);
               }}
-              className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+              className="text-gray-500 hover:text-gray-800 px-2"
             >
-              Verwijderen
+              ⋯
             </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 shadow-md rounded-md text-sm z-10 min-w-[120px]">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(veiling.veiling_Id);
+                    setMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                >
+                  Verwijderen
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </td>
     </tr>
   );
