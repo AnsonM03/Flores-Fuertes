@@ -15,3 +15,6 @@ appsettings.Development.json
 *.dll
 *.dll
 *.json
+/bin/Debug/net9.0
+/bin/Debug
+/bin

@@ -613,3 +613,5 @@ C:/Users/geral/Documents/Dev/Flores-Fuertes/bin/Debug/net9.0/frontend/tsconfig.j
 /Users/ansonmok/Documents/GitHub/Flores-Fuertes/bin/Debug/net9.0/frontend/tsconfig.json
 /Users/ansonmok/Documents/GitHub/Flores-Fuertes/bin/Debug/net9.0/package-lock.json
 /Users/ansonmok/Documents/GitHub/Flores-Fuertes/bin/Debug/net9.0/package.json
+C:/Users/geral/Documents/Dev/Flores-Fuertes/bin/Debug/net9.0/package-lock.json
+C:/Users/geral/Documents/Dev/Flores-Fuertes/bin/Debug/net9.0/package.json

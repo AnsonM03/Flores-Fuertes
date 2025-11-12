@@ -30,31 +30,18 @@ export default function Login() {
 
       if (response.ok) {
         const gebruiker = await response.json();
-
-        localStorage.setItem("gebruiker", JSON.stringify(gebruiker));
         login(gebruiker);
 
         alert("Inloggen gelukt! Je wordt nu doorgestuurd.");
-
-        // Gebruik nu de 'Rol' property van de backend
-        if (gebruiker.Rol === "Klant") {
-          router.push("/klant/dashboard");
-        } else if (gebruiker.Rol === "Aanvoerder") {
-          router.push("/aanvoerder/dashboard");
-        } else if (gebruiker.Rol === "Veilingmeester") {
-          router.push("/veilingmeester/dashboard");
-        } else {
-          router.push("/");
-        }
-
-        } else {
-          alert("Inloggen mislukt. Controleer je gegevens.");
-        }
-      } catch (error) {
-        console.error("Fout bij inloggen:", error);
-        alert("Er is een fout opgetreden. Probeer het opnieuw.");
+        router.push("/");
+      } else {
+        alert("Inloggen mislukt. Controleer je gegevens.");
       }
-    };
+    } catch (error) {
+      console.error("Fout bij inloggen:", error);
+      alert("Er is een fout opgetreden. Probeer het opnieuw.");
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-blue-200">
@@ -64,6 +51,7 @@ export default function Login() {
         </h1>
 x
         <form onSubmit={handleSubmit} className="space-y-5">
+
           {/* EMAIL */}
           <div>
             <label
@@ -75,7 +63,7 @@ x
             <input
               type="email"
               id="email"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-black"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -93,7 +81,7 @@ x
             <input
               type="password"
               id="wachtwoord"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-black"
               value={wachtwoord}
               onChange={(e) => setWachtwoord(e.target.value)}
               required

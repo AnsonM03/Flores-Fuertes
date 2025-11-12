@@ -89,7 +89,6 @@ namespace FloresFuertes.Controllers
 
             return NoContent(); // 204 betekent: succesvol verwijderd, geen content terug
         }
-        
 
         // [HttpPost]
         // public async Task<ActionResult<Veiling>> CreateVeiling([FromBody] VeilingCreateDto dto)
