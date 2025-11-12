@@ -51,6 +51,7 @@ export default function Login() {
         </h1>
 x
         <form onSubmit={handleSubmit} className="space-y-5">
+
           {/* EMAIL */}
           <div>
             <label
@@ -62,7 +63,7 @@ x
             <input
               type="email"
               id="email"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-black"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -80,7 +81,7 @@ x
             <input
               type="password"
               id="wachtwoord"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-black"
               value={wachtwoord}
               onChange={(e) => setWachtwoord(e.target.value)}
               required
