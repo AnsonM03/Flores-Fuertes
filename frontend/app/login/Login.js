@@ -14,7 +14,7 @@ export default function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const loginData = { email: email, wachtwoord: wachtwoord };
+    const loginData = { Email: email, Wachtwoord: wachtwoord };
 
     try {
       const response = await fetch("http://localhost:5281/api/Auth/login", {
