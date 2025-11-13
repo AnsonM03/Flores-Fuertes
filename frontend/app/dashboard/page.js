@@ -215,7 +215,7 @@ export default function Dashboard() {
             />}
 
           {/* --- KOPERS (alleen voor veilingmeester) --- */}
-          {(rol === "veilingmeester" || rol === "aanvoerder") && (
+          {(rol === "Veilingmeester" || rol === "Aanvoerder") && (
             <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
 

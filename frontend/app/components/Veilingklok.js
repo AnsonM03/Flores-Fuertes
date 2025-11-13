@@ -121,7 +121,7 @@ export default function VeilingKlok({ veiling, gebruikerRol }) {
 
       {/* --- Knoppen per rol --- */}
       {/* Knoppen voor klant */}
-      {gebruikerRol === "klant" && (
+      {gebruikerRol === "Klant" && (
         <button
           onClick={handleKoopNu}
           disabled={status !== "actief"}
@@ -137,7 +137,7 @@ export default function VeilingKlok({ veiling, gebruikerRol }) {
 
 
       {/* Knoppen voor veilingmeester */}
-      {gebruikerRol === "veilingmeester" && (
+      {gebruikerRol === "Veilingmeester" && (
         <div className="flex gap-4">
           <button
             onClick={handleStartVeiling}
