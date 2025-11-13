@@ -23,14 +23,12 @@ export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSe
     <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-800">Aankomende Veilingen</h2>
-        {rol === "Veilingmeester" && (
         <button
           onClick={onAdd}
           className="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
         >
           + Nieuwe Veiling
         </button>
-        )}
       </div>
 
       {error && <p className="text-red-600">{error}</p>}

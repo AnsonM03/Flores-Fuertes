@@ -4,6 +4,7 @@ import VeilingenLijst from "../components/VeilingenLijst";
 import VeilingKlok from "../components/Veilingklok";
 import KoperRij from "../components/Koperrij";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
   // ------------------------
@@ -13,21 +14,18 @@ export default function Dashboard() {
   const [selectedVeiling, setSelectedVeiling] = useState(null);
   const [error, setError] = useState(null);
   const [klanten, setKlanten] = useState([]);
-  const [gebruiker, setGebruiker] = useState(null);
+  const { gebruiker, loading } = useAuth();
   const router = useRouter();
-  const rol = gebruiker?.rol?.toLowerCase();
 
+  const rol = gebruiker?.rol?.toLowerCase();
   // ------------------------
   // Auth check
   // ------------------------
   useEffect(() => {
-    const stored = localStorage.getItem("gebruiker");
-    if (!stored) {
+    if (!loading && !gebruiker) {
       router.push("/login");
-      return;
     }
-    setGebruiker(JSON.parse(stored));
-  }, [router]);
+  }, [loading, gebruiker, router]);
 
   // ------------------------
   // Veilingen ophalen
@@ -99,7 +97,7 @@ export default function Dashboard() {
       setKlanten((prev) => prev.filter((k) => k.gebruiker_Id !== klantId));
       alert("Koper succesvol verwijderd");
     } catch (err) {
-      console.error("❌ Fout bij verwijderen van koper:", err);
+      console.error("Fout bij verwijderen van koper:", err);
       alert("Er ging iets mis bij het verwijderen van de koper");
     }
   }
@@ -118,7 +116,7 @@ export default function Dashboard() {
       setVeilingen((prev) => prev.filter((v) => v.veiling_Id !== veilingId));
       alert("Veiling succesvol verwijderd");
     } catch (err) {
-      console.error("❌ Fout bij verwijderen van veiling:", err);
+      console.error("Fout bij verwijderen van veiling:", err);
       alert("Er ging iets mis bij het verwijderen van de veiling");
     }
   }
@@ -141,8 +139,8 @@ export default function Dashboard() {
         eindTijd: eind.toISOString(),
         kloklocatie: randomLocatie,
         status: "open",
-        product_Id: "ce01670c-bc94-4dc3-8864-ddb756996006",
-        veilingmeester_Id: "403676f3-4ab2-475c-bb8c-86cbc9b0d668",
+        product_Id: "632e5fc8-abfa-4760-9e6b-28859ca83529",
+        veilingmeester_Id: "19c7ec76-e38f-4b8c-b985-00e5f804ca43",
       };
 
       const res = await fetch("http://localhost:5281/api/Veilingen", {
@@ -215,7 +213,7 @@ export default function Dashboard() {
             />}
 
           {/* --- KOPERS (alleen voor veilingmeester) --- */}
-          {(rol === "Veilingmeester" || rol === "Aanvoerder") && (
+          {(rol === "veilingmeester" || rol === "aanvoerder") && (
             <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
 

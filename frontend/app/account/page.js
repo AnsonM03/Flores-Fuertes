@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
 export default function AccountPage() {
-  const { user, loading } = useAuth();
+  const { gebruiker, loading } = useAuth();
   const [accountInfo, setAccountInfo] = useState(null);
   const [fetching, setFetching] = useState(true);
   const [editingInfo, setEditingInfo] = useState(false);
@@ -14,8 +14,8 @@ export default function AccountPage() {
   // Haal accountgegevens op
   useEffect(() => {
     async function fetchAccountInfo() {
-      if (!user?.gebruiker_Id) return;
-      const response = await fetch(`http://localhost:5281/api/Gebruikers/${user.gebruiker_Id}`, {
+      if (!gebruiker?.gebruiker_Id) return;
+      const response = await fetch(`http://localhost:5281/api/Gebruikers/${gebruiker.gebruiker_Id}`, {
         headers: { "Content-Type": "application/json" },
       });
       if (response.ok) {
@@ -26,16 +26,16 @@ export default function AccountPage() {
       setFetching(false);
     }
     fetchAccountInfo();
-  }, [user]);
+  }, [gebruiker]);
 
   if (loading || fetching) return <p className="text-center mt-10">Laden...</p>;
-  if (!user) return <p className="text-center mt-10">Je moet eerst inloggen.</p>;
+  if (!gebruiker) return <p className="text-center mt-10">Je moet eerst inloggen.</p>;
   if (!accountInfo) return <p className="text-center mt-10">Geen accountinformatie beschikbaar.</p>;
 
   // Sla accountgegevens op
   const handleInfoSave = async () => {
     try {
-      const response = await fetch(`http://localhost:5281/api/Gebruikers/${user.gebruiker_Id}`, {
+      const response = await fetch(`http://localhost:5281/api/Gebruikers/${gebruiker.gebruiker_Id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -60,7 +60,7 @@ export default function AccountPage() {
   // Wijzig wachtwoord
   const handlePasswordChange = async (oldPassword, newPassword) => {
     try {
-      const response = await fetch(`http://localhost:5281/api/Gebruikers/${user.gebruiker_Id}/changepassword`, {
+      const response = await fetch(`http://localhost:5281/api/Gebruikers/${gebruiker.gebruiker_Id}/changepassword`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oldPassword, newPassword }),
@@ -87,12 +87,12 @@ export default function AccountPage() {
         <div className="space-y-4">
           {editingInfo ? (
             <>
-              <EditableField label="Voornaam" value={formData.voornaam} onChange={(v) => setFormData({...formData, voornaam: v})} />
-              <EditableField label="Achternaam" value={formData.achternaam} onChange={(v) => setFormData({...formData, achternaam: v})} />
-              <EditableField label="Email" value={formData.email} onChange={(v) => setFormData({...formData, email: v})} />
-              <EditableField label="Adres" value={formData.adres} onChange={(v) => setFormData({...formData, adres: v})} />
-              <EditableField label="Telefoonnummer" value={formData.telefoonnr} onChange={(v) => setFormData({...formData, telefoonnr: v})} />
-              <EditableField label="Woonplaats" value={formData.woonplaats} onChange={(v) => setFormData({...formData, woonplaats: v})} />
+              <EditableField label="Voornaam" value={formData.voornaam} onChange={(v) => setFormData({ ...formData, voornaam: v })} />
+              <EditableField label="Achternaam" value={formData.achternaam} onChange={(v) => setFormData({ ...formData, achternaam: v })} />
+              <EditableField label="Email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} />
+              <EditableField label="Adres" value={formData.adres} onChange={(v) => setFormData({ ...formData, adres: v })} />
+              <EditableField label="Telefoonnummer" value={formData.telefoonnr} onChange={(v) => setFormData({ ...formData, telefoonnr: v })} />
+              <EditableField label="Woonplaats" value={formData.woonplaats} onChange={(v) => setFormData({ ...formData, woonplaats: v })} />
 
               <div className="flex gap-2 mt-2">
                 <button onClick={handleInfoSave} className="bg-blue-600 text-white px-4 py-2 rounded-md">Opslaan</button>
