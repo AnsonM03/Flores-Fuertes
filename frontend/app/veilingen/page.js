@@ -15,7 +15,7 @@ export default function Veilingen() {
       const [klanten, setKlanten] = useState([]);
       const [gebruiker, setGebruiker] = useState(null);
       const router = useRouter();
-      const rol = gebruiker?.rol?.toLowerCase();
+      const rol = gebruiker?.gebruikerType?.toLowerCase();
 
       console.log("GEVONDEN ROL:", rol);
     console.log("GEHELE GEBRUIKER:", gebruiker);
@@ -59,7 +59,6 @@ export default function Veilingen() {
             );
     
             setVeilingen(updated);
-            if (updated.length > 0) setSelectedVeiling(updated[0]);
           } catch (err) {
             console.error(err);
             setError("Kon veilingen niet ophalen");
@@ -133,7 +132,7 @@ export default function Veilingen() {
           {selectedVeiling ? (
             <VeilingKlok veiling={selectedVeiling} gebruikerRol={rol} />
           ) : (
-            <p className="text-gray-500 italic">Geen actieve veilingen</p>
+            <p className="text-gray-500 italic">Klik op een veiling</p>
           )}
         </div>
       </div>

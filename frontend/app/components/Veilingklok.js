@@ -6,6 +6,12 @@ export default function VeilingKlok({ veiling, gebruikerRol }) {
   const [huidigePrijs, setHuidigePrijs] = useState(veiling?.veilingPrijs || 100);
   const minimumPrijs = 5;
 
+
+
+  // ------------------------
+  // Veiling klok update
+  // ------------------------
+
   useEffect(() => {
     if (!veiling?.startTijd || !veiling?.eindTijd) return;
 
@@ -121,7 +127,7 @@ export default function VeilingKlok({ veiling, gebruikerRol }) {
 
       {/* --- Knoppen per rol --- */}
       {/* Knoppen voor klant */}
-      {gebruikerRol === "Klant" && (
+      {gebruikerRol === "klant" && (
         <button
           onClick={handleKoopNu}
           disabled={status !== "actief"}
@@ -137,7 +143,7 @@ export default function VeilingKlok({ veiling, gebruikerRol }) {
 
 
       {/* Knoppen voor veilingmeester */}
-      {gebruikerRol === "Veilingmeester" && (
+      {gebruikerRol === "veilingmeester" && (
         <div className="flex gap-4">
           <button
             onClick={handleStartVeiling}

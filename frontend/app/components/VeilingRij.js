@@ -12,7 +12,7 @@ export default function VeilingRij({ veiling, isSelected, onSelect, onDelete }) 
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setRol(parsed.rol?.toLowerCase());
+        setRol(parsed.gebruikerType?.toLowerCase());
       } catch {
         console.error("Kon gebruiker niet parsen uit localStorage");
       }
@@ -65,7 +65,7 @@ export default function VeilingRij({ veiling, isSelected, onSelect, onDelete }) 
 
 
         {/* --- Alleen veilingmeester ziet dit menu --- */}
-        {rol === "Veilingmeester" && (
+        {rol === "veilingmeester" && (
           <div className="relative">
             <button
               onClick={(e) => {

@@ -1,31 +1,39 @@
 "use client"
 
-import {createContext, useContext, useState, useEffect, use} from 'react';
+import {createContext, useContext, useState, useEffect} from 'react';
 
-const  AuthContext = createContext();
+const  AuthContext = createContext(null);
 
 export function AuthProvider( {children} ) {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const isLoggedIn = !!user;
 
     useEffect(() => {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
+        const stored = localStorage.getItem("gebruiker");
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                setUser(parsed);
+            } catch {
+                console.error("Kon gebruiker niet parsen uit localStorage");
+                localStorage.removeItem("gebruiker");
+            }
         }
+        setLoading(false);
     }, []);
 
     const  login = (userData) => {
             setUser(userData);
-            localStorage.setItem("user", JSON.stringify(userData)); // slaat op in LocalStorage
+            localStorage.setItem("gebruiker", JSON.stringify(userData)); // slaat op in LocalStorage
         };
 
-        const logout = () => {
-            setUser(null);
-            localStorage.removeItem("user");
-        };
+    const logout = () => {
+        setUser(null);
+        localStorage.removeItem("gebruiker");
+    };
     return (
-        <AuthContext.Provider value={{user, isLoggedIn, login, logout}}>
+        <AuthContext.Provider value={{user, isLoggedIn, loading, login, logout}}>
             {children}
         </AuthContext.Provider>
     );

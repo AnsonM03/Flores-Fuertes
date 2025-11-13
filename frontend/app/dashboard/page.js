@@ -15,7 +15,10 @@ export default function Dashboard() {
   const [klanten, setKlanten] = useState([]);
   const [gebruiker, setGebruiker] = useState(null);
   const router = useRouter();
-  const rol = gebruiker?.rol?.toLowerCase();
+  const rol = gebruiker?.gebruikerType?.toLowerCase();
+
+   console.log("GEVONDEN ROL:", rol);
+    console.log("GEHELE GEBRUIKER:", gebruiker);
 
   // ------------------------
   // Auth check
@@ -215,7 +218,7 @@ export default function Dashboard() {
             />}
 
           {/* --- KOPERS (alleen voor veilingmeester) --- */}
-          {(rol === "Veilingmeester" || rol === "Aanvoerder") && (
+          {(rol === "veilingmeester" || rol === "aanvoerder") && (
             <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
 

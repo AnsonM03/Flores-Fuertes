@@ -4,6 +4,7 @@ import { useState, useEffect} from "react";
 
 export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSelect, onDelete, onAdd }) {
     const [rol, setRol] = useState(null);
+    
 
     // Haal rol op uit localStorage
       useEffect(() => {
@@ -11,7 +12,7 @@ export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSe
         if (stored) {
           try {
             const parsed = JSON.parse(stored);
-            setRol(parsed.rol?.toLowerCase());
+            setRol(parsed.gebruikerType?.toLowerCase());
           } catch {
             console.error("Kon gebruiker niet parsen uit localStorage");
           }
@@ -23,7 +24,7 @@ export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSe
     <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-800">Aankomende Veilingen</h2>
-        {rol === "Veilingmeester" && (
+        {rol === "veilingmeester" && (
         <button
           onClick={onAdd}
           className="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
