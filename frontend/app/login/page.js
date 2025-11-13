@@ -139,7 +139,7 @@ export default function Login() {
         <section className="auth-wrap">
           <div className="auth-card">
             <div className="auth-media">
-              <img src="/images/loginFH.png" alt="Login visual" />
+              <img src="/loginFH.png" alt="Login visual" />
             </div>
 
             <div className="auth-form">

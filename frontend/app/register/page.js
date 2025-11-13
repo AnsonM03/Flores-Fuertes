@@ -87,63 +87,115 @@ export default function Register() {
   }, []);
 
   return (
-    <main className="main auth">
-      <section className="auth-wrap">
-        <div className="auth-card">
-          <div className="auth-media">
-            <img src="/images/loginFH.png" alt="Registratie visual" />
-          </div>
+    <div className="page">
+      {/* HEADER */}
+      <header className="site-header">
+        <div className="header-inner">
+          <Link href="/" className="brand">
+            <img
+              src="https://www.royalfloraholland.com/assets/favicons/favicon-32x32.png"
+              alt="Royal Flora Holland"
+              className="brand-logo"
+            />
+            <span className="brand-text">
+              Royal<br />Flora<br />Holland
+            </span>
+          </Link>
 
-          <div className="auth-form">
-            <h2>Registreren</h2>
+          <nav className="nav" id="nav">
+            <Link href="/" className="nav-link">Home</Link>
+            <Link href="/login" className="nav-link">Login</Link>
+            <Link href="/register" className="nav-link is-active">Registreren</Link>
+            <Link href="/veilingen" className="nav-link">Veilingen</Link>
+          </nav>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {[
-                { id: "Voornaam", label: "Voornaam*" },
-                { id: "Achternaam", label: "Achternaam*" },
-                { id: "Email", label: "E-mail*", type: "email" },
-                { id: "Adres", label: "Adres" },
-                { id: "Telefoonnr", label: "Telefoonnummer", type: "tel" },
-                { id: "Woonplaats", label: "Woonplaats" },
-                { id: "Wachtwoord", label: "Wachtwoord*", type: "password" },
-              ].map((field) => (
-                <div key={field.id}>
-                  <label htmlFor={field.id}>{field.label}</label>
-                  <input
-                    id={field.id}
-                    type={field.type || "text"}
-                    value={formData[field.id]}
-                    onChange={handleChange}
-                    required={field.label.includes("*")}
-                  />
-                </div>
-              ))}
-
-              <button type="submit" className="btn">
-                Volgende
-              </button>
-            </form>
-
-            <Link href="/login" className="auth-cta">
-              <span>
-                <strong>Al een account?</strong>
-                <br />
-                Log hier in
-              </span>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M8 5l7 7-7 7"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-          </div>
+          <button
+            className="hamburger"
+            aria-label="Open menu"
+            aria-controls="nav"
+            aria-expanded="false"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
-      </section>
-    </main>
+      </header>
+
+      {/* MAIN REGISTRATION FORM */}
+      <main className="main auth">
+        <section className="auth-wrap">
+          <div className="auth-card">
+            <div className="auth-media">
+              <img src="/loginFH.png" alt="Registratie visual" />
+            </div>
+
+            <div className="auth-form">
+              <h2>Registreren</h2>
+
+              <form onSubmit={handleSubmit} className="space-y-3">
+                {[
+                  { id: "Voornaam", label: "Voornaam*" },
+                  { id: "Achternaam", label: "Achternaam*" },
+                  { id: "Email", label: "E-mail*", type: "email" },
+                  { id: "Adres", label: "Adres" },
+                  { id: "Telefoonnr", label: "Telefoonnummer", type: "tel" },
+                  { id: "Woonplaats", label: "Woonplaats" },
+                  { id: "Wachtwoord", label: "Wachtwoord*", type: "password" },
+                ].map((field) => (
+                  <div key={field.id}>
+                    <label htmlFor={field.id}>{field.label}</label>
+                    <input
+                      id={field.id}
+                      type={field.type || "text"}
+                      value={formData[field.id]}
+                      onChange={handleChange}
+                      required={field.label.includes("*")}
+                    />
+                  </div>
+                ))}
+
+                <button type="submit" className="btn">
+                  Volgende
+                </button>
+              </form>
+
+              <Link href="/login" className="auth-cta">
+                <span>
+                  <strong>Al een account?</strong>
+                  <br />
+                  Log hier in
+                </span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M8 5l7 7-7 7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="site-footer">
+        <div className="container footer-grid">
+          <p>
+            © <span id="y"></span> Royal Flora Holland — Alle rechten
+            voorbehouden.
+          </p>
+          <nav className="footer-nav">
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/cookies">Cookies</Link>
+            <Link href="/contact">Contact</Link>
+          </nav>
+        </div>
+      </footer>
+    </div>
   );
 }

@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import "../../styles/stylebp.css";
-import "../../styles/contact.css";
+import "../styles/stylebp.css";
+import "../styles/contact.css";
 
 export default function Contact() {
   useEffect(() => {
