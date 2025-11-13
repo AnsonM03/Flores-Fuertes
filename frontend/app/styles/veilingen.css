@@ -1,0 +1,185 @@
+/* ---
+   Nieuwe stijlen voor de veilingpagina
+   Gebruikt variabelen uit stylebp.css en auth.css
+--- */
+
+/* 1. Pagina Layout */
+.veiling-pagina {
+  /* Gebruik de container breedte van stylebp.css */
+  width: var(--container);
+  margin: 0 auto;
+  padding: 40px 0;
+}
+
+.veiling-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* 2. Kolom 1: Veiling Lijst */
+.veiling-lijst-kolom h2 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+
+.veiling-lijst {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 8px;
+  background: #fdfdfd;
+}
+
+.veiling-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.veiling-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+  border-color: var(--brand);
+}
+
+.veiling-item.selected {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand);
+  background: #f8fefb;
+}
+
+.veiling-item-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.veiling-item-info p {
+  font-size: 14px;
+  color: var(--ink-weak);
+  margin: 4px 0 0;
+}
+
+.veiling-item-status {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 99px;
+  text-transform: capitalize;
+}
+
+.status-actief {
+  background: #e6f7ec;
+  color: #0b875b; /* Groen van je site */
+}
+
+.status-wachten {
+  background: #fdf6e9;
+  color: #b98900; /* Oranje/geel */
+}
+
+.status-afgelopen {
+  background: #f8f9fa;
+  color: #6c757d; /* Grijs */
+}
+
+/* 3. Kolom 2: Veiling Klok */
+.veiling-klok-kolom {
+  position: sticky; /* Maakt de klok "sticky" tijdens het scrollen */
+  top: 90px; /* 70px (header) + 20px marge */
+}
+
+.veiling-klok-kaart {
+  /* Hergebruik van auth-card stijl, maar forceer 'auto' breedte */
+  width: auto; 
+  margin: 0;
+}
+
+.veiling-klok-details p {
+  font-size: 15px;
+  color: var(--ink-weak);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.veiling-klok-details p strong {
+  color: var(--ink);
+}
+
+.klok-display {
+  text-align: center;
+  margin: 24px 0;
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.klok-prijs {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--brand); /* Oranje van auth.css */
+  line-height: 1.1;
+}
+
+.klok-tijd {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink-weak);
+  letter-spacing: 1px;
+}
+
+/* We hergebruiken de .btn stijl van auth.css */
+.klok-bod-knop {
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
+}
+
+.klok-bod-knop:disabled {
+  background: var(--accent); /* Grijze kleur van auth.css */
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.klok-geen-klant {
+  text-align: center;
+  font-style: italic;
+  color: var(--ink-weak);
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+/* 4. Responsive (Mobiel) */
+@media (max-width: 960px) {
+  .veiling-layout {
+    grid-template-columns: 1fr; /* Stapel de kolommen op mobiel */
+  }
+  
+  .veiling-lijst-kolom {
+    order: 2; /* Lijst onder de klok */
+  }
+
+  .veiling-klok-kolom {
+    order: 1; /* Klok bovenaan */
+    position: static;
+  }
+}

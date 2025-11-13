@@ -2,9 +2,12 @@
 
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-//import Nav from "./components/Nav";
-//import Footer from "./components/Footer";
 import "./globals.css";
+
+// Importeer je custom styles hier zodat ze overal gelden
+import "./styles/stylebp.css";
+import "./styles/auth.css";
+
 import { AuthProvider } from "./context/AuthContext";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
@@ -16,16 +19,22 @@ export const Metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    // 1. VOEG 'suppressHydrationWarning' TOE.
-    //    De font-klassen zijn hier verwijderd.
     <html lang="en" suppressHydrationWarning>
-     
-      {/* 2. VOEG DE FONT-KLASSEN TOE AAN DE 'body' TAG. */}
-      <body className={`flex flex-col min-h-screen ${GeistSans.variable} ${GeistMono.variable}`}>
+      {/* Verwijder Tailwind classes zoals 'flex', 'flex-col', 'min-h-screen'.
+        Je 'stylebp.css' beheert nu de layout, beginnend met de 'page' class.
+      */}
+      <body className={`${GeistSans.variable} ${GeistMono.variable}`}>
         <AuthProvider>
-          <main className="flex-1">
+          {/* De 'page' div wikkelt alles in, net als in je originele bestanden */}
+          <div className="page">
+            <Nav /> 
+            
+            {/* 'children' is de content van je specifieke pagina 
+                (page.js, login/page.js, etc.) */}
             {children}
-          </main>
+            
+            <Footer />
+          </div>
         </AuthProvider>
       </body>
     </html>

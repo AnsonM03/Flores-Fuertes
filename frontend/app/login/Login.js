@@ -1,18 +1,14 @@
+// app/login/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react"; // useEffect is verwijderd
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import "../styles/stylebp.css";
-import "../styles/auth.css";
+// CSS-imports zijn niet meer nodig, ze staan in layout.js
 import { useAuth } from "../context/AuthContext";
 
-// 1. Importeer je nieuwe componenten
-import Nav from '../components/Nav';
-import Footer from '../components/Footer';
-
 export default function Login() {
-  // 2. Je login-logica blijft ongewijzigd
+  // Je login-logica blijft ongewijzigd
   const [email, setEmail] = useState("");
   const [wachtwoord, setWachtwoord] = useState("");
   const router = useRouter();
@@ -20,11 +16,7 @@ export default function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    const loginData = {
-      Email: email,
-      Wachtwoord: wachtwoord,
-    };
+    const loginData = { Email: email, Wachtwoord: wachtwoord };
 
     try {
       const response = await fetch("http://localhost:5281/api/Auth/login", {
@@ -35,8 +27,7 @@ export default function Login() {
 
       if (response.ok) {
         const gebruiker = await response.json();
-        // localStorage.setItem("gebruiker", JSON.stringify(gebruiker)); // Dit kan waarschijnlijk weg als je context het onthoudt
-        login(gebruiker);
+        login(gebruiker); // Je gebruikt 'gebruiker' hier
         alert("Inloggen gelukt!");
 
         // Je role-based redirect logica
@@ -58,79 +49,72 @@ export default function Login() {
     }
   };
 
-  // 3. De useEffect voor header/footer is VERWIJDERD
-  //    De logica zit nu in Nav.js en Footer.js
+  // De useEffect voor header/footer is VERWIJDERD
 
   return (
-    <div className="page">
+    // De <main> tag met 'auth' class blijft over
+    <main className="main auth">
+      {/* Verwijderd: <Nav /> */}
       
-      {/* 4. Gebruik het Nav component */}
-      <Nav />
-
-      {/* 5. Je login formulier (met jouw CSS classes) */}
-      <main className="main auth">
-        <section className="auth-wrap">
-          <div className="auth-card">
-            <div className="auth-media">
-              <img src="/loginFH.png" alt="Login visual" />
-            </div>
-
-            <div className="auth-form">
-              <h2>Inloggen</h2>
-
-              <form onSubmit={handleSubmit}>
-                <label htmlFor="email">E-mail*</label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-
-                <label htmlFor="wachtwoord">Wachtwoord*</label>
-                <input
-                  type="password"
-                  id="wachtwoord"
-                  value={wachtwoord}
-                  onChange={(e) => setWachtwoord(e.target.value)}
-                  required
-                />
-
-                <div className="checkbox-row">
-                  <input type="checkbox" id="aangemeldblijven" />
-                  <label htmlFor="aangemeldblijven">Aangemeld blijven</label>
-                </div>
-
-                <button type="submit" className="btn">
-                  Inloggen
-                </button>
-              </form>
-
-              <Link href="/register" className="auth-cta">
-                <span>
-                  <strong>Nog geen account?</strong>
-                  <br />Account aanmaken
-                </span>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M8 5l7 7-7 7"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
-            </div>
+      <section className="auth-wrap">
+        <div className="auth-card">
+          <div className="auth-media">
+            <img src="/loginFH.png" alt="Login visual" />
           </div>
-        </section>
-      </main>
 
-      {/* 6. Gebruik het Footer component */}
-      <Footer />
+          <div className="auth-form">
+            <h2>Inloggen</h2>
+
+            <form onSubmit={handleSubmit}>
+              <label htmlFor="email">E-mail*</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              <label htmlFor="wachtwoord">Wachtwoord*</label>
+              <input
+                type="password"
+                id="wachtwoord"
+                value={wachtwoord}
+                onChange={(e) => setWachtwoord(e.target.value)}
+                required
+              />
+
+              <div className="checkbox-row">
+                <input type="checkbox" id="aangemeldblijven" />
+                <label htmlFor="aangemeldblijven">Aangemeld blijven</label>
+              </div>
+
+              <button type="submit" className="btn">
+                Inloggen
+              </button>
+            </form>
+
+            <Link href="/register" className="auth-cta">
+              <span>
+                <strong>Nog geen account?</strong>
+                <br />Account aanmaken
+              </span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M8 5l7 7-7 7"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
       
-    </div>
+      {/* Verwijderd: <Footer /> */}
+    </main>
   );
 }

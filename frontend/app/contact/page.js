@@ -29,32 +29,6 @@ export default function Contact() {
 
   return (
     <div className="page">
-      {/* Header */}
-      <header className="site-header">
-        <div className="header-inner">
-          <Link href="/" className="brand">
-            <img
-              src="https://www.royalfloraholland.com/assets/favicons/favicon-32x32.png"
-              alt="Royal Flora Holland"
-              className="brand-logo"
-            />
-            <span className="brand-text">
-              Royal<br />Flora<br />Holland
-            </span>
-          </Link>
-
-          <nav className="nav" id="nav">
-            <Link href="/" className="nav-link">Home</Link>
-            <Link href="/login" className="nav-link">Login</Link>
-            <Link href="/register" className="nav-link">Registreren</Link>
-            <Link href="/contact" className="nav-link is-active">Contact</Link>
-          </nav>
-
-          <button className="hamburger" aria-label="Open menu" aria-controls="nav" aria-expanded="false">
-            <span></span><span></span><span></span>
-          </button>
-        </div>
-      </header>
 
       {/* Contactsectie */}
       <main className="main contact-page">
@@ -122,17 +96,7 @@ export default function Contact() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="site-footer">
-        <div className="container footer-grid">
-          <p>© <span id="y"></span> Royal Flora Holland — Alle rechten voorbehouden.</p>
-          <nav className="footer-nav">
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/cookies">Cookies</Link>
-            <Link href="/contact">Contact</Link>
-          </nav>
-        </div>
-      </footer>
+      
     </div>
   );
 }
