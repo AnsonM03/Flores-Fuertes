@@ -1,0 +1,168 @@
+:root{
+  --brand:#FF8300;
+  --brand-hover:#E67300;
+  --accent:#ADC3BF;
+  --accent-hover:#A7BBB7;
+}
+
+                                                                                         /*indeling vlak + achtergrond  */
+.auth{
+  min-height:calc(100vh - 140px);
+  background:url("https://ok9static.oktacdn.com/fs/bco/7/fs080lnm3kOGnglTN417") center/cover no-repeat fixed;
+  display:grid;
+  place-items:center;
+  position:relative;
+  padding-bottom:80px;             
+}
+.auth::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.15);
+  backdrop-filter:saturate(110%) blur(1px);
+}
+
+.auth-wrap{
+  position:relative;
+  z-index:1;
+  width:var(--container);
+}
+
+.auth-card{
+  margin-inline:auto;
+  width:min(420px,92vw);
+  background:#fff;
+  border-radius:0;                 
+  box-shadow:0 14px 40px rgba(0,0,0,.22);
+  overflow:hidden;
+  position:relative;
+}
+.auth-card::before{content:none;}
+
+
+                                                                          /* =======================================
+                                                                            AFBEELDING werkt nog steeds niet maar goed genoeg
+                                                                          ======================================= */
+.auth-media{
+  width:100%;
+  height:220px;
+  position:relative;
+  overflow:hidden;
+}
+.auth-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:right center;    
+  display:block;
+}
+
+
+                                                                            /* =======================================
+                                                                              FORMULIER OPMAAK
+                                                                              tekst vlakken 
+                                                                              status af denk ik
+                                                                            ======================================= */
+.auth-form{
+  position:relative;
+  z-index:1;
+  padding:16px 24px 0;             
+  margin-top:-48px;                
+}
+.auth-form h2{
+  font-size:26px;
+  font-weight:800;
+  margin:0 0 18px 0;
+  color:#222;
+}
+.auth-form form{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:stretch;             
+  width:100%;
+}
+.auth-form label{
+  font-weight:600;
+  font-size:14px;
+}
+.auth-form input[type="text"],
+.auth-form input[type="password"]{
+  padding:10px 12px;
+  border:1px solid #cfd3d6;
+  border-radius:0;
+  font-size:15px;
+  width:100%;
+}
+.auth-form input:focus{
+  outline:2px solid var(--brand);
+}
+.checkbox-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:2px;
+}
+
+
+                                                                                                  /* log in knop*/
+.auth .btn{
+  background:var(--brand);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  padding:12px;
+  font-weight:800;
+  cursor:pointer;
+  margin-top:6px;
+  width:100%;
+  transition:background .25s,transform .15s,box-shadow .25s;
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+}
+.auth .btn:hover{
+  background:var(--brand-hover);
+  transform:translateY(-1px);
+  box-shadow:0 12px 26px rgba(0,0,0,.24);
+}
+.auth .btn:active{
+  transform:translateY(0);
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
+}
+
+
+                                                                                            /*ONDERBALK  */
+.auth-cta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:18px -24px 0 -24px;                                                           
+  padding:16px 20px;
+  border-top:1px solid #e9ecef;
+  background:var(--accent);
+  color:#223;
+  text-decoration:none;
+  font-size:20px;
+}
+.auth-cta span{line-height:1.2;}
+.auth-cta svg{
+  width:32px;
+  height:32px;
+  color:#1d2a27;
+  align-self:center;
+  transition:color .25s ease;
+}
+.auth-cta:hover{
+  background:var(--accent-hover);
+}
+.auth-cta:hover svg{
+  color:var(--brand);
+}
+
+.auth-card{padding-bottom:0;}
+
+
+
+@media(max-width:960px){
+  .auth-card{width:min(480px,94vw);}
+  .auth-form{margin-top:-24px;}
+}

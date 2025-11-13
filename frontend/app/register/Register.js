@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import "../styles/stylebp.css";
+import "../styles/auth.css";
 
+// 1. Importeer je nieuwe componenten
+import Nav from '../components/Nav';
+import Footer from '../components/Footer';
 
 export default function Register() {
   const router = useRouter();
 
-  // Je state management (ongewijzigd)
+  // 2. Je state en handlers blijven ongewijzigd
   const [formData, setFormData] = useState({
     Voornaam: "",
     Achternaam: "",
@@ -19,7 +24,6 @@ export default function Register() {
     Wachtwoord: "",
   });
 
-  // Je handleChange (ongewijzigd)
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -27,109 +31,102 @@ export default function Register() {
     });
   };
 
-  // Je handleSubmit (ongewijzigd)
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const response = await fetch("http://localhost:5281/api/Gebruikers", {
+      const res = await fetch("http://localhost:5281/api/Gebruikers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
+      if (res.ok) {
         alert("Registratie gelukt!");
         router.push("/login");
+      } else if (res.status === 409) {
+        const msg = await res.text();
+        alert(msg);
       } else {
-        if (response.status === 409) { // Conflict status code
-          const errorMessage = await response.text();
-          alert(errorMessage);
-        } else {
-          alert("Registratie mislukt. Probeer opnieuw.");
-        }
+        alert("Registratie mislukt.");
       }
-    } catch (error) {
-      console.error("Fout bij registratie:", error);
-      alert("Er is een fout opgetreden. Probeer opnieuw.");
+    } catch (err) {
+      console.error("Fout:", err);
+      alert("Er is iets misgegaan.");
     }
   };
 
-  // --- START VAN DE AANGEPASTE JSX ---
+  // 3. De useEffect voor de header/footer is VERWIJDERD.
+  //    Die logica zit nu in de Nav.js en Footer.js componenten.
+
   return (
-    // 1. Buitenste container (van login.js)
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-blue-200">
+    <div className="page">
       
-      {/* 2. Formulier-kaart (van login.js) */}
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        
-        {/* 3. Titel (gestyled zoals login.js) */}
-        <h1
-          id="register-heading" 
-          className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Registreren
-        </h1>
+      {/* 4. Gebruik het Nav component */}
+      <Nav />
 
-        {/* 4. Formulier (gestyled zoals login.js) */}
-        <form 
-          aria-labelledby="register-heading"
-          onSubmit={handleSubmit}
-          className="space-y-5"
-        > 
-          
-          {/* 5. Je velden-map, nu met styling */}
-          {[
-            { id: "Voornaam", label: "Voornaam" },
-            { id: "Achternaam", label: "Achternaam" },
-            { id: "Email", label: "Email" },
-            { id: "Adres", label: "Adres" },
-            { id: "Telefoonnr", label: "Telefoon Nummer" },
-            { id: "Woonplaats", label: "Woonplaats" },
-            { id: "Wachtwoord", label: "Wachtwoord", type: "password" }
-          ].map((field) => (
-            <div key={field.id}>
-              {/* Label (gestyled zoals login.js) */}
-              <label
-                htmlFor={field.id}
-                className="block text-sm font-medium text-gray-700"
-              >
-                {field.label}
-              </label>
-              
-              {/* Input (gestyled zoals login.js) */}
-              <input
-                type={field.type || "text"}
-                id={field.id}
-                name={field.id}
-                value={formData[field.id]}
-                onChange={handleChange}
-                required
-                aria-required="true"
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-black placeholder-gray-600"
-              />
+      {/* 5. Je formulier-inhoud blijft hetzelfde (met jouw CSS classes) */}
+      <main className="main auth">
+        <section className="auth-wrap">
+          <div className="auth-card">
+            <div className="auth-media">
+              <img src="/loginFH.png" alt="Registratie visual" />
             </div>
-          ))}
 
-          {/* 6. Submit knop (gestyled zoals login.js) */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Register
-          </button>
-        </form>
+            <div className="auth-form">
+              <h2>Registreren</h2>
 
-        {/* 7. Link onderaan (gestyled zoals login.js) */}
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Al een account?{" "}
-          <Link
-            href="/login"
-            className="text-blue-600 hover:underline font-medium"
-          >
-            Log hier in!
-          </Link>
-        </p>
-      </div>
+              <form onSubmit={handleSubmit} className="space-y-3">
+                {[
+                  { id: "Voornaam", label: "Voornaam*" },
+                  { id: "Achternaam", label: "Achternaam*" },
+                  { id: "Email", label: "E-mail*", type: "email" },
+                  { id: "Adres", label: "Adres" },
+                  { id: "Telefoonnr", label: "Telefoonnummer", type: "tel" },
+                  { id: "Woonplaats", label: "Woonplaats" },
+                  { id: "Wachtwoord", label: "Wachtwoord*", type: "password" },
+                ].map((field) => (
+                  <div key={field.id}>
+                    <label htmlFor={field.id}>{field.label}</label>
+                    <input
+                      id={field.id}
+                      type={field.type || "text"}
+                      value={formData[field.id]}
+                      onChange={handleChange}
+                      required={field.label.includes("*")}
+                    />
+                  </div>
+                ))}
+
+                <button type="submit" className="btn">
+                  Volgende
+                </button>
+              </form>
+
+              <Link href="/login" className="auth-cta">
+                <span>
+                  <strong>Al een account?</strong>
+                  <br />
+                  Log hier in
+                </span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M8 5l7 7-7 7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* 6. Gebruik het Footer component */}
+      <Footer />
+      
     </div>
   );
 }

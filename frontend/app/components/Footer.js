@@ -1,26 +1,31 @@
 // app/components/Footer.js
+"use client";
+
+import { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Footer() {
-  return (
-    <footer className="bg-gray-100 border-t border-gray-200 text-gray-600">
-      <div className="container mx-auto px-4 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          
-          {/* Copyright Tekst */}
-          <p className="text-sm text-center md:text-left">
-            {/* Gebruik van het Flores Fuertes logo i.p.v. Royal Flora Holland */}
-            © {new Date().getFullYear()} Flores Fuertes — Alle rechten voorbehouden.
-          </p>
-          
-          {/* Footer Navigatie */}
-          <nav className="flex gap-6">
-            <Link href="#" className="text-sm hover:text-green-800 transition-colors">Privacy</Link>
-            <Link href="#" className="text-sm hover:text-green-800 transition-colors">Cookies</Link>
-            <Link href="#" className="text-sm hover:text-green-800 transition-colors">Contact</Link>
-          </nav>
+  
+  useEffect(() => {
+    // Zoek de span binnen deze component-instantie
+    // Ik gebruik "footer-year" om conflicten te voorkomen
+    const yearSpan = document.getElementById('footer-year');
+    if (yearSpan) {
+      yearSpan.textContent = new Date().getFullYear();
+    }
+  }, []); // Deze useEffect hoeft alleen bij de start te draaien
 
-        </div>
+  return (
+    <footer className="site-footer">
+      <div className="container footer-grid">
+        <p>
+          © <span id="footer-year"></span> Royal Flora Holland — Alle rechten voorbehouden.
+        </p>
+        <nav className="footer-nav" aria-label="Voettekstnavigatie">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/cookies">Cookies</Link>
+          <Link href="/contact">Contact</Link>
+        </nav>
       </div>
     </footer>
   );
