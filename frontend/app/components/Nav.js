@@ -1,4 +1,3 @@
-// app/components/Nav.js
 "use client";
 
 import { useState } from "react";
@@ -8,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function Nav() {
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, gebruiker, logout } = useAuth();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -21,10 +20,11 @@ export default function Nav() {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const naam = [gebruiker?.voornaam, gebruiker?.achternaam].filter(Boolean).join(" ") || "Gebruiker";
+
   return (
     <header className="bg-green-900 text-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 lg:px-8 flex justify-between items-center h-20">
-        
         {/* Logo + Naam + Gebruiker */}
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-3">
@@ -40,33 +40,27 @@ export default function Nav() {
               Flores<br />Fuertes
             </span>
           </Link>
-          
-          {/* Hallo, gebruiker */}
+
           {isLoggedIn && (
             <span className="hidden sm:inline-block text-white font-medium">
-              Welkom, {" "}
-              {[
-                user?.voornaam || user?.voornaam || "",
-                user?.achternaam || user?.achternaam || "",
-              ]
-                .filter(Boolean)
-                .join(" ") || "Gebruiker"}
+              Welkom, {naam}
             </span>
           )}
         </div>
 
         {/* Desktop Navigatie */}
         <nav className="hidden lg:flex items-center gap-8">
-          <Link href="/" className="hover:text-green-200 transition-colors">Home</Link>
-          <Link href="/veilingen" className="hover:text-green-200 transition-colors">Veilingen</Link>
+          <Link href="/" className="hover:text-green-200 transition-colors" aria-current={router.pathname === "/" ? "page" : undefined}>Home</Link>
+          <Link href="/veilingen" className="hover:text-green-200 transition-colors" aria-current={router.pathname === "/veilingen" ? "page" : undefined}>Veilingen</Link>
 
           {isLoggedIn ? (
             <>
-              <Link href="/account" className="hover:text-green-200 transition-colors">Account</Link>
-              <Link href="/dashboard" className="hover:text-green-200 transition-colors">Dashboard</Link>
+              <Link href="/account" className="hover:text-green-200 transition-colors" aria-current={router.pathname === "/account" ? "page" : undefined}>Account</Link>
+              <Link href="/dashboard" className="hover:text-green-200 transition-colors" aria-current={router.pathname === "/dashboard" ? "page" : undefined}>Dashboard</Link>
               <button 
                 onClick={handleLogout} 
                 className="bg-white text-green-900 px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition-colors"
+                aria-label="Uitloggen"
               >
                 Uitloggen
               </button>
@@ -88,6 +82,7 @@ export default function Nav() {
         <button
           className="lg:hidden z-20"
           aria-label="Open menu"
+          aria-expanded={isMenuOpen}
           onClick={toggleMenu}
         >
           <div className="space-y-1.5">
@@ -113,12 +108,13 @@ export default function Nav() {
         {isLoggedIn ? (
           <>
             <Link href="/account" className="hover:text-green-200" onClick={toggleMenu}>
-              Account ({user?.voornaam || "Gebruiker"})
+              Account ({gebruiker?.voornaam || "Gebruiker"})
             </Link>
             <Link href="/dashboard" className="hover:text-green-200" onClick={toggleMenu}>Dashboard</Link>
             <button 
               onClick={handleLogout} 
               className="bg-white text-green-900 px-6 py-3 rounded-md font-semibold hover:bg-gray-200"
+              aria-label="Uitloggen"
             >
               Uitloggen
             </button>

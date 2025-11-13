@@ -65,7 +65,7 @@ export default function VeilingRij({ veiling, isSelected, onSelect, onDelete }) 
 
 
         {/* --- Alleen veilingmeester ziet dit menu --- */}
-        {rol === "Veilingmeester" && (
+        {rol?.toLowerCase === "veilingmeester" && (
           <div className="relative">
             <button
               onClick={(e) => {
