@@ -1,42 +1,40 @@
 // app/layout.js
-import { Geist, Geist_Mono } from "next/font/google";
+
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
+import "./globals.css";
+
+// Importeer je custom styles hier zodat ze overal gelden
+import "./styles/stylebp.css";
+import "./styles/auth.css";
+
+import { AuthProvider } from "./context/AuthContext";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
-import "./globals.css";
-import { AuthProvider } from "./context/AuthContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata = {
-  title: "Royal Flora Holland — Veilingsplatform",
+export const Metadata = {
+  title: "Flores Fuertes — Veilingsplatform",
   description: "Het grootste internationale bloemen veilingsplatform",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="nl" className={`${geistSans.variable} ${geistMono.variable}`}>
-      {/* Voeg Tailwind classes toe aan body */}
-      <body className="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-50 font-sans min-h-screen">
-        <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only absolute top-2 left-2 bg-blue-600 text-white px-3 py-2 rounded"
-      >
-        Sla navigatie over
-      </a>
+    <html lang="en" suppressHydrationWarning>
+      {/* Verwijder Tailwind classes zoals 'flex', 'flex-col', 'min-h-screen'.
+        Je 'stylebp.css' beheert nu de layout, beginnend met de 'page' class.
+      */}
+      <body className={`${GeistSans.variable} ${GeistMono.variable}`}>
         <AuthProvider>
-          <Nav />
-          <main id="main-content" className="flex-1">
+          {/* De 'page' div wikkelt alles in, net als in je originele bestanden */}
+          <div className="page">
+            <Nav /> 
+            
+            {/* 'children' is de content van je specifieke pagina 
+                (page.js, login/page.js, etc.) */}
             {children}
-          </main>
-          <Footer />
+            
+            <Footer />
+          </div>
         </AuthProvider>
       </body>
     </html>

@@ -11,16 +11,11 @@ namespace FloresFuertes.Controllers
     {
         private readonly AppDbContext _context;
 
-        public KlantenController(AppDbContext context)
-        {
-            _context = context;
-        }
+        public KlantenController(AppDbContext context) => _context = context;
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Klant>>> GetAll()
-        {
-            return await _context.Klanten.ToListAsync();
-        }
+            => await _context.Klanten.ToListAsync();
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Klant>> GetById(string id)
@@ -33,6 +28,11 @@ namespace FloresFuertes.Controllers
         [HttpPost]
         public async Task<ActionResult<Klant>> Create(KlantCreateDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Email)) return BadRequest("Email is verplicht");
+
+            if (await _context.Klanten.AnyAsync(k => k.Email == dto.Email))
+                return Conflict("E-mail bestaat al.");
+
             var klant = new Klant
             {
                 Voornaam = dto.Voornaam,
@@ -48,9 +48,7 @@ namespace FloresFuertes.Controllers
             await _context.Klanten.AddAsync(klant);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetAll),
-                new { id = klant.Gebruiker_Id },
-                klant);
+            return CreatedAtAction(nameof(GetById), new { id = klant.Gebruiker_Id }, klant);
         }
 
         [HttpPut("{id}")]

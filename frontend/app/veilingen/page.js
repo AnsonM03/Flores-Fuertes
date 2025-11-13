@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import VeilingenLijst from "../components/VeilingenLijst";
-import VeilingKlok from "../components/Veilingklok";
-
+import VeilingKlok from "../components/Veilingklok"; // We gebruiken de 'k' op het einde
+import "../styles/veilingen.css"; // Importeren van de nieuwe CSS
 
 export default function Veilingen() {
      // ------------------------
@@ -17,43 +17,43 @@ export default function Veilingen() {
       const router = useRouter();
       const rol = gebruiker?.gebruikerType?.toLowerCase();
 
-      console.log("GEVONDEN ROL:", rol);
-    console.log("GEHELE GEBRUIKER:", gebruiker);
-    
-      // ------------------------
-      // Auth check
-      // ------------------------
-      useEffect(() => {
-        const stored = localStorage.getItem("gebruiker");
-        if (!stored) {
-          router.push("/login");
-          return;
-        }
-        setGebruiker(JSON.parse(stored));
-      }, [router]);
-    
-      // ------------------------
-      // Veilingen ophalen
-      // ------------------------
-      useEffect(() => {
-        async function fetchVeilingenMetAanvoerders() {
-          try {
-            const res = await fetch("http://localhost:5281/api/Veilingen");
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-    
-            // Koppel aanvoerders aan veilingen
-            const updated = await Promise.all(
-              data.map(async (v) => {
-                const aanvoerderId = v.product?.aanvoerder_Id;
-                if (!aanvoerderId) return v;
-                try {
-                  const r2 = await fetch(`http://localhost:5281/api/Aanvoerders/${aanvoerderId}`);
-                  if (!r2.ok) return v;
+  // ------------------------
+  // Auth check
+  // ------------------------
+  useEffect(() => {
+    const stored = localStorage.getItem("gebruiker");
+    if (!stored) {
+      router.push("/login");
+      return;
+    }
+    const gebruikerData = JSON.parse(stored);
+    setGebruiker(gebruikerData);
+  }, [router]);
+
+  // ------------------------
+  // Veilingen ophalen
+  // ------------------------
+  useEffect(() => {
+    async function fetchVeilingenMetAanvoerders() {
+      try {
+        const res = await fetch("http://localhost:5281/api/Veilingen");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        // Koppel aanvoerders aan veilingen
+        const updated = await Promise.all(
+          data.map(async (v) => {
+            // Pas de datastructuur aan op basis van je API
+            const aanvoerderId = v.product?.aanvoerder_Id || v.product?.aanvoerderId;
+            const productName = v.product?.naam || "Onbekend Product";
+            
+            let aanvoerderNaam = "Onbekende Aanvoerder";
+            if (aanvoerderId) {
+              try {
+                const r2 = await fetch(`http://localhost:5281/api/Gebruikers/${aanvoerderId}`);
+                if (r2.ok) {
                   const aanvoerder = await r2.json();
-                  return { ...v, aanvoerder };
-                } catch {
-                  return v;
+                  aanvoerderNaam = `${aanvoerder.voornaam || ''} ${aanvoerder.achternaam || ''}`.trim();
                 }
               })
             );
@@ -103,39 +103,98 @@ export default function Veilingen() {
               } else {
                 status = "wachten";
               }
-    
-              return { ...v, status };
-            })
-          );
-        }, 1000);
-    
-        return () => clearInterval(interval);
-      }, []);
+            }
+            // We slaan de info plat op in het veiling object
+            return { ...v, aanvoerderNaam, productName };
+          })
+        );
 
-    return (
-    <div className="min-h-screen bg-gray-100 p-6 font-sans">
-      <div className="grid grid-cols-2 gap-6">
-        <div className="flex flex-col gap-6">
+        setVeilingen(updated);
+        // Selecteer de eerste veiling die nog niet is afgelopen
+        const eersteActieve = updated.find(v => new Date(v.eindTijd) > new Date()) || updated[0];
+        setSelectedVeiling(eersteActieve);
 
-          {/* --- VEILINGEN (voor klanten)--- */}
+      } catch (err) {
+        console.error(err);
+        setError("Kon veilingen niet ophalen");
+      }
+    }
+
+    fetchVeilingenMetAanvoerders();
+  }, []);
+
+  // ------------------------
+  // Live status updates
+  // ------------------------
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const nu = new Date();
+      setVeilingen((prev) =>
+        prev.map((v) => {
+          const eind = new Date(v.eindTijd);
+          let status = v.status;
+
+          if (nu < eind && nu >= new Date(v.startTijd)) {
+            status = "actief";
+          } else if (nu >= eind) {
+            status = "afgelopen";
+          } else {
+            status = "wachten";
+          }
+
+          return { ...v, status };
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handler voor het plaatsen van een bod
+  const handleBod = (veilingId, bedrag) => {
+    if (rol !== 'klant') {
+      alert("Alleen klanten kunnen bieden.");
+      return;
+    }
+    
+    // TODO: Implementeer je bod-logica hier
+    // (Waarschijnlijk een POST request naar je API)
+    console.log(`Klant ${gebruiker.gebruiker_Id} biedt ${bedrag} op veiling ${veilingId}`);
+    alert(`Bod van €${bedrag} geplaatst!`);
+
+    // Optioneel: update de veiling (bijv. met nieuwe prijs)
+    // En selecteer de volgende actieve veiling
+  };
+
+  return (
+    // We gebruiken de 'main' tag en voegen een class toe
+    <main className="main veiling-pagina">
+      {/* Een container om de layout te centreren, net als in stylebp.css */}
+      <div className="container veiling-layout">
+        
+        {/* Kolom 1: De lijst met veilingen */}
+        <div className="veiling-lijst-kolom">
           <VeilingenLijst
-              veilingen={veilingen}
-              error={error}
-              selectedVeiling={selectedVeiling}
-              onSelect={setSelectedVeiling}
-            />
+            veilingen={veilingen}
+            error={error}
+            selectedVeiling={selectedVeiling}
+            onSelect={setSelectedVeiling}
+          />
+        </div>
 
-            </div>
-
-        {/* --- VEILINGKLOK (alle rollen zien dit, klant alleen "koop nu") --- */}
-        <div className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col items-center justify-center p-6">
+        {/* Kolom 2: De Veilingklok */}
+        <div className="veiling-klok-kolom">
           {selectedVeiling ? (
-            <VeilingKlok veiling={selectedVeiling} gebruikerRol={rol} />
+            <VeilingKlok 
+              veiling={selectedVeiling} 
+              gebruikerRol={rol} 
+              onBod={handleBod}
+            />
           ) : (
             <p className="text-gray-500 italic">Klik op een veiling</p>
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
