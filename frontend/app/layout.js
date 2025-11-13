@@ -2,8 +2,8 @@
 
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-import Nav from "./components/Nav";
-import Footer from "./components/Footer";
+//import Nav from "./components/Nav";
+//import Footer from "./components/Footer";
 import "./globals.css"; 
 import { AuthProvider } from "./context/AuthContext"; 
 
@@ -21,11 +21,9 @@ export default function RootLayout({ children }) {
       {/* 2. VOEG DE FONT-KLASSEN TOE AAN DE 'body' TAG. */}
       <body className={`flex flex-col min-h-screen ${GeistSans.variable} ${GeistMono.variable}`}>
         <AuthProvider>
-          <Nav /> 
           <main className="flex-1">
             {children} 
           </main>
-          <Footer /> 
         </AuthProvider>
       </body>
     </html>

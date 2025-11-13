@@ -1,8 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import "../styles/stylebp.css";
+import "../styles/auth.css";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
@@ -22,21 +24,16 @@ export default function Login() {
     try {
       const response = await fetch("http://localhost:5281/api/Auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
       });
 
       if (response.ok) {
         const gebruiker = await response.json();
-
         localStorage.setItem("gebruiker", JSON.stringify(gebruiker));
         login(gebruiker);
+        alert("Inloggen gelukt!");
 
-        alert("Inloggen gelukt! Je wordt nu doorgestuurd.");
-
-        // Gebruik nu de 'Rol' property van de backend
         if (gebruiker.Rol === "Klant") {
           router.push("/klant/dashboard");
         } else if (gebruiker.Rol === "Aanvoerder") {
@@ -46,95 +43,172 @@ export default function Login() {
         } else {
           router.push("/");
         }
-
-        } else {
-          alert("Inloggen mislukt. Controleer je gegevens.");
-        }
-      } catch (error) {
-        console.error("Fout bij inloggen:", error);
-        alert("Er is een fout opgetreden. Probeer het opnieuw.");
+      } else {
+        alert("Inloggen mislukt. Controleer je gegevens.");
       }
+    } catch (error) {
+      console.error("Fout bij inloggen:", error);
+      alert("Er is een fout opgetreden. Probeer opnieuw.");
+    }
+  };
+
+  useEffect(() => {
+    // Zet het jaartal in footer
+    const yearSpan = document.getElementById("y");
+    if (yearSpan) {
+      yearSpan.textContent = new Date().getFullYear();
+    }
+
+    // Hamburger menu
+    const burger = document.querySelector(".hamburger");
+    const nav = document.getElementById("nav");
+    const header = document.querySelector(".site-header");
+    let lastY = window.scrollY;
+
+    const toggleNav = () => {
+      const open = burger.classList.toggle("open");
+      nav.classList.toggle("open", open);
+      burger.setAttribute("aria-expanded", String(open));
     };
 
+    const handleScroll = () => {
+      const y = window.scrollY;
+      const down = y > lastY;
+      if (y > 10) header.classList.add("peek");
+      else header.classList.remove("peek");
+      if (down && y > 90) header.classList.add("hide");
+      else header.classList.remove("hide");
+      lastY = y;
+    };
+
+    burger?.addEventListener("click", toggleNav);
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      burger?.removeEventListener("click", toggleNav);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-blue-200">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Login Page
-        </h1>
-x
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* EMAIL */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+    <div className="page">
+      {/* HEADER */}
+      <header className="site-header">
+        <div className="header-inner">
+          <Link href="/" className="brand">
+            <img
+              src="https://www.royalfloraholland.com/assets/favicons/favicon-32x32.png"
+              alt="Royal Flora Holland"
+              className="brand-logo"
             />
-          </div>
-
-          {/* WACHTWOORD */}
-          <div>
-            <label
-              htmlFor="wachtwoord"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Wachtwoord
-            </label>
-            <input
-              type="password"
-              id="wachtwoord"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              value={wachtwoord}
-              onChange={(e) => setWachtwoord(e.target.value)}
-              required
-            />
-          </div>
-
-          {/* CHECKBOX */}
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="aangemeldblijven"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="aangemeldblijven"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Aangemeld blijven
-            </label>
-          </div>
-
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Inloggen
-          </button>
-        </form>
-
-        {/* REGISTRATIE LINK */}
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Nog geen account?{" "}
-          <Link
-            href="/register"
-            className="text-blue-600 hover:underline font-medium"
-          >
-            Account aanmaken
+            <span className="brand-text">
+              Royal<br />Flora<br />Holland
+            </span>
           </Link>
-        </p>
-      </div>
+
+          <nav className="nav" id="nav">
+            <Link href="/" className="nav-link">
+              Home
+            </Link>
+            <Link href="/login" className="nav-link is-active">
+              Login
+            </Link>
+            <Link href="/register" className="nav-link">
+              Registreren
+            </Link>
+            <Link href="/veilingen" className="nav-link">
+              Veilingen
+            </Link>
+          </nav>
+
+          <button
+            className="hamburger"
+            aria-label="Open menu"
+            aria-controls="nav"
+            aria-expanded="false"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </header>
+
+      {/* MAIN LOGIN FORM */}
+      <main className="main auth">
+        <section className="auth-wrap">
+          <div className="auth-card">
+            <div className="auth-media">
+              <img src="/images/loginFH.png" alt="Login visual" />
+            </div>
+
+            <div className="auth-form">
+              <h2>Inloggen</h2>
+
+              <form onSubmit={handleSubmit}>
+                <label htmlFor="email">E-mail*</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+
+                <label htmlFor="wachtwoord">Wachtwoord*</label>
+                <input
+                  type="password"
+                  id="wachtwoord"
+                  value={wachtwoord}
+                  onChange={(e) => setWachtwoord(e.target.value)}
+                  required
+                />
+
+                <div className="checkbox-row">
+                  <input type="checkbox" id="aangemeldblijven" />
+                  <label htmlFor="aangemeldblijven">Aangemeld blijven</label>
+                </div>
+
+                <button type="submit" className="btn">
+                  Inloggen
+                </button>
+              </form>
+
+              <Link href="/register" className="auth-cta">
+                <span>
+                  <strong>Nog geen account?</strong>
+                  <br />Account aanmaken
+                </span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M8 5l7 7-7 7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="site-footer">
+        <div className="container footer-grid">
+          <p>
+            © <span id="y"></span> Royal Flora Holland — Alle rechten
+            voorbehouden.
+          </p>
+          <nav className="footer-nav">
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/cookies">Cookies</Link>
+            <Link href="/contact">Contact</Link>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 }
