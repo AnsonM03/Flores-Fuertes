@@ -14,10 +14,7 @@ namespace FloresFuertes.Controllers
         // 2. VOEG DE HASHER TOE
         private readonly PasswordHasher<Gebruiker> _passwordHasher = new();
 
-        public AuthController(AppDbContext context)
-        {
-            _context = context;
-        }
+        public AuthController(AppDbContext context) => _context = context;
 
         [HttpPost("login")]
         public async Task<ActionResult<Gebruiker>> Login(LoginModel loginModel)
@@ -27,28 +24,20 @@ namespace FloresFuertes.Controllers
 
             if (gebruiker == null)
             {
-                // Gebruik een algemene foutmelding om "user enumeration" te voorkomen
-                return Unauthorized("E-mail of wachtwoord is onjuist.");
+                return NotFound("Gebruiker niet gevonden.");
             }
 
-            if(gebruiker.LockoutEndTime != null && gebruiker.LockoutEndTime > DateTime.Now)
-            {
-                return StatusCode(423, "Account is geblokkeerd. Probeer het later opnieuw.");
-            }
+            if (gebruiker.LockoutEndTime != null && gebruiker.LockoutEndTime > DateTime.UtcNow)
+                return StatusCode(423, "Account geblokkeerd. Probeer later.");
 
-            // --- 3. DIT IS DE CORRECTIE ---
-            // Vervang de foute '!=' controle
-            var result = _passwordHasher.VerifyHashedPassword(gebruiker, gebruiker.Wachtwoord, loginModel.Wachtwoord);
-
-            if (result == PasswordVerificationResult.Failed)
+            if (gebruiker.Wachtwoord != loginModel.Wachtwoord)
             {
-                // Het wachtwoord is fout, voer de faallogica uit
                 gebruiker.FailedLoginAttempts += 1;
 
                 if (gebruiker.FailedLoginAttempts >= 5)
                 {
                     gebruiker.LockoutEndTime = DateTime.Now.AddMinutes(15);
-                    gebruiker.FailedLoginAttempts = 0; // Reset na lockout
+                    gebruiker.FailedLoginAttempts = 0; // Reset after lockout
                 }
                 await _context.SaveChangesAsync();
                 return Unauthorized("E-mail of wachtwoord is onjuist.");

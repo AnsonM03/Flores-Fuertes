@@ -7,12 +7,16 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [gebruiker, setGebruiker] = useState(null);
   const [loading, setLoading] = useState(true);
-  const isLoggedIn = !!gebruiker;
 
   useEffect(() => {
     const storedGebruiker = localStorage.getItem("gebruiker");
     if (storedGebruiker) {
-      setGebruiker(JSON.parse(storedGebruiker));
+      try {
+        setGebruiker(JSON.parse(storedGebruiker));
+      } catch (err) {
+        console.error("Kon gebruiker niet parsen uit localStorage", err);
+        localStorage.removeItem("gebruiker");
+      }
     }
     setLoading(false);
   }, []);
@@ -27,6 +31,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("gebruiker");
   };
 
+  const isLoggedIn = !!gebruiker;
+
   return (
     <AuthContext.Provider value={{ gebruiker, isLoggedIn, login, logout, loading }}>
       {children}
@@ -35,5 +41,7 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+  return context;
 }

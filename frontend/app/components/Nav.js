@@ -1,4 +1,3 @@
-// app/components/Nav.js
 "use client";
 
 import { useEffect, useRef } from 'react';
@@ -8,6 +7,7 @@ import { useAuth } from "../context/AuthContext"; // Importeer je Auth context
 import { useRouter } from "next/navigation"; // Importeer de router voor logout
 
 export default function Nav() {
+  const { isLoggedIn, gebruiker, logout } = useAuth();
   // --- Hooks van je custom CSS Nav (voor animatie) ---
   const lastY = useRef(0);
   const headerRef = useRef(null);
@@ -79,28 +79,38 @@ export default function Nav() {
     }
   };
 
-  return (
-    // De structuur is van je custom CSS Nav
-    <header className="site-header" ref={headerRef}>
-      <div className="header-inner">
-        
-        {/* Brand/Logo (van custom CSS Nav) */}
-        <Link className="brand" href="/" onClick={handleLinkClick}>
-          <img
-            src="https://www.royalfloraholland.com/assets/favicons/favicon-32x32.png"
-            alt="Royal Flora Holland"
-            className="brand-logo"
-          />
-          <span className="brand-text">Royal<br />Flora<br />Holland</span>
-        </Link>
+  const naam = [gebruiker?.voornaam, gebruiker?.achternaam].filter(Boolean).join(" ") || "Gebruiker";
 
-        {/* Welkom bericht (desktop) - van Tailwind Nav */}
-        {/* Je kunt "nav-welcome" en "hidden-lg" stylen in je CSS */}
-        {isLoggedIn && (
-          <span className="nav-welcome hidden-lg">
-            Welkom, {user?.voornaam || "Gebruiker"}
-          </span>
-        )}
+  return (
+    <header className="bg-green-900 text-white shadow-md sticky top-0 z-50">
+      <div className="container mx-auto px-4 lg:px-8 flex justify-between items-center h-20">
+        {/* Logo + Naam + Gebruiker */}
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/flores-fuertes-logo.png"
+              alt="Flores Fuertes Logo"
+              width={50}
+              height={50}
+              className="rounded-md"
+              priority
+            />
+            <span className="font-bold text-xl leading-tight hidden sm:block">
+              Flores<br />Fuertes
+            </span>
+          </Link>
+
+          {isLoggedIn && (
+            <span className="hidden sm:inline-block text-white font-medium">
+              Welkom, {naam}
+            </span>
+          )}
+        </div>
+
+        {/* Desktop Navigatie */}
+        <nav className="hidden lg:flex items-center gap-8">
+          <Link href="/" className="hover:text-green-200 transition-colors" aria-current={router.pathname === "/" ? "page" : undefined}>Home</Link>
+          <Link href="/veilingen" className="hover:text-green-200 transition-colors" aria-current={router.pathname === "/veilingen" ? "page" : undefined}>Veilingen</Link>
 
         {/* Aangepaste navigatie met conditionele links */}
         <nav className="nav" id="nav" ref={navRef}>
@@ -113,20 +123,13 @@ export default function Nav() {
           {/* Conditionele links op basis van isLoggedIn */}
           {isLoggedIn ? (
             <>
-              {/* --- INGELOGDE LINKS --- */}
-              <Link href="/veilingen" className={`nav-link ${isActive('/veilingen') ? 'is-active' : ''}`} onClick={handleLinkClick}>
-                Veilingen
-              </Link>
-              <Link href="/account" className={`nav-link ${isActive('/account') ? 'is-active' : ''}`} onClick={handleLinkClick}>
-                Account
-              </Link>
-              <Link href="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'is-active' : ''}`} onClick={handleLinkClick}>
-                Dashboard
-              </Link>
-              
-              {/* Geef de uitlogknop een 'nav-link' class + een extra class 
-                  zodat je het als een knop kunt stylen in je CSS. */}
-              <button onClick={handleLogout} className="nav-link nav-link-button">
+              <Link href="/account" className="hover:text-green-200 transition-colors" aria-current={router.pathname === "/account" ? "page" : undefined}>Account</Link>
+              <Link href="/dashboard" className="hover:text-green-200 transition-colors" aria-current={router.pathname === "/dashboard" ? "page" : undefined}>Dashboard</Link>
+              <button 
+                onClick={handleLogout} 
+                className="bg-white text-green-900 px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition-colors"
+                aria-label="Uitloggen"
+              >
                 Uitloggen
               </button>
             </>
@@ -148,16 +151,55 @@ export default function Nav() {
           )}
         </nav>
 
-        {/* Burger knop (van custom CSS Nav) */}
-        <button 
-          className="hamburger" 
-          aria-label="Open menu" 
-          aria-controls="nav" 
-          aria-expanded="false" 
-          ref={burgerRef}
+        {/* Hamburger Knop Mobiel */}
+        <button
+          className="lg:hidden z-20"
+          aria-label="Open menu"
+          aria-expanded={isMenuOpen}
+          onClick={toggleMenu}
         >
           <span></span><span></span><span></span>
         </button>
+      </div>
+
+      {/* Mobiel Menu */}
+      <div 
+        className={`
+          lg:hidden absolute top-0 left-0 w-full h-screen bg-green-900 
+          flex flex-col items-center justify-center gap-8 text-xl
+          transition-transform duration-300 ease-in-out z-10
+          ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
+        <Link href="/" className="hover:text-green-200" onClick={toggleMenu}>Home</Link>
+        <Link href="/veilingen" className="hover:text-green-200" onClick={toggleMenu}>Veilingen</Link>
+
+        {isLoggedIn ? (
+          <>
+            <Link href="/account" className="hover:text-green-200" onClick={toggleMenu}>
+              Account ({gebruiker?.voornaam || "Gebruiker"})
+            </Link>
+            <Link href="/dashboard" className="hover:text-green-200" onClick={toggleMenu}>Dashboard</Link>
+            <button 
+              onClick={handleLogout} 
+              className="bg-white text-green-900 px-6 py-3 rounded-md font-semibold hover:bg-gray-200"
+              aria-label="Uitloggen"
+            >
+              Uitloggen
+            </button>
+          </>
+        ) : (
+          <>
+            <Link href="/login" className="hover:text-green-200" onClick={toggleMenu}>Login</Link>
+            <Link 
+              href="/register" 
+              className="bg-white text-green-900 px-6 py-3 rounded-md font-semibold hover:bg-gray-200"
+              onClick={toggleMenu}
+            >
+              Registreren
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );
