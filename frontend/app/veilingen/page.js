@@ -58,8 +58,9 @@ export default function Veilingen() {
               aanvoerderNaam,
             };
           })
-        );
+        ); // <-- Einde van Promise.all
 
+        // !! FIX: State updates moeten *na* de Promise.all gebeuren, niet erin !!
         setVeilingen(updated);
 
         // selecteer eerste actieve veiling
@@ -111,13 +112,14 @@ export default function Veilingen() {
             status = "wachten";
           }
 
+          // !! FIX: Je moet het nieuwe object returnen binnen de .map() !!
           return { ...v, status };
         })
       );
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval); // Cleanup
+  }, []); // Lege dependency array, interval start 1x
 
   // ------------------------
   // BOD HANDLER

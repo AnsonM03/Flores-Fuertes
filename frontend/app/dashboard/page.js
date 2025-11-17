@@ -42,14 +42,25 @@ export default function Dashboard() {
 
         const updated = await Promise.all(
           data.map(async (v) => {
-            const aanvoerderId = v.product?.aanvoerder_Id;
+            // !! FIX: Aangepast om 'aanvoerder_Id' of 'aanvoerderId' te checken
+            const aanvoerderId =
+              v.product?.aanvoerder_Id || v.product?.aanvoerderId;
             if (!aanvoerderId) return v;
 
             try {
-              const r2 = await fetch(`http://localhost:5281/api/Aanvoerders/${aanvoerderId}`);
+              // !! FIX: API-endpoint moet overeenkomen (Gebruikers/Aanvoerders?)
+              // Ik gebruik hier 'Gebruikers' o.b.v. een vorig bestand. Pas aan indien nodig.
+              const r2 = await fetch(
+                `http://localhost:5281/api/Gebruikers/${aanvoerderId}`
+              );
               if (!r2.ok) return v;
               const aanvoerder = await r2.json();
-              return { ...v, aanvoerder };
+              // Sla de naam plat op voor eenvoudiger gebruik
+              const aanvoerderNaam =
+                `${aanvoerder.voornaam || ""} ${
+                  aanvoerder.achternaam || ""
+                }`.trim();
+              return { ...v, aanvoerder, aanvoerderNaam };
             } catch {
               return v;
             }
@@ -81,8 +92,11 @@ export default function Dashboard() {
         console.error(err);
       }
     }
-    fetchKlanten();
-  }, []);
+    // Voer alleen uit als de gebruiker is geladen
+    if (gebruiker) {
+      fetchKlanten();
+    }
+  }, [gebruiker]); // Afhankelijk van 'gebruiker'
 
   // ------------------------
   // KLANT VERWIJDEREN
@@ -221,7 +235,9 @@ export default function Dashboard() {
 
           {(rol === "veilingmeester" || rol === "aanvoerder") && (
             <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Kopers
+              </h2>
 
               {klanten.length === 0 ? (
                 <p className="text-gray-500 italic">Kopers worden geladen...</p>

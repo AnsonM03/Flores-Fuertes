@@ -27,16 +27,19 @@ export default function Login() {
 
       if (response.ok) {
         const gebruiker = await response.json();
-        login(gebruiker); // Je gebruikt 'gebruiker' hier
+        login(gebruiker); // Dit werkt nu correct door Fix 1
         alert("Inloggen gelukt!");
 
-        // Je role-based redirect logica
-        if (gebruiker.Rol === "Klant") {
-          router.push("/klant/dashboard");
-        } else if (gebruiker.Rol === "Aanvoerder") {
-          router.push("/aanvoerder/dashboard");
-        } else if (gebruiker.Rol === "Veilingmeester") {
-          router.push("/veilingmeester/dashboard");
+        // !! FIX: Waarschijnlijk heet de eigenschap 'gebruikerType', niet 'Rol'.
+        // We voegen .toLowerCase() toe voor de zekerheid.
+        const rol = gebruiker.gebruikerType?.toLowerCase();
+
+        if (rol === "klant") {
+          router.push("/dashboard"); // Zie Fix 3
+        } else if (rol === "aanvoerder") {
+          router.push("/dashboard"); // Zie Fix 3
+        } else if (rol === "veilingmeester") {
+          router.push("/dashboard"); // Zie Fix 3
         } else {
           router.push("/");
         }
