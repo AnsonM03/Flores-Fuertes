@@ -2,8 +2,8 @@
 import VeilingRij from "./VeilingRij";
 import { useState, useEffect} from "react";
 
-export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSelect, onDelete, onAdd }) {
-    const [rol, setRol] = useState(null);
+export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSelect, onDelete, onAdd, rol }) {
+    // const [rol, setRol] = useState(null);
     
 
     // Haal rol op uit localStorage
@@ -20,7 +20,6 @@ export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSe
       }, []);
   
 
-export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSelect, onDelete, onAdd, rol }) {
   return (
     <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">

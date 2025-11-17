@@ -2,23 +2,21 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import VeilingenLijst from "../components/VeilingenLijst";
-import VeilingKlok from "../components/Veilingklok"; // We gebruiken de 'k' op het einde
-import "../styles/veilingen.css"; // Importeren van de nieuwe CSS
+import VeilingKlok from "../components/Veilingklok";
+import "../styles/veilingen.css";
 
 export default function Veilingen() {
-     // ------------------------
-      // USESTATES
-      // ------------------------
-      const [veilingen, setVeilingen] = useState([]);
-      const [selectedVeiling, setSelectedVeiling] = useState(null);
-      const [error, setError] = useState(null);
-      const [klanten, setKlanten] = useState([]);
-      const [gebruiker, setGebruiker] = useState(null);
-      const router = useRouter();
-      const rol = gebruiker?.gebruikerType?.toLowerCase();
+  const [veilingen, setVeilingen] = useState([]);
+  const [selectedVeiling, setSelectedVeiling] = useState(null);
+  const [error, setError] = useState(null);
+  const [klanten, setKlanten] = useState([]);
+  const [gebruiker, setGebruiker] = useState(null);
+  const router = useRouter();
+
+  const rol = gebruiker?.gebruikerType?.toLowerCase();
 
   // ------------------------
-  // Auth check
+  // AUTH CHECK
   // ------------------------
   useEffect(() => {
     const stored = localStorage.getItem("gebruiker");
@@ -26,117 +24,88 @@ export default function Veilingen() {
       router.push("/login");
       return;
     }
-    const gebruikerData = JSON.parse(stored);
-    setGebruiker(gebruikerData);
+    setGebruiker(JSON.parse(stored));
   }, [router]);
 
   // ------------------------
-  // Veilingen ophalen
+  // VEILINGEN OPHALEN + AANVOERDER KOPPELEN
   // ------------------------
   useEffect(() => {
-    async function fetchVeilingenMetAanvoerders() {
+    async function fetchVeilingen() {
       try {
         const res = await fetch("http://localhost:5281/api/Veilingen");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const raw = await res.json();
 
-        // Koppel aanvoerders aan veilingen
         const updated = await Promise.all(
-          data.map(async (v) => {
-            // Pas de datastructuur aan op basis van je API
-            const aanvoerderId = v.product?.aanvoerder_Id || v.product?.aanvoerderId;
-            const productName = v.product?.naam || "Onbekend Product";
-            
+          raw.map(async (v) => {
+            const aanvoerderId = v.product?.aanvoerder_Id;
+
             let aanvoerderNaam = "Onbekende Aanvoerder";
             if (aanvoerderId) {
-              try {
-                const r2 = await fetch(`http://localhost:5281/api/Gebruikers/${aanvoerderId}`);
-                if (r2.ok) {
-                  const aanvoerder = await r2.json();
-                  aanvoerderNaam = `${aanvoerder.voornaam || ''} ${aanvoerder.achternaam || ''}`.trim();
-                }
-              })
-            );
-    
-            setVeilingen(updated);
-          } catch (err) {
-            console.error(err);
-            setError("Kon veilingen niet ophalen");
-          }
-        }
-    
-        fetchVeilingenMetAanvoerders();
-      }, []);
-    
-      // ------------------------
-      // Klanten ophalen
-      // ------------------------
-      useEffect(() => {
-        async function fetchKlanten() {
-          try {
-            const res = await fetch("http://localhost:5281/api/Klanten");
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            setKlanten(data);
-          } catch (err) {
-            console.error(err);
-          }
-        }
-        fetchKlanten();
-      }, []);
-    
-      // ------------------------
-      // Live status updates
-      // ------------------------
-      useEffect(() => {
-        const interval = setInterval(() => {
-          const nu = new Date();
-          setVeilingen((prev) =>
-            prev.map((v) => {
-              const eind = new Date(v.eindTijd);
-              let status = v.status;
-    
-              if (nu < eind && nu >= new Date(v.startTijd)) {
-                status = "actief";
-              } else if (nu >= eind) {
-                status = "afgelopen";
-              } else {
-                status = "wachten";
+              const r2 = await fetch(
+                `http://localhost:5281/api/Gebruikers/${aanvoerderId}`
+              );
+              if (r2.ok) {
+                const a = await r2.json();
+                aanvoerderNaam = `${a.voornaam} ${a.achternaam}`;
               }
             }
-            // We slaan de info plat op in het veiling object
-            return { ...v, aanvoerderNaam, productName };
+
+            return {
+              ...v,
+              productNaam: v.product?.naam || "Onbekend product",
+              aanvoerderNaam,
+            };
           })
         );
 
         setVeilingen(updated);
-        // Selecteer de eerste veiling die nog niet is afgelopen
-        const eersteActieve = updated.find(v => new Date(v.eindTijd) > new Date()) || updated[0];
-        setSelectedVeiling(eersteActieve);
 
+        // selecteer eerste actieve veiling
+        const actieve = updated.find(
+          (v) => new Date(v.eindTijd) > new Date()
+        );
+        setSelectedVeiling(actieve || updated[0]);
       } catch (err) {
         console.error(err);
         setError("Kon veilingen niet ophalen");
       }
     }
 
-    fetchVeilingenMetAanvoerders();
+    fetchVeilingen();
   }, []);
 
   // ------------------------
-  // Live status updates
+  // KLANTEN OPHALEN
+  // ------------------------
+  useEffect(() => {
+    async function fetchKlanten() {
+      try {
+        const res = await fetch("http://localhost:5281/api/Klanten");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setKlanten(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchKlanten();
+  }, []);
+
+  // ------------------------
+  // LIVE STATUS UPDATES
   // ------------------------
   useEffect(() => {
     const interval = setInterval(() => {
       const nu = new Date();
       setVeilingen((prev) =>
         prev.map((v) => {
-          const eind = new Date(v.eindTijd);
           let status = v.status;
 
-          if (nu < eind && nu >= new Date(v.startTijd)) {
+          if (nu >= new Date(v.startTijd) && nu < new Date(v.eindTijd)) {
             status = "actief";
-          } else if (nu >= eind) {
+          } else if (nu >= new Date(v.eindTijd)) {
             status = "afgelopen";
           } else {
             status = "wachten";
@@ -150,29 +119,25 @@ export default function Veilingen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Handler voor het plaatsen van een bod
+  // ------------------------
+  // BOD HANDLER
+  // ------------------------
   const handleBod = (veilingId, bedrag) => {
-    if (rol !== 'klant') {
-      alert("Alleen klanten kunnen bieden.");
+    if (rol !== "klant") {
+      alert("Alleen klanten mogen bieden.");
       return;
     }
-    
-    // TODO: Implementeer je bod-logica hier
-    // (Waarschijnlijk een POST request naar je API)
-    console.log(`Klant ${gebruiker.gebruiker_Id} biedt ${bedrag} op veiling ${veilingId}`);
-    alert(`Bod van €${bedrag} geplaatst!`);
 
-    // Optioneel: update de veiling (bijv. met nieuwe prijs)
-    // En selecteer de volgende actieve veiling
+    console.log(
+      `Klant ${gebruiker.gebruiker_Id} biedt €${bedrag} op veiling ${veilingId}`
+    );
+    alert(`Bod geplaatst: €${bedrag}`);
   };
 
   return (
-    // We gebruiken de 'main' tag en voegen een class toe
     <main className="main veiling-pagina">
-      {/* Een container om de layout te centreren, net als in stylebp.css */}
       <div className="container veiling-layout">
-        
-        {/* Kolom 1: De lijst met veilingen */}
+        {/* Veilingen lijst */}
         <div className="veiling-lijst-kolom">
           <VeilingenLijst
             veilingen={veilingen}
@@ -182,16 +147,16 @@ export default function Veilingen() {
           />
         </div>
 
-        {/* Kolom 2: De Veilingklok */}
+        {/* Klok */}
         <div className="veiling-klok-kolom">
           {selectedVeiling ? (
-            <VeilingKlok 
-              veiling={selectedVeiling} 
-              gebruikerRol={rol} 
+            <VeilingKlok
+              veiling={selectedVeiling}
+              gebruikerRol={rol}
               onBod={handleBod}
             />
           ) : (
-            <p className="text-gray-500 italic">Klik op een veiling</p>
+            <p className="text-gray-500 italic">Selecteer een veiling</p>
           )}
         </div>
       </div>
