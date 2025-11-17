@@ -4,6 +4,9 @@
   --accent:#ADC3BF;
   --accent-hover:#A7BBB7;
   --focus:#005fcc;
+  --input-border:#cfd3d6;
+  --input-focus-bg:#fff;
+  --error-color:#d32f2f;
 }
 
 /* Achtergrond */
@@ -68,42 +71,36 @@
   font-weight:600;
   font-size:14px;
   display:block;
+  margin-bottom:4px;
 }
 
 /* Inputs */
 .auth-form input[type="text"],
 .auth-form input[type="email"],
-.auth-form input[type="password"] {
-  padding: 14px 20px;
-  border: 2px solid #cfd3d6;
-  border-radius: 9999px; /* maakt het ovaal */
-  font-size: 16px;
-  width: 100%;
-  background-color: #fff;
-  box-shadow: 0 3x 8px rgba(0,0,0,0.12);
-  transition: border 0.2s, box-shadow 0.2s;
+.auth-form input[type="password"],
+.auth-form input[type="tel"] {
+  padding:14px 20px;
+  border:2px solid var(--input-border);
+  border-radius:9999px;
+  font-size:16px;
+  width:100%;
+  background-color:var(--input-focus-bg);
+  box-shadow:0 3px 8px rgba(0,0,0,0.12);
+  transition:border 0.2s, box-shadow 0.2s;
 }
 
-.auth-form input[type="text"]:focus,
-.auth-form input[type="email"]:focus,
-.auth-form input[type="password"]:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 4px rgba(255,131,0,0.3);
-}
-
-/* Focus voor alle inputs */
 .auth-form input:focus{
-  outline:3px solid var(--focus);
-  outline-offset:2px;
+  outline:none;
+  border-color:var(--brand);
+  box-shadow:0 0 0 4px rgba(255,131,0,0.3);
+  background:#fff;
 }
 
-/* Checkbox rij */
-.checkbox-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-top:2px;
+/* Foutmelding */
+.auth-form p[role="alert"]{
+  color:var(--error-color);
+  font-weight:600;
+  margin-bottom:12px;
 }
 
 /* Knop */
@@ -121,7 +118,7 @@
   box-shadow:0 8px 22px rgba(0,0,0,.18);
 }
 
-/* Hover en focus gelijkwaardig */
+/* Hover en focus */
 .auth .btn:hover,
 .auth .btn:focus-visible{
   background:var(--brand-hover);
@@ -131,6 +128,7 @@
   outline-offset:3px;
 }
 
+/* Actieve knop */
 .auth .btn:active{
   transform:translateY(0);
   box-shadow:0 6px 16px rgba(0,0,0,.18);
@@ -151,7 +149,6 @@
   cursor:pointer;
 }
 
-/* Hover & focus */
 .auth-cta:hover,
 .auth-cta:focus-visible{
   background:var(--accent-hover);
@@ -170,6 +167,14 @@
 .auth-cta:hover svg,
 .auth-cta:focus-visible svg{
   color:var(--brand);
+}
+
+/* Focus indicator voor alle interactieve elementen */
+.auth-form input:focus,
+.auth-form button:focus,
+.auth-cta:focus{
+  outline:3px solid var(--focus);
+  outline-offset:2px;
 }
 
 /* Mobile */
