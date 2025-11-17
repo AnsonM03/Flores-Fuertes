@@ -18,6 +18,7 @@ export default function Register() {
     Telefoonnr: "",
     Woonplaats: "",
     Wachtwoord: "",
+    GebruikerType: "Klant",
   });
 
   const handleChange = (e) => {
