@@ -2,18 +2,9 @@
 import VeilingRij from "./VeilingRij";
 import { useState, useEffect } from "react";
 
-// !! FIX: Samengevoegd tot één enkele component.
-// De 'rol' prop is uit de parameters gehaald, omdat deze component
-// zijn eigen 'rol' uit de localStorage haalt.
-export default function VeilingenLijst({
-  veilingen,
-  error,
-  selectedVeiling,
-  onSelect,
-  onDelete,
-  onAdd,
-}) {
-  const [rol, setRol] = useState(null);
+export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSelect, onDelete, onAdd, rol }) {
+    // const [rol, setRol] = useState(null);
+    
 
   // Haal rol op uit localStorage
   useEffect(() => {
@@ -28,7 +19,6 @@ export default function VeilingenLijst({
     }
   }, []);
 
-  // !! FIX: De 'return' met de JSX hoort *binnen* dezelfde functie.
   return (
     <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">
