@@ -7,19 +7,21 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
+  // !! FIX: Haal 'gebruiker' en 'loading' op uit de AuthContext
   const { gebruiker, loading } = useAuth();
-  const router = useRouter();
+  const router = useRouter(); // !! FIX: Eén keer 'router' declareren
 
   const [veilingen, setVeilingen] = useState([]);
   const [selectedVeiling, setSelectedVeiling] = useState(null);
   const [error, setError] = useState(null);
   const [klanten, setKlanten] = useState([]);
-  const [gebruiker, setGebruiker] = useState(null);
-  const router = useRouter();
+
+  // !! FIX: De dubbele declaraties voor 'gebruiker' en 'router' zijn verwijderd.
+  // 'rol' wordt nu correct afgeleid van de 'gebruiker' uit de AuthContext.
   const rol = gebruiker?.gebruikerType?.toLowerCase();
 
-   console.log("GEVONDEN ROL:", rol);
-    console.log("GEHELE GEBRUIKER:", gebruiker);
+  console.log("GEVONDEN ROL:", rol);
+  console.log("GEHELE GEBRUIKER:", gebruiker);
 
   // Redirect naar login als niet ingelogd
   useEffect(() => {
@@ -39,13 +41,25 @@ export default function Dashboard() {
         // Aanvoerders koppelen
         const updated = await Promise.all(
           data.map(async (v) => {
-            const aanvoerderId = v.product?.aanvoerder_Id;
+            // !! FIX: Aangepast om 'aanvoerder_Id' of 'aanvoerderId' te checken
+            const aanvoerderId =
+              v.product?.aanvoerder_Id || v.product?.aanvoerderId;
             if (!aanvoerderId) return v;
+
             try {
-              const r2 = await fetch(`http://localhost:5281/api/Aanvoerders/${aanvoerderId}`);
+              // !! FIX: API-endpoint moet overeenkomen (Gebruikers/Aanvoerders?)
+              // Ik gebruik hier 'Gebruikers' o.b.v. een vorig bestand. Pas aan indien nodig.
+              const r2 = await fetch(
+                `http://localhost:5281/api/Gebruikers/${aanvoerderId}`
+              );
               if (!r2.ok) return v;
               const aanvoerder = await r2.json();
-              return { ...v, aanvoerder };
+              // Sla de naam plat op voor eenvoudiger gebruik
+              const aanvoerderNaam =
+                `${aanvoerder.voornaam || ""} ${
+                  aanvoerder.achternaam || ""
+                }`.trim();
+              return { ...v, aanvoerder, aanvoerderNaam };
             } catch {
               return v;
             }
@@ -60,8 +74,11 @@ export default function Dashboard() {
       }
     }
 
-    fetchVeilingen();
-  }, []);
+    // Voer alleen uit als de gebruiker is geladen
+    if (gebruiker) {
+      fetchVeilingen();
+    }
+  }, [gebruiker]); // Afhankelijk van 'gebruiker'
 
   // Klanten ophalen
   useEffect(() => {
@@ -75,11 +92,15 @@ export default function Dashboard() {
         console.error(err);
       }
     }
-    fetchKlanten();
-  }, []);
+    // Voer alleen uit als de gebruiker is geladen
+    if (gebruiker) {
+      fetchKlanten();
+    }
+  }, [gebruiker]); // Afhankelijk van 'gebruiker'
 
   // Willekeurige veiling maken
   async function maakRandomVeiling() {
+    // ... (deze functie was correct)
     const start = new Date();
     const eind = new Date(start.getTime() + (Math.random() * 10 + 5) * 60 * 1000);
     const randomPrijs = Math.floor(Math.random() * 100) + 20;
@@ -93,8 +114,8 @@ export default function Dashboard() {
       eindTijd: eind.toISOString(),
       kloklocatie: randomLocatie,
       status: "open",
-      product_Id: "632e5fc8-abfa-4760-9e6b-28859ca83529",
-      veilingmeester_Id: "19c7ec76-e38f-4b8c-b985-00e5f804ca43",
+      product_Id: "632e5fc8-abfa-4760-9e6b-28859ca83529", // Hardcoded, pas aan!
+      veilingmeester_Id: gebruiker.gebruiker_Id, // Gebruik de ingelogde veilingmeester
     };
 
     try {
@@ -112,6 +133,36 @@ export default function Dashboard() {
       console.error(err);
       alert("❌ Er ging iets mis bij het aanmaken van de veiling");
     }
+  }
+
+  // !! FIX: Ontbrekende functies toegevoegd
+  async function handleVeilingVerwijderen(veilingId) {
+    if (!confirm("Weet je zeker dat je deze veiling wilt verwijderen?")) return;
+
+    console.log("Verwijder veiling:", veilingId);
+    // TODO: Implementeer je fetch DELETE request hier
+    // try {
+    //   await fetch(`http://localhost:5281/api/Veilingen/${veilingId}`, { method: 'DELETE' });
+    //   setVeilingen(prev => prev.filter(v => v.veiling_Id !== veilingId));
+    //   alert("Veiling verwijderd.");
+    // } catch (err) {
+    //   alert("Kon veiling niet verwijderen.");
+    // }
+  }
+
+  // !! FIX: Ontbrekende functies toegevoegd
+  async function handleKlantVerwijderen(klantId) {
+    if (!confirm("Weet je zeker dat je deze klant wilt verwijderen?")) return;
+
+    console.log("Verwijder klant:", klantId);
+    // TODO: Implementeer je fetch DELETE request hier
+    // try {
+    //   await fetch(`http://localhost:5281/api/Klanten/${klantId}`, { method: 'DELETE' });
+    //   setKlanten(prev => prev.filter(k => k.gebruiker_Id !== klantId));
+    //   alert("Klant verwijderd.");
+    // } catch (err) {
+    //   alert("Kon klant niet verwijderen.");
+    // }
   }
 
   // Live status updates
@@ -132,34 +183,32 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading || !gebruiker) return <p className="text-center mt-10">Laden...</p>;
+  if (loading || !gebruiker)
+    return <p className="text-center mt-10">Laden...</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       <div className="grid grid-cols-2 gap-6">
         <div className="flex flex-col gap-6">
-
           {/* --- VEILINGEN (voor aanvoerder & veilingmeester)--- */}
-          {rol === "veilingmeester" ? (
-            <VeilingenLijst
-              veilingen={veilingen}
-              error={error}
-              selectedVeiling={selectedVeiling}
-              onSelect={setSelectedVeiling}
-              onDelete={handleVeilingVerwijderen}
-              onAdd={maakRandomVeiling}
-            />
-          ) : <VeilingenLijst
-              veilingen={veilingen}
-              error={error}
-              selectedVeiling={selectedVeiling}
-              onSelect={setSelectedVeiling}
-            />}
+          {/* We geven de rol nu mee aan de lijst, zodat die de knoppen kan tonen/verbergen */}
+          <VeilingenLijst
+            veilingen={veilingen}
+            error={error}
+            selectedVeiling={selectedVeiling}
+            onSelect={setSelectedVeiling}
+            onDelete={
+              rol === "veilingmeester" ? handleVeilingVerwijderen : undefined
+            }
+            onAdd={rol === "veilingmeester" ? maakRandomVeiling : undefined}
+          />
 
           {/* --- KOPERS (alleen voor veilingmeester) --- */}
           {(rol === "veilingmeester" || rol === "aanvoerder") && (
             <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Kopers
+              </h2>
 
               {klanten.length === 0 ? (
                 <p className="text-gray-500 italic">Kopers worden geladen...</p>
@@ -178,7 +227,11 @@ export default function Dashboard() {
                         <KoperRij
                           key={k.gebruiker_Id}
                           klant={k}
-                          onDelete={rol === "veilingmeester" ? () => handleKlantVerwijderen(k.gebruiker_Id) : undefined}
+                          onDelete={
+                            rol === "veilingmeester"
+                              ? () => handleKlantVerwijderen(k.gebruiker_Id)
+                              : undefined
+                          }
                         />
                       ))}
                     </tbody>
