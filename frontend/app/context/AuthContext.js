@@ -1,43 +1,42 @@
-"use client";
+"use client"
 
-import { createContext, useContext, useState, useEffect } from "react";
+import {createContext, useContext, useState, useEffect} from 'react';
 
-const AuthContext = createContext();
+const  AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-  const [gebruiker, setGebruiker] = useState(null);
-  const [loading, setLoading] = useState(true);
+export function AuthProvider( {children} ) {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const isLoggedIn = !!user;
 
-  useEffect(() => {
-    const storedGebruiker = localStorage.getItem("gebruiker");
-    if (storedGebruiker) {
-      try {
-        setGebruiker(JSON.parse(storedGebruiker));
-      } catch (err) {
-        console.error("Kon gebruiker niet parsen uit localStorage", err);
+    useEffect(() => {
+        const stored = localStorage.getItem("gebruiker");
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                setUser(parsed);
+            } catch {
+                console.error("Kon gebruiker niet parsen uit localStorage");
+                localStorage.removeItem("gebruiker");
+            }
+        }
+        setLoading(false);
+    }, []);
+
+    const  login = (userData) => {
+            setUser(userData);
+            localStorage.setItem("gebruiker", JSON.stringify(userData)); // slaat op in LocalStorage
+        };
+
+    const logout = () => {
+        setUser(null);
         localStorage.removeItem("gebruiker");
-      }
-    }
-    setLoading(false);
-  }, []);
-
-  const login = (gebruikerData) => {
-    setGebruiker(gebruikerData);
-    localStorage.setItem("gebruiker", JSON.stringify(gebruikerData));
-  };
-
-  const logout = () => {
-    setGebruiker(null);
-    localStorage.removeItem("gebruiker");
-  };
-
-  const isLoggedIn = !!gebruiker;
-
-  return (
-    <AuthContext.Provider value={{ gebruiker, isLoggedIn, login, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    };
+    return (
+        <AuthContext.Provider value={{user, isLoggedIn, loading, login, logout}}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export function useAuth() {

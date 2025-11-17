@@ -14,8 +14,12 @@ export default function Dashboard() {
   const [selectedVeiling, setSelectedVeiling] = useState(null);
   const [error, setError] = useState(null);
   const [klanten, setKlanten] = useState([]);
+  const [gebruiker, setGebruiker] = useState(null);
+  const router = useRouter();
+  const rol = gebruiker?.gebruikerType?.toLowerCase();
 
-  const rol = gebruiker?.rol?.toLowerCase();
+   console.log("GEVONDEN ROL:", rol);
+    console.log("GEHELE GEBRUIKER:", gebruiker);
 
   // Redirect naar login als niet ingelogd
   useEffect(() => {
@@ -134,18 +138,55 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       <div className="grid grid-cols-2 gap-6">
         <div className="flex flex-col gap-6">
-          <VeilingenLijst
-            veilingen={veilingen}
-            error={error}
-            selectedVeiling={selectedVeiling}
-            onSelect={setSelectedVeiling}
-            onDelete={(id) =>
-              setVeilingen((prev) => prev.filter((v) => v.veiling_Id !== id))
-            }
-            onAdd={rol === "veilingmeester" ? maakRandomVeiling : undefined}
-            rol={rol}
-          />
-          {/* Koperslijst */}
+
+          {/* --- VEILINGEN (voor aanvoerder & veilingmeester)--- */}
+          {rol === "veilingmeester" ? (
+            <VeilingenLijst
+              veilingen={veilingen}
+              error={error}
+              selectedVeiling={selectedVeiling}
+              onSelect={setSelectedVeiling}
+              onDelete={handleVeilingVerwijderen}
+              onAdd={maakRandomVeiling}
+            />
+          ) : <VeilingenLijst
+              veilingen={veilingen}
+              error={error}
+              selectedVeiling={selectedVeiling}
+              onSelect={setSelectedVeiling}
+            />}
+
+          {/* --- KOPERS (alleen voor veilingmeester) --- */}
+          {(rol === "veilingmeester" || rol === "aanvoerder") && (
+            <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Kopers</h2>
+
+              {klanten.length === 0 ? (
+                <p className="text-gray-500 italic">Kopers worden geladen...</p>
+              ) : (
+                <div className="overflow-auto rounded-md border border-gray-200">
+                  <table className="min-w-full text-sm text-left text-gray-700">
+                    <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
+                      <tr>
+                        <th className="px-4 py-2">Naam</th>
+                        <th className="px-4 py-2">Woonplaats</th>
+                        <th className="px-4 py-2 text-right">Acties</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {klanten.map((k) => (
+                        <KoperRij
+                          key={k.gebruiker_Id}
+                          klant={k}
+                          onDelete={rol === "veilingmeester" ? () => handleKlantVerwijderen(k.gebruiker_Id) : undefined}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col items-center justify-center p-6">
           {selectedVeiling ? (

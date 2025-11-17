@@ -15,5 +15,6 @@ namespace FloresFuertes.Models
         public string Wachtwoord { get; set; } = null!;
         public int FailedLoginAttempts { get; set; } = 0;
         public DateTime? LockoutEndTime { get; set; } = null;
+        public string GebruikerType { get; set; } = "Klant";
     }
 }
