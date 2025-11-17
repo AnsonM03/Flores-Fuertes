@@ -1,0 +1,307 @@
+/* ===========================
+   Contactpagina basislayout
+=========================== */
+.contact-page {
+  background: #f1f1f1;
+  padding: 48px 16px 80px;
+  display: grid;
+  place-items: center;
+  font-family: 'Inter', system-ui, Segoe UI, Roboto, Arial, sans-serif;
+  color: #000;
+}
+
+/* ===========================
+   Witte hoofdkaart
+=========================== */
+.contact_us {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+
+.contact_inner {
+  position: relative;
+  width: var(--container);
+  background-color: #fff;
+  border-radius: 25px;
+  box-shadow: 20px 22px 44px #ccc;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px; /* formulier + rechterbalk */
+  gap: 0;
+  padding: 60px 100px 90px 100px;
+  overflow: hidden;
+}
+
+/* ===========================
+   Rechter gradient-balk met socials
+=========================== */
+.right_conatct_social_icon {
+  background: #57C785;
+  background: linear-gradient(90deg, rgba(87, 199, 133, 1) 0%, rgba(42, 191, 166, 1) 52%, rgba(87, 199, 133, 1) 100%);
+  width: 100px;
+  min-height: 240px;
+  border-radius: 0 25px 25px 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.socil_item_inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 10px;
+  list-style: none;
+}
+
+.socil_item_inner li {
+  list-style: none;
+}
+
+.socil_item_inner li a {
+  color: #fff;
+  font-size: 18px;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  transition: opacity 0.25s ease;
+}
+
+.socil_item_inner li a:hover {
+  opacity: 0.75;
+}
+
+/* ===========================
+   Linkerzijde (formulier)
+=========================== */
+.contact_form_inner {
+  display: block;
+  min-width: 0;
+}
+
+.contact_field h3 {
+  color: #000;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin: 0 0 12px;
+  text-transform: capitalize;
+}
+
+.contact_field p {
+  color: #000;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  margin: 0 0 35px;
+  max-width: 320px;
+}
+
+.contact_form {
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===========================
+   Inputvelden + button
+=========================== */
+.form-control {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  background: transparent;
+  padding: 8px 0;
+  font-size: 13px;
+  color: #000;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+}
+
+.form-control::placeholder {
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: #4b4b4b;
+}
+
+.form-control:focus {
+  border-bottom: 2px solid #1325e8;
+  box-shadow: none;
+  outline: none;
+}
+
+/* Gradient knop */
+.contact_form_submit {
+  background: #57C785;
+  background: linear-gradient(90deg, rgba(87, 199, 133, 1) 0%, rgba(42, 191, 166, 1) 52%, rgba(87, 199, 133, 1) 100%);
+  border: none;
+  color: #fff;
+  padding: 10px 15px;
+  width: 100%;
+  margin-top: 25px;
+  border-radius: 35px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  line-height: 1.2;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+.contact_form_submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24);
+}
+
+/* ===========================
+   Donkere contact-info kaart
+=========================== */
+.contact_info_sec {
+  position: absolute;
+  background-color: #2d2d2d;
+  color: #fff;
+  right: 1px;
+  top: 18%;
+  width: 340px;
+  min-height: 340px;
+  padding: 40px;
+  border-radius: 25px 0 0 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  z-index: 2;
+}
+
+/* Paarse/blauwe balk achter de kaart — boven */
+.contact_info_sec::before {
+  content: "";
+  position: absolute;
+  right: 0%;
+  top: -100px;
+  width: 200px;
+  height: 100px;
+  background: #43D49E;
+  background: linear-gradient(135deg, rgba(67, 212, 158, 1) 0%, rgba(87, 199, 133, 1) 28%, rgba(237, 221, 83, 1) 100%);
+  border-radius: 4px;
+  z-index: -1;
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.18);
+}
+
+/* Paarse/blauwe balk achter de kaart — onder */
+.contact_info_sec::after {
+  content: "";
+  position: absolute;
+  right: 0px;
+  bottom: -80px;
+  width: 200px;
+  height: 80px;
+  background: #43D49E;
+  background: linear-gradient(45deg, rgba(67, 212, 158, 1) 0%, rgba(87, 199, 133, 1) 28%, rgba(237, 221, 83, 1) 100%);
+  border-radius: 4px;
+  z-index: -1;
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.18);
+}
+
+.contact_info_sec h4 {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin: 0 0 15px;
+}
+
+.info_single {
+  display: flex;
+  align-items: flex-start;
+  margin: 30px 0;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.info_single i {
+  margin-right: 15px;
+  color: #fff;
+  font-size: 14px;
+  min-width: 16px;
+}
+
+.info_single span {
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: #fff;
+}
+
+/* ===========================
+   Google Maps sectie
+=========================== */
+.map_sec {
+  width: 100%;
+  padding: 50px 0;
+}
+
+.map_inner {
+  width: var(--container);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.map_inner h4 {
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.map_bind {
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: 20px 22px 44px #ccc;
+  margin-top: 50px;
+}
+
+/* ===========================
+   Responsive gedrag
+=========================== */
+@media (max-width: 1000px) {
+  .contact_inner {
+    grid-template-columns: 1fr;
+    padding: 32px 24px;
+  }
+
+  .contact_info_sec {
+    position: static;
+    width: auto;
+    min-height: unset;
+    border-radius: 15px;
+    margin-top: 24px;
+    right: auto;
+    top: auto;
+  }
+
+  /* geen balken achter op mobiel */
+  .contact_info_sec::before,
+  .contact_info_sec::after {
+    display: none;
+  }
+
+  .right_conatct_social_icon {
+    order: -1;
+    width: 100%;
+    min-height: auto;
+    border-radius: 25px 25px 0 0;
+    padding: 12px 0;
+    justify-content: center;
+  }
+
+  .socil_item_inner {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
