@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import '../styles/account.css'; // <-- 1. Importeer je nieuwe CSS
 
 export default function AccountPage() {
   const { gebruiker, loading } = useAuth();
@@ -25,12 +26,13 @@ export default function AccountPage() {
       }
       setFetching(false);
     }
-    fetchAccountInfo();
-  }, [gebruiker]);
-
-  if (loading || fetching) return <p className="text-center mt-10">Laden...</p>;
-  if (!gebruiker) return <p className="text-center mt-10">Je moet eerst inloggen.</p>;
-  if (!accountInfo) return <p className="text-center mt-10">Geen accountinformatie beschikbaar.</p>;
+    // Wacht tot de gebruiker geladen is uit de context
+    if (!loading && gebruiker) {
+      fetchAccountInfo();
+    } else if (!loading && !gebruiker) {
+      setFetching(false); // Geen gebruiker, stop met laden
+    }
+  }, [gebruiker, loading]); // Voeg 'loading' toe als dependency
 
   // Sla accountgegevens op
   const handleInfoSave = async () => {
@@ -79,69 +81,120 @@ export default function AccountPage() {
     }
   };
 
+  // --- Laad- en foutstatussen ---
+  if (loading || fetching) {
+    return (
+      <main className="account-page">
+        <p>Gegevens laden...</p>
+      </main>
+    );
+  }
+  
+  if (!gebruiker) {
+    return (
+      <main className="account-page">
+        <div className="auth-card account-card">
+          <div className="auth-form">
+            <h1>Geen toegang</h1>
+            <p>Je moet eerst inloggen om je accountgegevens te zien.</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+  
+  if (!accountInfo) {
+     return (
+      <main className="account-page">
+        <p>Kon accountinformatie niet laden.</p>
+      </main>
+    );
+  }
+
+  // --- Hoofdweergave ---
   return (
-    <main className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-md">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">Mijn Account</h1>
-
-        <div className="space-y-4">
-          {editingInfo ? (
-            <>
-              <EditableField label="Voornaam" value={formData.voornaam} onChange={(v) => setFormData({ ...formData, voornaam: v })} />
-              <EditableField label="Achternaam" value={formData.achternaam} onChange={(v) => setFormData({ ...formData, achternaam: v })} />
-              <EditableField label="Email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} />
-              <EditableField label="Adres" value={formData.adres} onChange={(v) => setFormData({ ...formData, adres: v })} />
-              <EditableField label="Telefoonnummer" value={formData.telefoonnr} onChange={(v) => setFormData({ ...formData, telefoonnr: v })} />
-              <EditableField label="Woonplaats" value={formData.woonplaats} onChange={(v) => setFormData({ ...formData, woonplaats: v })} />
-
-              <div className="flex gap-2 mt-2">
-                <button onClick={handleInfoSave} className="bg-blue-600 text-white px-4 py-2 rounded-md">Opslaan</button>
-                <button onClick={() => setEditingInfo(false)} className="bg-gray-400 text-white px-4 py-2 rounded-md">Annuleren</button>
+    <main className="account-page">
+      <div className="auth-card account-card">
+        <div className="auth-form">
+          
+          <div className="account-header">
+            <h1>Mijn Account</h1>
+            {/* Toon knop alleen als we niet al aan het wijzigen zijn */}
+            {!editingInfo && !changingPassword && (
+              <div className="button-group" style={{ marginTop: 0 }}>
+                <button onClick={() => setEditingInfo(true)} className="btn btn-primary">
+                  Gegevens aanpassen
+                </button>
               </div>
-            </>
-          ) : (
-            <>
-              <ReadOnlyField label="Voornaam" value={accountInfo.voornaam} />
-              <ReadOnlyField label="Achternaam" value={accountInfo.achternaam} />
-              <ReadOnlyField label="Email" value={accountInfo.email} />
-              <ReadOnlyField label="Adres" value={accountInfo.adres} />
-              <ReadOnlyField label="Telefoonnummer" value={accountInfo.telefoonnr} />
-              <ReadOnlyField label="Woonplaats" value={accountInfo.woonplaats} />
+            )}
+          </div>
 
-              <div className="flex gap-2 mt-4">
-                <button onClick={() => setEditingInfo(true)} className="bg-blue-600 text-white px-4 py-2 rounded-md">Gegevens aanpassen</button>
-                <button onClick={() => setChangingPassword(true)} className="bg-green-600 text-white px-4 py-2 rounded-md">Wachtwoord wijzigen</button>
-              </div>
-            </>
-          )}
+          <div className="account-content">
+            {editingInfo ? (
+              <>
+                {/* --- Bewerkbare Velden --- */}
+                <EditableField label="Voornaam" value={formData.voornaam} onChange={(v) => setFormData({ ...formData, voornaam: v })} />
+                <EditableField label="Achternaam" value={formData.achternaam} onChange={(v) => setFormData({ ...formData, achternaam: v })} />
+                <EditableField label="Email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} />
+                <EditableField label="Adres" value={formData.adres} onChange={(v) => setFormData({ ...formData, adres: v })} />
+                <EditableField label="Telefoonnummer" value={formData.telefoonnr} onChange={(v) => setFormData({ ...formData, telefoonnr: v })} />
+                <EditableField label="Woonplaats" value={formData.woonplaats} onChange={(v) => setFormData({ ...formData, woonplaats: v })} />
 
-          {changingPassword && (
-            <ChangePasswordForm
-              onCancel={() => setChangingPassword(false)}
-              onSave={handlePasswordChange}
-            />
-          )}
+                <div className="button-group">
+                  <button onClick={handleInfoSave} className="btn btn-primary">Opslaan</button>
+                  <button onClick={() => setEditingInfo(false)} className="btn btn-secondary">Annuleren</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* --- Alleen-lezen Velden --- */}
+                <ReadOnlyField label="Voornaam" value={accountInfo.voornaam} />
+                <ReadOnlyField label="Achternaam" value={accountInfo.achternaam} />
+                <ReadOnlyField label="Email" value={accountInfo.email} />
+                <ReadOnlyField label="Adres" value={accountInfo.adres} />
+                <ReadOnlyField label="Telefoonnummer" value={accountInfo.telefoonnr} />
+                <ReadOnlyField label="Woonplaats" value={accountInfo.woonplaats} />
+
+                {/* Toon 'Wachtwoord wijzigen' knop alleen in read-only modus */}
+                <div className="button-group">
+                  {!changingPassword && (
+                    <button onClick={() => setChangingPassword(true)} className="btn btn-secondary">Wachtwoord wijzigen</button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* --- Wachtwoord Formulier --- */}
+            {changingPassword && (
+              <ChangePasswordForm
+                onCancel={() => setChangingPassword(false)}
+                onSave={handlePasswordChange}
+              />
+            )}
+          </div>
+          
         </div>
       </div>
     </main>
   );
 }
 
-// Componenten
+// --- Inline Componenten (nu met custom classes) ---
+
 function ReadOnlyField({ label, value }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      <input type="text" value={value || ""} disabled className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-900" />
+    <div className="account-field">
+      <label>{label}</label>
+      <input type="text" value={value || ""} disabled />
     </div>
   );
 }
 
 function EditableField({ label, value, onChange }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      <input type="text" value={value || ""} onChange={(e) => onChange(e.target.value)} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900" />
+    <div className="account-field">
+      <label>{label}</label>
+      <input type="text" value={value || ""} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
@@ -151,15 +204,16 @@ function ChangePasswordForm({ onCancel, onSave }) {
   const [newPassword, setNewPassword] = useState("");
 
   return (
-    <div className="mt-6 p-6 bg-white rounded-xl shadow-lg border border-gray-300 max-w-md mx-auto">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Wachtwoord wijzigen</h2>
-
-      <EditableField label="Huidig wachtwoord" value={oldPassword} onChange={setOldPassword} />
-      <EditableField label="Nieuw wachtwoord" value={newPassword} onChange={setNewPassword} />
-
-      <div className="flex justify-end mt-4 gap-2">
-        <button onClick={() => onSave(oldPassword, newPassword)} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">Opslaan</button>
-        <button onClick={onCancel} className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500 transition-colors">Annuleren</button>
+    <div className="password-form">
+      <h2>Wachtwoord wijzigen</h2>
+      {/* Hergebruik account-content voor de 2-kolommen layout */}
+      <div className="account-content">
+        <EditableField label="Huidig wachtwoord" value={oldPassword} onChange={setOldPassword} type="password" />
+        <EditableField label="Nieuw wachtwoord" value={newPassword} onChange={setNewPassword} type="password" />
+      </div>
+      <div className="button-group">
+        <button onClick={() => onSave(oldPassword, newPassword)} className="btn btn-primary">Opslaan</button>
+        <button onClick={onCancel} className="btn btn-secondary">Annuleren</button>
       </div>
     </div>
   );

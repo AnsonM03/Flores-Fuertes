@@ -1,0 +1,146 @@
+/* * Stijlen voor de account pagina
+ * Laadt na auth.css en stylebp.css
+ */
+
+/* 1. Pagina wrapper */
+main.account-page {
+  /* We gebruiken een lichtere achtergrond dan .auth */
+  background: #f8f9fa;
+  min-height: calc(100vh - 140px); /* Zelfde hoogte als .auth */
+  display: grid;
+  place-items: center;
+  padding: 40px 16px 80px;
+  box-sizing: border-box;
+}
+
+/* 2. De kaart */
+/* We hergebruiken .auth-card en voegen .account-card toe voor overrides */
+.auth-card.account-card {
+  width: min(700px, 92vw);
+  margin: 0;
+  border-radius: 12px; /* Iets moderner dan auth.css */
+  padding-bottom: 24px;
+}
+
+/* We hergebruiken .auth-form voor de padding binnen de kaart */
+.account-card .auth-form {
+  margin-top: 0; /* Geen negatieve marge nodig zoals in auth.css */
+  padding: 24px 32px;
+}
+
+/* 3. Header in de kaart */
+.account-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 16px;
+}
+
+.account-header h1 {
+  font-size: 26px;
+  font-weight: 800;
+  color: #222;
+  margin: 0;
+}
+
+/* 4. Formulier velden layout */
+.account-content {
+  display: grid;
+  /* Twee kolommen op desktop */
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.account-field label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink-weak);
+  text-transform: capitalize;
+}
+
+/* Stijl voor alle inputs, geleend van auth.css */
+.account-field input[type="text"],
+.account-field input[type="password"] {
+  padding: 10px 12px;
+  border: 1px solid #cfd3d6;
+  border-radius: 6px; /* Iets ronder */
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box; /* Zorgt dat padding werkt */
+}
+.account-field input:focus {
+  outline: 2px solid var(--brand); /* Oranje brand van auth.css */
+}
+
+/* Stijl voor read-only velden */
+.account-field input:disabled {
+  background: #f1f3f5;
+  color: #555;
+  cursor: not-allowed;
+  border-color: #e9ecef;
+}
+
+/* 5. Knoppen */
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  /* Zorgt dat de groep de volle breedte van 2 kolommen pakt */
+  grid-column: 1 / -1; 
+}
+
+/* We hergebruiken de .btn class van auth.css */
+/* Je kunt .btn-primary en .btn-secondary nu overal gebruiken */
+
+/* Primaire knop (Oranje, van auth.css) */
+.btn.btn-primary {
+  background: var(--brand);
+}
+.btn.btn-primary:hover {
+  background: var(--brand-hover);
+}
+
+/* Secundaire knop (Grijs) */
+.btn.btn-secondary {
+  background: #6c757d;
+  color: white;
+  box-shadow: 0 8px 22px rgba(0,0,0,.1);
+}
+.btn.btn-secondary:hover {
+  background: #5a6268;
+  box-shadow: 0 12px 26px rgba(0,0,0,.15);
+}
+
+/* 6. Wachtwoord formulier */
+.password-form {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e9ecef;
+  grid-column: 1 / -1; /* Volle breedte */
+}
+.password-form h2 {
+   font-size: 20px;
+   font-weight: 700;
+   margin-bottom: 16px;
+}
+
+/* 7. Responsive */
+@media (max-width: 640px) {
+  .account-content {
+    grid-template-columns: 1fr; /* Eén kolom op mobiel */
+  }
+
+  .account-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+}
