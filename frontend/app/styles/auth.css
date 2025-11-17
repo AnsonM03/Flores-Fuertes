@@ -3,46 +3,38 @@
   --brand-hover:#E67300;
   --accent:#ADC3BF;
   --accent-hover:#A7BBB7;
+  --focus:#005fcc;
 }
 
-                                                                                         /*indeling vlak + achtergrond  */
+/* Achtergrond */
 .auth{
   min-height:calc(100vh - 140px);
   background:url("https://ok9static.oktacdn.com/fs/bco/7/fs080lnm3kOGnglTN417") center/cover no-repeat fixed;
   display:grid;
   place-items:center;
   position:relative;
-  padding-bottom:80px;             
+  padding-bottom:80px;
 }
 .auth::before{
   content:"";
   position:absolute;
   inset:0;
-  background:rgba(255,255,255,.15);
-  backdrop-filter:saturate(110%) blur(1px);
+  background:rgba(255,255,255,.25);
+  backdrop-filter:saturate(110%) blur(2px);
 }
 
-.auth-wrap{
-  position:relative;
-  z-index:1;
-  width:var(--container);
-}
-
+/* Card */
 .auth-card{
   margin-inline:auto;
   width:min(420px,92vw);
   background:#fff;
-  border-radius:0;                 
+  border-radius:4px;
   box-shadow:0 14px 40px rgba(0,0,0,.22);
   overflow:hidden;
   position:relative;
 }
-.auth-card::before{content:none;}
 
-
-                                                                          /* =======================================
-                                                                            AFBEELDING werkt nog steeds niet maar goed genoeg
-                                                                          ======================================= */
+/* Media */
 .auth-media{
   width:100%;
   height:220px;
@@ -53,21 +45,16 @@
   width:100%;
   height:100%;
   object-fit:cover;
-  object-position:right center;    
+  object-position:right center;
   display:block;
 }
 
-
-                                                                            /* =======================================
-                                                                              FORMULIER OPMAAK
-                                                                              tekst vlakken 
-                                                                              status af denk ik
-                                                                            ======================================= */
+/* Formulier */
 .auth-form{
   position:relative;
   z-index:1;
-  padding:16px 24px 0;             
-  margin-top:-48px;                
+  padding:16px 24px 0;
+  margin-top:-48px;
 }
 .auth-form h2{
   font-size:26px;
@@ -75,28 +62,43 @@
   margin:0 0 18px 0;
   color:#222;
 }
-.auth-form form{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  align-items:stretch;             
-  width:100%;
-}
+
+/* Labels */
 .auth-form label{
   font-weight:600;
   font-size:14px;
+  display:block;
 }
+
+/* Inputs */
 .auth-form input[type="text"],
-.auth-form input[type="password"]{
-  padding:10px 12px;
-  border:1px solid #cfd3d6;
-  border-radius:0;
-  font-size:15px;
-  width:100%;
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+  padding: 14px 20px;
+  border: 2px solid #cfd3d6;
+  border-radius: 9999px; /* maakt het ovaal */
+  font-size: 16px;
+  width: 100%;
+  background-color: #fff;
+  box-shadow: 0 3x 8px rgba(0,0,0,0.12);
+  transition: border 0.2s, box-shadow 0.2s;
 }
+
+.auth-form input[type="text"]:focus,
+.auth-form input[type="email"]:focus,
+.auth-form input[type="password"]:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(255,131,0,0.3);
+}
+
+/* Focus voor alle inputs */
 .auth-form input:focus{
-  outline:2px solid var(--brand);
+  outline:3px solid var(--focus);
+  outline-offset:2px;
 }
+
+/* Checkbox rij */
 .checkbox-row{
   display:flex;
   align-items:center;
@@ -104,8 +106,7 @@
   margin-top:2px;
 }
 
-
-                                                                                                  /* log in knop*/
+/* Knop */
 .auth .btn{
   background:var(--brand);
   color:#fff;
@@ -119,31 +120,45 @@
   transition:background .25s,transform .15s,box-shadow .25s;
   box-shadow:0 8px 22px rgba(0,0,0,.18);
 }
-.auth .btn:hover{
+
+/* Hover en focus gelijkwaardig */
+.auth .btn:hover,
+.auth .btn:focus-visible{
   background:var(--brand-hover);
   transform:translateY(-1px);
   box-shadow:0 12px 26px rgba(0,0,0,.24);
+  outline:3px solid var(--focus);
+  outline-offset:3px;
 }
+
 .auth .btn:active{
   transform:translateY(0);
   box-shadow:0 6px 16px rgba(0,0,0,.18);
 }
 
-
-                                                                                            /*ONDERBALK  */
+/* Onderbalk link */
 .auth-cta{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin:18px -24px 0 -24px;                                                           
+  margin:18px -24px 0 -24px;
   padding:16px 20px;
   border-top:1px solid #e9ecef;
   background:var(--accent);
-  color:#223;
-  text-decoration:none;
+  color:#000;
   font-size:20px;
+  text-decoration:none;
+  cursor:pointer;
 }
-.auth-cta span{line-height:1.2;}
+
+/* Hover & focus */
+.auth-cta:hover,
+.auth-cta:focus-visible{
+  background:var(--accent-hover);
+  outline:3px solid var(--focus);
+  outline-offset:3px;
+}
+
 .auth-cta svg{
   width:32px;
   height:32px;
@@ -151,17 +166,13 @@
   align-self:center;
   transition:color .25s ease;
 }
-.auth-cta:hover{
-  background:var(--accent-hover);
-}
-.auth-cta:hover svg{
+
+.auth-cta:hover svg,
+.auth-cta:focus-visible svg{
   color:var(--brand);
 }
 
-.auth-card{padding-bottom:0;}
-
-
-
+/* Mobile */
 @media(max-width:960px){
   .auth-card{width:min(480px,94vw);}
   .auth-form{margin-top:-24px;}

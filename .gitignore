@@ -18,3 +18,4 @@ appsettings.Development.json
 /bin/Debug/net9.0
 /bin/Debug
 /bin
+appsettings.json
