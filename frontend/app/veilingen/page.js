@@ -6,16 +6,16 @@ import VeilingKlok from "../components/Veilingklok"; // We gebruiken de 'k' op h
 import "../styles/veilingen.css"; // Importeren van de nieuwe CSS
 
 export default function Veilingen() {
-  // ------------------------
-  // USESTATES
-  // ------------------------
-  const [veilingen, setVeilingen] = useState([]);
-  const [selectedVeiling, setSelectedVeiling] = useState(null);
-  const [error, setError] = useState(null);
-  const [klanten, setKlanten] = useState([]); // Deze wordt nog niet gebruikt, maar laten we hem staan
-  const [gebruiker, setGebruiker] = useState(null);
-  const router = useRouter();
-  const rol = gebruiker?.rol?.toLowerCase() || gebruiker?.Rol?.toLowerCase(); // Check voor beide notaties
+     // ------------------------
+      // USESTATES
+      // ------------------------
+      const [veilingen, setVeilingen] = useState([]);
+      const [selectedVeiling, setSelectedVeiling] = useState(null);
+      const [error, setError] = useState(null);
+      const [klanten, setKlanten] = useState([]);
+      const [gebruiker, setGebruiker] = useState(null);
+      const router = useRouter();
+      const rol = gebruiker?.gebruikerType?.toLowerCase();
 
   // ------------------------
   // Auth check
@@ -55,8 +55,53 @@ export default function Veilingen() {
                   const aanvoerder = await r2.json();
                   aanvoerderNaam = `${aanvoerder.voornaam || ''} ${aanvoerder.achternaam || ''}`.trim();
                 }
-              } catch {
-                // Kon aanvoerder niet ophalen
+              })
+            );
+    
+            setVeilingen(updated);
+          } catch (err) {
+            console.error(err);
+            setError("Kon veilingen niet ophalen");
+          }
+        }
+    
+        fetchVeilingenMetAanvoerders();
+      }, []);
+    
+      // ------------------------
+      // Klanten ophalen
+      // ------------------------
+      useEffect(() => {
+        async function fetchKlanten() {
+          try {
+            const res = await fetch("http://localhost:5281/api/Klanten");
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            setKlanten(data);
+          } catch (err) {
+            console.error(err);
+          }
+        }
+        fetchKlanten();
+      }, []);
+    
+      // ------------------------
+      // Live status updates
+      // ------------------------
+      useEffect(() => {
+        const interval = setInterval(() => {
+          const nu = new Date();
+          setVeilingen((prev) =>
+            prev.map((v) => {
+              const eind = new Date(v.eindTijd);
+              let status = v.status;
+    
+              if (nu < eind && nu >= new Date(v.startTijd)) {
+                status = "actief";
+              } else if (nu >= eind) {
+                status = "afgelopen";
+              } else {
+                status = "wachten";
               }
             }
             // We slaan de info plat op in het veiling object
@@ -146,9 +191,7 @@ export default function Veilingen() {
               onBod={handleBod}
             />
           ) : (
-            <div className="veiling-klok-placeholder">
-              <p>Geen veiling geselecteerd</p>
-            </div>
+            <p className="text-gray-500 italic">Klik op een veiling</p>
           )}
         </div>
       </div>
