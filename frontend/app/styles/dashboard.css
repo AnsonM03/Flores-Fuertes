@@ -1,0 +1,429 @@
+/* ============================================
+   DASHBOARD – zelfde stijl als Account pagina
+   Alles centraal hier!
+================================================= */
+
+.dashboard-container {
+  width: var(--container);
+  margin: 50px auto;
+  padding-bottom: 60px;
+}
+
+/* Grote witte kaart zoals Account */
+.dashboard-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+}
+
+/* Hoofdtitel */
+.dashboard-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 32px;
+  color: var(--ink);
+}
+
+/* Twee kolommen binnen de kaart */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 32px;
+}
+
+/* Linker- en rechterkolom */
+.dashboard-column-left,
+.dashboard-column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Algemene subkaart (Aankomende veilingen, Kopers) */
+.section-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+}
+
+/* Header bovenin een subkaart */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* Knop “+ Nieuwe veiling” */
+.new-veiling-btn {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+  transition: background .2s ease, transform .15s ease, box-shadow .2s ease;
+}
+
+.new-veiling-btn:hover {
+  background: var(--brand-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+}
+
+.new-veiling-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+}
+
+/* ============================================
+   Veilingenlijst (table)
+================================================= */
+
+.veiling-table-wrapper {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.veiling-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.veiling-table thead {
+  background: #f9fafb;
+}
+
+.veiling-table th,
+.veiling-table td {
+  text-align: left;
+  padding: 10px 14px;
+}
+
+.veiling-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.veiling-row {
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.veiling-row:hover {
+  background: #f3f4ff;
+}
+
+.veiling-row--selected {
+  background: #eef7f1;
+}
+
+/* Status badges */
+.veiling-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.veiling-status--actief {
+  background: #dff6e7;
+  color: #0a784f;
+}
+
+.veiling-status--wachten {
+  background: #fff2cf;
+  color: #8e6800;
+}
+
+.veiling-status--afgelopen {
+  background: #eef0f2;
+  color: #6a6f77;
+}
+
+/* Fout / lege tekst */
+.veiling-message {
+  font-size: 14px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* ============================================
+   KOPER TABEL – VISUEEL MOOIER GEMAAKT
+================================================= */
+
+.kopers-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px; /* ruimte tussen rijen */
+  font-size: 15px;
+}
+
+.koper-row {
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.koper-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.10);
+  background: #f9fafb;
+}
+
+/* Cellen mooi uitlijnen */
+.kopers-table td {
+  padding: 14px 18px;
+  vertical-align: middle;
+  border: none;
+}
+
+/* Avatar / Initialen */
+.koper-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  margin-right: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Naam + woonplaats samen */
+.koper-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.koper-naam {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.koper-woonplaats {
+  color: #6b7280;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* 3-puntjes menu */
+.koper-actions {
+  position: relative;
+  text-align: right;
+}
+
+.koper-menu-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 20px;
+  color: #4b5563;
+}
+
+.koper-menu-btn:hover {
+  background: #e5e7eb;
+}
+
+/* Dropdown menu */
+.koper-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.15);
+  min-width: 150px;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.koper-menu button {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.koper-menu button:hover {
+  background: #f3f4f6;
+}
+
+.koper-menu button.koper-menu-delete {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* ============================================
+   KLOKVEILING PANEEL
+================================================= */
+
+.klok-wrapper {
+  background: #fafafa;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+}
+
+.klok-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.klok-status-text {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.klok-status-text--wachten {
+  color: #a16207;
+}
+
+.klok-status-text--actief {
+  color: #15803d;
+}
+
+.klok-status-text--afgelopen {
+  color: #b91c1c;
+}
+
+/* Grote prijs weergave */
+.klok-price-large {
+  font-size: 44px;
+  font-weight: 900;
+  color: #059669;
+  text-align: center;
+  margin: 20px 0;
+}
+
+/* Info blok */
+.klok-info-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  margin-top: 4px;
+}
+
+.klok-product-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.klok-field-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.klok-field-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Knoppen onderaan de klok */
+.klok-buttons {
+  margin-top: 18px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.klok-btn {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  transition: background .2s ease, transform .15s ease, box-shadow .2s ease;
+}
+
+.klok-btn--koop {
+  background: #059669;
+}
+
+.klok-btn--start {
+  background: #2563eb;
+}
+
+.klok-btn--stop {
+  background: #dc2626;
+}
+
+.klok-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+}
+
+.klok-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Geen geselecteerde veiling */
+.no-veiling {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Loading state */
+.dashboard-loading {
+  min-height: calc(100vh - 140px);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  color: #4b5563;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-card {
+    padding: 24px;
+  }
+}

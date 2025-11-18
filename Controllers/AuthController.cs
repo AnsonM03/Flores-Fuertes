@@ -4,6 +4,11 @@ using FloresFuertes.Models;
 using FloresFuertes.Data;
 using Microsoft.AspNetCore.Identity;
 
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+
 namespace FloresFuertes.Controllers
 {
     [ApiController]
@@ -12,7 +17,7 @@ namespace FloresFuertes.Controllers
     {
         private readonly AppDbContext _context;
         private readonly PasswordHasher<Gebruiker> _passwordHasher = new();
-
+        private const string JwtSecret = "gH7$kP9!sL2@xQ5#dR8&Tz4%wB1^mN0pF3*Jk6L"; // Vervang dit door een veilige sleutel
         public AuthController(AppDbContext context) => _context = context;
 
         [HttpPost("login")]
@@ -63,6 +68,25 @@ namespace FloresFuertes.Controllers
 
             await _context.SaveChangesAsync();
 
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(JwtSecret);
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, gebruiker.Gebruiker_Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, gebruiker.Email),
+                new Claim("rol", gebruiker.GebruikerType.ToLower()) // rol claim in lowercase
+            };
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(2),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
             return Ok(new
             {
                 gebruiker_Id = gebruiker.Gebruiker_Id,
@@ -72,7 +96,8 @@ namespace FloresFuertes.Controllers
                 adres = gebruiker.Adres,
                 telefoonnr = gebruiker.Telefoonnr,
                 woonplaats = gebruiker.Woonplaats,
-                gebruikerType = gebruiker.GebruikerType
+                gebruikerType = gebruiker.GebruikerType,
+                token = tokenHandler.WriteToken(token)
             });
         }
     }

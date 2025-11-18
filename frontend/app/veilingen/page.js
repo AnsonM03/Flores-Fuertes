@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import VeilingenLijst from "../components/VeilingenLijst";
-import VeilingKlok from "../components/Veilingklok";
+import VeilingKlok from "../components/VeilingKlok";
 import "../styles/veilingen.css";
 
 export default function Veilingen() {

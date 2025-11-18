@@ -1,73 +1,56 @@
 "use client";
+
 import VeilingRij from "./VeilingRij";
-import { useState, useEffect } from "react";
 
-export default function VeilingenLijst({ veilingen, error, selectedVeiling, onSelect, onDelete, onAdd, rol }) {
-    // const [rol, setRol] = useState(null);
-    
+export default function VeilingenLijst({
+  veilingen,
+  error,
+  selectedVeiling,
+  onSelect,
+  onDelete,
+  rol,
+}) {
+  if (error) {
+    return <p className="veiling-message">{error}</p>;
+  }
 
-  // Haal rol op uit localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem("gebruiker");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setRol(parsed.gebruikerType?.toLowerCase());
-      } catch {
-        console.error("Kon gebruiker niet parsen uit localStorage");
-      }
-    }
-  }, []);
+  if (!error && veilingen.length === 0) {
+    return <p className="veiling-message">Geen veilingen gevonden...</p>;
+  }
 
   return (
-    <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Aankomende Veilingen
-        </h2>
-        {/* Deze 'rol' verwijst nu correct naar de 'rol' state hierboven */}
-        {rol === "veilingmeester" && (
-          <button
-            onClick={onAdd}
-            className="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
-          >
-            + Nieuwe Veiling
-          </button>
-        )}
-      </div>
+    <div className="veiling-table-wrapper" role="region" aria-label="Lijst van veilingen">
+      <table className="veiling-table">
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Aanvoerder</th>
+            <th scope="col">Start</th>
+            <th scope="col">Einde</th>
+            <th scope="col">Prijs (€)</th>
+            <th scope="col">Status</th>
+            {rol === "veilingmeester" && <th scope="col" aria-label="Acties" />}
+          </tr>
+        </thead>
+        <tbody>
+          {veilingen.map(v => {
+            const id = v.veiling_Id || v.Veiling_Id || v.id;
+            const selectedId =
+              selectedVeiling?.veiling_Id || selectedVeiling?.Veiling_Id || selectedVeiling?.id;
 
-      {error && <p className="text-red-600">{error}</p>}
-      {!error && veilingen.length === 0 && (
-        <p className="text-gray-500 italic">Geen veilingen gevonden...</p>
-      )}
-
-      {veilingen.length > 0 && (
-        <div className="overflow-auto rounded-md border border-gray-200">
-          <table className="min-w-full text-sm text-left text-gray-700">
-            <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
-              <tr>
-                <th className="px-4 py-2">Product</th>
-                <th className="px-4 py-2">Aanvoerder</th>
-                <th className="px-4 py-2">Start</th>
-                <th className="px-4 py-2">Einde</th>
-                <th className="px-4 py-2 text-right">Prijs (€)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {veilingen.map((v) => (
-                <VeilingRij
-                  key={v.veiling_Id}
-                  veiling={v}
-                  isSelected={selectedVeiling?.veiling_Id === v.veiling_Id}
-                  onSelect={onSelect}
-                  onDelete={onDelete}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            return (
+              <VeilingRij
+                key={id}
+                veiling={v}
+                isSelected={id === selectedId}
+                onSelect={onSelect}
+                onDelete={onDelete}
+                rol={rol}
+              />
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
-// !! FIX: De extra accolades '}' zijn verwijderd.
