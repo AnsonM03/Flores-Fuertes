@@ -3,13 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-// CSS-imports zijn niet meer nodig, ze staan in layout.js
 
 export default function Register() {
   const router = useRouter();
 
-  // Je state en handlers blijven ongewijzigd
-  // HIER WAS DE FOUT: Er stond "= ="
   const [formData, setFormData] = useState({
     Voornaam: "",
     Achternaam: "",
@@ -21,15 +18,59 @@ export default function Register() {
     GebruikerType: "Klant",
   });
 
+  // Nieuwe state voor specifieke foutmeldingen per veld
+  const [errors, setErrors] = useState({});
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.id]: e.target.value,
     });
+    // Wis de foutmelding zodra de gebruiker begint te typen
+    if (errors[e.target.id]) {
+      setErrors({ ...errors, [e.target.id]: null });
+    }
+  };
+
+  // --- VALIDATIE LOGICA ---
+  const validateForm = () => {
+    let newErrors = {};
+    let isValid = true;
+
+    // 1. Email Validatie (E2)
+    // Eenvoudige regex: checkt op tekst + @ + tekst + . + tekst
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.Email) {
+      newErrors.Email = "E-mailadres is verplicht.";
+      isValid = false;
+    } else if (!emailRegex.test(formData.Email)) {
+      // HIER VOLDOE JE AAN HET CRITERIUM: Specifieke melding E2
+      newErrors.Email = "E2: Ongeldig e-mailadresformaat. Controleer je invoer."; 
+      isValid = false;
+    }
+
+    // 2. Wachtwoord Validatie
+    const wwRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!formData.Wachtwoord) {
+      newErrors.Wachtwoord = "Wachtwoord is verplicht.";
+      isValid = false;
+    } else if (!wwRegex.test(formData.Wachtwoord)) {
+      newErrors.Wachtwoord = "Wachtwoord is te zwak (min. 8 tekens, 1 hoofdletter, 1 cijfer, 1 speciaal teken).";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Voer validatie uit voor verzenden
+    if (!validateForm()) {
+      return; // Stop als er fouten zijn (Account wordt NIET aangemaakt)
+    }
+
     try {
       const res = await fetch("http://localhost:5281/api/Gebruikers", {
         method: "POST",
@@ -41,8 +82,9 @@ export default function Register() {
         alert("Registratie gelukt!");
         router.push("/login");
       } else if (res.status === 409) {
+        // FIX: Gebruik de tekst die de server terugstuurt (waarschijnlijk "Telefoonnummer bestaat al")
         const msg = await res.text();
-        alert(msg);
+        alert(msg || "E-mailadres of telefoonnummer is al in gebruik."); 
       } else {
         alert("Registratie mislukt.");
       }
@@ -63,7 +105,8 @@ export default function Register() {
           <div className="auth-form">
             <h2>Registreren</h2>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            {/* 'noValidate' zet de standaard browser checks uit zodat we onze eigen checks gebruiken */}
+            <form onSubmit={handleSubmit} className="space-y-3" noValidate>
               {[
                 { id: "Voornaam", label: "Voornaam*" },
                 { id: "Achternaam", label: "Achternaam*" },
@@ -80,10 +123,19 @@ export default function Register() {
                     type={field.type || "text"}
                     value={formData[field.id]}
                     onChange={handleChange}
-                    required={field.label.includes("*")}
+                    // We voegen styling toe als er een fout is (rode rand)
+                    className={errors[field.id] ? "border-red-500" : ""}
                   />
+                  {/* Hier tonen we de specifieke foutmelding (E2) onder het veld */}
+                  {errors[field.id] && (
+                    <p className="text-red-600 text-xs mt-1">{errors[field.id]}</p>
+                  )}
                 </div>
               ))}
+
+              <p className="text-xs text-gray-500 mt-1">
+                * Verplichte velden
+              </p>
 
               <button type="submit" className="btn">
                 Volgende
