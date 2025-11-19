@@ -18,7 +18,8 @@ export default function Nav() {
 
   // --- Auth Hooks ---
   // BELANGRIJK: We halen hier 'gebruiker' op (niet 'user')
-  const { isLoggedIn, gebruiker, logout } = useAuth(); 
+  const { gebruiker, logout } = useAuth(); 
+  const isLoggedIn = !!gebruiker;
 
   // --- Auth Handler ---
   const handleLogout = () => {

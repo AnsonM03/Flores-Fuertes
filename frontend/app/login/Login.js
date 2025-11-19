@@ -25,13 +25,18 @@ export default function Login() {
         body: JSON.stringify(loginData),
       });
 
-      if (response.ok) {
-        const gebruiker = await response.json();
-        login(gebruiker); // Dit werkt nu correct door Fix 1
-        alert("Inloggen gelukt!");
+      if (!response.ok) {
+        alert("Inloggen mislukt!");
+        return;
+      }
 
-        // !! FIX: Waarschijnlijk heet de eigenschap 'gebruikerType', niet 'Rol'.
-        // We voegen .toLowerCase() toe voor de zekerheid.
+      const gebruiker = await response.json();
+
+      localStorage.setItem("token", gebruiker.token);
+      localStorage.setItem("gebruiker", JSON.stringify(gebruiker));
+
+      login(gebruiker); // Update de context met de ingelogde gebruiker
+
         const rol = gebruiker.gebruikerType?.toLowerCase();
 
         if (rol === "klant") {
@@ -43,9 +48,6 @@ export default function Login() {
         } else {
           router.push("/");
         }
-      } else {
-        alert("Inloggen mislukt. Controleer je gegevens.");
-      }
     } catch (error) {
       console.error("Fout bij inloggen:", error);
       alert("Er is een fout opgetreden. Probeer opnieuw.");
@@ -116,8 +118,6 @@ export default function Login() {
           </div>
         </div>
       </section>
-      
-      {/* Verwijderd: <Footer /> */}
     </main>
   );
 }

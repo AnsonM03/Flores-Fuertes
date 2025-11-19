@@ -1,47 +1,61 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-    // !! FIX 1: Hernoem 'user' naar 'gebruiker' en 'setUser' naar 'setGebruiker'
     const [gebruiker, setGebruiker] = useState(null);
+    const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
-    
-    // !! FIX 2: Baseer 'isLoggedIn' op 'gebruiker'
-    const isLoggedIn = !!gebruiker;
+
+    // Logged-in wanneer beide bestaan
+    const isLoggedIn = !!gebruiker && !!token;
 
     useEffect(() => {
-        const stored = localStorage.getItem("gebruiker");
-        if (stored) {
+        const storedUser = localStorage.getItem("gebruiker");
+        const storedToken = localStorage.getItem("token");
+
+        if (storedUser && storedToken) {
             try {
-                const parsed = JSON.parse(stored);
-                // !! FIX 3: Gebruik 'setGebruiker'
+                const parsed = JSON.parse(storedUser);
+                parsed.gebruikerType = parsed.gebruikerType?.trim().toLowerCase();
+
                 setGebruiker(parsed);
+                setToken(storedToken);
             } catch {
                 console.error("Kon gebruiker niet parsen uit localStorage");
                 localStorage.removeItem("gebruiker");
+                localStorage.removeItem("token");
             }
         }
+
         setLoading(false);
     }, []);
 
     const login = (userData) => {
-        // !! FIX 4: Gebruik 'setGebruiker'
-        setGebruiker(userData);
-        localStorage.setItem("gebruiker", JSON.stringify(userData)); // slaat op in LocalStorage
+        const normalizedUser = {
+            ...userData,
+            gebruikerType: userData.gebruikerType?.trim().toLowerCase()
+        };
+
+        setGebruiker(normalizedUser);
+        setToken(userData.token);
+
+        localStorage.setItem("gebruiker", JSON.stringify(normalizedUser));
+        localStorage.setItem("token", userData.token);
     };
 
     const logout = () => {
-        // !! FIX 5: Gebruik 'setGebruiker'
         setGebruiker(null);
+        setToken(null);
+
         localStorage.removeItem("gebruiker");
+        localStorage.removeItem("token");
     };
 
     return (
-        // !! FIX 6: Geef 'gebruiker' door in de value, niet 'user'
-        <AuthContext.Provider value={{ gebruiker, isLoggedIn, loading, login, logout }}>
+        <AuthContext.Provider value={{ gebruiker, token, isLoggedIn, loading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
