@@ -40,14 +40,15 @@ export default function Login() {
         const rol = gebruiker.gebruikerType?.toLowerCase();
 
         if (rol === "klant") {
-          router.push("/dashboard"); // Zie Fix 3
-        } else if (rol === "aanvoerder") {
-          router.push("/dashboard"); // Zie Fix 3
-        } else if (rol === "veilingmeester") {
-          router.push("/dashboard"); // Zie Fix 3
-        } else {
-          router.push("/");
-        }
+        // !! AANPASSING: Klanten gaan naar de homepagina
+        router.push("/"); 
+      } else if (rol === "aanvoerder" || rol === "veilingmeester") {
+        // !! AANPASSING: Personeel/Aanvoerders gaan naar het dashboard
+        router.push("/dashboard");
+      } else {
+        // Fallback voor onbekende rollen
+        router.push("/");
+      }
     } catch (error) {
       console.error("Fout bij inloggen:", error);
       alert("Er is een fout opgetreden. Probeer opnieuw.");
