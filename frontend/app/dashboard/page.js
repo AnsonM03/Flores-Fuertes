@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import VeilingenLijst from "../components/VeilingenLijst";
 import VeilingKlok from "../components/VeilingKlok";
 import KoperRij from "../components/Koperrij";
-import { useRouter } from "next/navigation";
 
 import "../styles/dashboard.css";
 
@@ -13,35 +14,39 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [klanten, setKlanten] = useState([]);
   const [gebruiker, setGebruiker] = useState(null);
-  const [token, setToken] = useState(null);
 
   const router = useRouter();
 
-  // AUTH LOAD
+  // ---------- AUTH LOAD ----------
   useEffect(() => {
     const storedGebruiker = localStorage.getItem("gebruiker");
-    const storedToken = localStorage.getItem("token");
 
-    if (!storedGebruiker || !storedToken) {
+    if (!storedGebruiker) {
       router.push("/login");
       return;
     }
 
     setGebruiker(JSON.parse(storedGebruiker));
-    setToken(storedToken);
   }, [router]);
 
   const rol = gebruiker?.gebruikerType?.toLowerCase();
 
-  // VEILINGEN
+  // ---------- VEILINGEN OPHALEN ----------
   useEffect(() => {
-    if (!token) return;
+    if (!gebruiker) return;
 
     async function fetchVeilingen() {
       try {
         const res = await fetch("http://localhost:5281/api/Veilingen", {
-          headers: { Authorization: `Bearer ${token}` },
+          method: "GET",
+          credentials: "include", // cookie meesturen
         });
+
+        if (res.status === 401) {
+          localStorage.removeItem("gebruiker");
+          router.push("/login");
+          return;
+        }
 
         if (!res.ok) throw new Error();
 
@@ -54,50 +59,82 @@ export default function Dashboard() {
     }
 
     fetchVeilingen();
-  }, [token]);
+  }, [gebruiker, router]);
 
-  // KLANTEN
+  // ---------- KLANTEN OPHALEN ----------
   useEffect(() => {
-    if (!token || (rol !== "veilingmeester" && rol !== "aanvoerder")) return;
+    if (!gebruiker) return;
+    if (rol !== "veilingmeester" && rol !== "aanvoerder") return;
 
     async function fetchKlanten() {
       try {
         const res = await fetch("http://localhost:5281/api/Klanten", {
-          headers: { Authorization: `Bearer ${token}` },
+          method: "GET",
+          credentials: "include",
         });
+
+        if (res.status === 401) {
+          localStorage.removeItem("gebruiker");
+          router.push("/login");
+          return;
+        }
 
         if (!res.ok) throw new Error();
 
         setKlanten(await res.json());
-      } catch {
-        console.error("Kon klanten niet ophalen");
+      } catch (err) {
+        console.error("Kon klanten niet ophalen", err);
       }
     }
 
     fetchKlanten();
-  }, [rol, token]);
+  }, [rol, gebruiker, router]);
 
-  // ACTIES
+  // ---------- ACTIES ----------
   async function handleKlantVerwijderen(id) {
-    if (!confirm("Weet je zeker?")) return;
+    if (!confirm("Weet je zeker dat je deze koper wilt verwijderen?")) return;
 
-    await fetch(`http://localhost:5281/api/Klanten/${id}`, {
+    const res = await fetch(`http://localhost:5281/api/Klanten/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     });
+
+    if (res.status === 401) {
+      localStorage.removeItem("gebruiker");
+      router.push("/login");
+      return;
+    }
+
+    if (!res.ok) {
+      alert("Fout bij verwijderen koper");
+      return;
+    }
 
     setKlanten(prev => prev.filter(k => k.gebruiker_Id !== id));
   }
 
   async function handleVeilingVerwijderen(id) {
-    if (!confirm("Weet je zeker?")) return;
+    if (!confirm("Weet je zeker dat je deze veiling wilt verwijderen?")) return;
 
-    await fetch(`http://localhost:5281/api/Veilingen/${id}`, {
+    const res = await fetch(`http://localhost:5281/api/Veilingen/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     });
 
-    setVeilingen(prev => prev.filter(v => v.veiling_Id !== id && v.Veiling_Id !== id));
+    if (res.status === 401) {
+      localStorage.removeItem("gebruiker");
+      router.push("/login");
+      return;
+    }
+
+    if (!res.ok) {
+      alert("Fout bij verwijderen veiling");
+      return;
+    }
+
+    setVeilingen(prev =>
+      prev.filter(v => v.veiling_Id !== id && v.Veiling_Id !== id)
+    );
   }
 
   async function maakRandomVeiling() {
@@ -115,23 +152,33 @@ export default function Dashboard() {
 
     const res = await fetch("http://localhost:5281/api/Veilingen", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(nieuwe),
     });
 
+    if (res.status === 401) {
+      localStorage.removeItem("gebruiker");
+      router.push("/login");
+      return;
+    }
+
+    if (!res.ok) {
+      alert("Veiling aanmaken mislukt");
+      return;
+    }
+
     const created = await res.json();
     setVeilingen(prev => [created, ...prev]);
+    setSelectedVeiling(created);
   }
 
-  // LOADING
-  if (!gebruiker || !token) {
+  // ---------- LOADING ----------
+  if (!gebruiker) {
     return <div className="dashboard-loading">Laden...</div>;
   }
 
-  // UI
+  // ---------- UI ----------
   return (
     <div className="dashboard-container">
       <div className="dashboard-card">
@@ -140,7 +187,6 @@ export default function Dashboard() {
         <div className="dashboard-layout">
           {/* LINKERKANT */}
           <div className="dashboard-column-left">
-            {/* Aankomende veilingen */}
             <div className="section-card">
               <div className="section-header">
                 <h2 className="section-title">Aankomende veilingen</h2>
@@ -157,12 +203,15 @@ export default function Dashboard() {
                 error={error}
                 selectedVeiling={selectedVeiling}
                 onSelect={setSelectedVeiling}
-                onDelete={rol === "veilingmeester" ? handleVeilingVerwijderen : undefined}
+                onDelete={
+                  rol === "veilingmeester"
+                    ? handleVeilingVerwijderen
+                    : undefined
+                }
                 rol={rol}
               />
             </div>
 
-            {/* Kopers */}
             {(rol === "veilingmeester" || rol === "aanvoerder") && (
               <div className="section-card">
                 <div className="section-header">
@@ -188,10 +237,14 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* RECHTERKANT – KLOKVEILING */}
+          {/* RECHTERKANT */}
           <div className="dashboard-column-right">
             <div className="klok-wrapper">
-              <VeilingKlok veiling={selectedVeiling} gebruikerRol={rol} />
+              {selectedVeiling ? (
+                <VeilingKlok veiling={selectedVeiling} gebruikerRol={rol} />
+              ) : (
+                <p className="no-veiling">Geen actieve veiling geselecteerd</p>
+              )}
             </div>
           </div>
         </div>
