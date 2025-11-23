@@ -1,14 +1,12 @@
 // app/login/page.js
 "use client";
 
-import { useState } from "react"; // useEffect is verwijderd
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-// CSS-imports zijn niet meer nodig, ze staan in layout.js
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-  // Je login-logica blijft ongewijzigd
   const [email, setEmail] = useState("");
   const [wachtwoord, setWachtwoord] = useState("");
   const router = useRouter();
@@ -16,12 +14,17 @@ export default function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const loginData = { Email: email, Wachtwoord: wachtwoord };
+
+    const loginData = {
+      Email: email,
+      Wachtwoord: wachtwoord,
+    };
 
     try {
       const response = await fetch("http://localhost:5281/api/Auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // ★ cookies meesturen én ontvangen
         body: JSON.stringify(loginData),
       });
 
@@ -32,36 +35,30 @@ export default function Login() {
 
       const gebruiker = await response.json();
 
-      localStorage.setItem("token", gebruiker.token);
+      // ★ JWT zit nu in een HttpOnly cookie (gezet door de backend)
+      // We slaan alleen de gebruiker op in localStorage
       localStorage.setItem("gebruiker", JSON.stringify(gebruiker));
 
-      login(gebruiker); // Update de context met de ingelogde gebruiker
+      // Update AuthContext
+      login(gebruiker);
 
-        const rol = gebruiker.gebruikerType?.toLowerCase();
+      const rol = (gebruiker.gebruikerType || "").toLowerCase();
 
-        if (rol === "klant") {
-        // !! AANPASSING: Klanten gaan naar de homepagina
-        router.push("/"); 
+      if (rol === "klant") {
+        router.push("/");
       } else if (rol === "aanvoerder" || rol === "veilingmeester") {
-        // !! AANPASSING: Personeel/Aanvoerders gaan naar het dashboard
         router.push("/dashboard");
       } else {
-        // Fallback voor onbekende rollen
         router.push("/");
       }
     } catch (error) {
-      console.error("Fout bij inloggen:", error);
-      alert("Er is een fout opgetreden. Probeer opnieuw.");
+      console.error("Login fout:", error);
+      alert("Er ging iets mis. Probeer opnieuw.");
     }
   };
 
-  // De useEffect voor header/footer is VERWIJDERD
-
   return (
-    // De <main> tag met 'auth' class blijft over
     <main className="main auth">
-      {/* Verwijderd: <Nav /> */}
-      
       <section className="auth-wrap">
         <div className="auth-card">
           <div className="auth-media">
@@ -103,9 +100,10 @@ export default function Login() {
             <Link href="/register" className="auth-cta">
               <span>
                 <strong>Nog geen account?</strong>
-                <br />Account aanmaken
+                <br />
+                Account aanmaken
               </span>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
                 <path
                   d="M8 5l7 7-7 7"
                   fill="none"

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import VeilingenLijst from "../components/VeilingenLijst";
 import VeilingKlok from "../components/VeilingKlok";
 import "../styles/veilingen.css";
@@ -11,13 +12,11 @@ export default function Veilingen() {
   const [error, setError] = useState(null);
   const [klanten, setKlanten] = useState([]);
   const [gebruiker, setGebruiker] = useState(null);
-  const router = useRouter();
 
+  const router = useRouter();
   const rol = gebruiker?.gebruikerType?.toLowerCase();
 
-  // ------------------------
   // AUTH CHECK
-  // ------------------------
   useEffect(() => {
     const stored = localStorage.getItem("gebruiker");
     if (!stored) {
@@ -27,24 +26,33 @@ export default function Veilingen() {
     setGebruiker(JSON.parse(stored));
   }, [router]);
 
-  // ------------------------
-  // VEILINGEN OPHALEN + AANVOERDER KOPPELEN
-  // ------------------------
+  // VEILINGEN OPHALEN
   useEffect(() => {
     async function fetchVeilingen() {
       try {
-        const res = await fetch("http://localhost:5281/api/Veilingen");
+        const res = await fetch("http://localhost:5281/api/Veilingen", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("gebruiker");
+          router.push("/login");
+          return;
+        }
+
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = await res.json();
 
         const updated = await Promise.all(
           raw.map(async (v) => {
             const aanvoerderId = v.product?.aanvoerder_Id;
-
             let aanvoerderNaam = "Onbekende Aanvoerder";
+
             if (aanvoerderId) {
               const r2 = await fetch(
-                `http://localhost:5281/api/Gebruikers/${aanvoerderId}`
+                `http://localhost:5281/api/Gebruikers/${aanvoerderId}`,
+                { credentials: "include" }
               );
               if (r2.ok) {
                 const a = await r2.json();
@@ -58,12 +66,10 @@ export default function Veilingen() {
               aanvoerderNaam,
             };
           })
-        ); // <-- Einde van Promise.all
+        );
 
-        // !! FIX: State updates moeten *na* de Promise.all gebeuren, niet erin !!
         setVeilingen(updated);
 
-        // selecteer eerste actieve veiling
         const actieve = updated.find(
           (v) => new Date(v.eindTijd) > new Date()
         );
@@ -75,18 +81,19 @@ export default function Veilingen() {
     }
 
     fetchVeilingen();
-  }, []);
+  }, [router]);
 
-  // ------------------------
-  // KLANTEN OPHALEN
-  // ------------------------
+  // KLANTEN OPHALEN (optioneel voor deze pagina)
   useEffect(() => {
     async function fetchKlanten() {
       try {
-        const res = await fetch("http://localhost:5281/api/Klanten");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setKlanten(data);
+        const res = await fetch("http://localhost:5281/api/Klanten", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+        setKlanten(await res.json());
       } catch (err) {
         console.error(err);
       }
@@ -94,36 +101,7 @@ export default function Veilingen() {
     fetchKlanten();
   }, []);
 
-  // ------------------------
-  // LIVE STATUS UPDATES
-  // ------------------------
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const nu = new Date();
-      setVeilingen((prev) =>
-        prev.map((v) => {
-          let status = v.status;
-
-          if (nu >= new Date(v.startTijd) && nu < new Date(v.eindTijd)) {
-            status = "actief";
-          } else if (nu >= new Date(v.eindTijd)) {
-            status = "afgelopen";
-          } else {
-            status = "wachten";
-          }
-
-          // !! FIX: Je moet het nieuwe object returnen binnen de .map() !!
-          return { ...v, status };
-        })
-      );
-    }, 1000);
-
-    return () => clearInterval(interval); // Cleanup
-  }, []); // Lege dependency array, interval start 1x
-
-  // ------------------------
-  // BOD HANDLER
-  // ------------------------
+  // BOD
   const handleBod = (veilingId, bedrag) => {
     if (rol !== "klant") {
       alert("Alleen klanten mogen bieden.");
@@ -139,17 +117,16 @@ export default function Veilingen() {
   return (
     <main className="main veiling-pagina">
       <div className="container veiling-layout">
-        {/* Veilingen lijst */}
         <div className="veiling-lijst-kolom">
           <VeilingenLijst
             veilingen={veilingen}
             error={error}
             selectedVeiling={selectedVeiling}
             onSelect={setSelectedVeiling}
+            rol={rol}
           />
         </div>
 
-        {/* Klok */}
         <div className="veiling-klok-kolom">
           {selectedVeiling ? (
             <VeilingKlok

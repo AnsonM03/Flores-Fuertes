@@ -3,36 +3,31 @@ using FloresFuertes.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
+using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- VOEG DIT TOE (DEEL 1) ---
-// Definieer een CORS-beleid
+// ----------------------------
+// CORS
+// ----------------------------
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowMyFrontend",
-        policy =>
-        {
-            // Sta de oorsprong van je VS Code Live Server toe
-            policy.WithOrigins(
-                "http://localhost:3000",
-                "http://127.0.0.1:5500") 
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+    options.AddPolicy("AllowMyFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
-// ------------------------------
 
-// JwtConstants AUTHENTICATION
+// ----------------------------
+// JWT
+// ----------------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings.GetValue<string>("Key"));
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -41,17 +36,30 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings.GetValue<string>("Issuer"),
-        ValidAudience = jwtSettings.GetValue<string>("Audience"),
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key),
+    };
+
+    // COOKIE → JWT
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            if (context.Request.Cookies.ContainsKey("token"))
+            {
+                context.Token = context.Request.Cookies["token"];
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
-// Add services to the container.
+// ----------------------------
+// SERVICES
+// ----------------------------
 builder.Services.AddAuthorization();
-
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -60,22 +68,39 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ----------------------------
+// PIPELINE
+// ----------------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
-
-// --- VOEG DIT TOE (DEEL 2) ---
-// Gebruik het CORS-beleid dat je hierboven hebt gedefinieerd
-// DIT MOET VÓÓR UseAuthorization()
 app.UseCors("AllowMyFrontend");
-// ------------------------------
-app.UseAuthentication();
 
+// Zorgt ervoor dat cookies + credentials GEEN CORS-blokkade geven
+app.Use(async (context, next) =>
+{
+    var origin = context.Request.Headers["Origin"];
+
+    if (origin == "http://localhost:3000")
+    {
+        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+        context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+    }
+
+    // Preflight fix
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 204;
+        return;
+    }
+
+    await next();
+});
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
