@@ -13,7 +13,9 @@ export default function VeilingProductenLijst({ veilingId }) {
     async function fetchData() {
       try {
         const res = await fetch(
-          `http://localhost:5281/api/VeilingProducten/veiling/${veilingId}`
+          `http://localhost:5281/api/VeilingProducten/veiling/${veilingId}`, {
+          credentials: "include",
+        }
         );
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

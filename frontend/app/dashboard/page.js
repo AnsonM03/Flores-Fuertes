@@ -11,7 +11,7 @@ export default function MijnVeilingenPage() {
 
   const router = useRouter();
 
-  // ✔️ AUTH LADEN
+  // ✔️ AUTH LADEN VIA COOKIE + localStorage gebruiker info
   useEffect(() => {
     const stored = localStorage.getItem("gebruiker");
     const token = localStorage.getItem("token");
@@ -41,13 +41,15 @@ export default function MijnVeilingenPage() {
     }
   }, [router]);
 
-  // ✔️ VEILINGEN LADEN
+  // ✔️ VEILINGEN LADEN — NU MET CREDENTIALS OM COOKIE MEE TE STUREN
   useEffect(() => {
     if (!gebruiker) return;
 
     async function fetchVeilingen() {
       try {
-        const res = await fetch("http://localhost:5281/api/Veilingen");
+        const res = await fetch("http://localhost:5281/api/Veilingen", {
+          credentials: "include",  
+        });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
