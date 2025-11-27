@@ -152,7 +152,9 @@ export default function Dashboard() {
               </div>
 
               {/* <h2 className="text-xl font-semibold mb-4">Producten in deze veiling</h2> */}
-                      <VeilingProductenLijst veilingId={id} />
+                      <VeilingProductenLijst
+                      Veiling_Id={veilingIdFromUrl || selectedVeiling?.Veiling_Id}
+                      />
 
               {/* <VeilingenLijst
                 veilingen={veilingen}
