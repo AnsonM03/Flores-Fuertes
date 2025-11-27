@@ -17,9 +17,12 @@ export default function Nav() {
   const router = useRouter();
 
   // --- Auth Hooks ---
-  // BELANGRIJK: We halen hier 'gebruiker' op (niet 'user')
   const { gebruiker, logout } = useAuth(); 
   const isLoggedIn = !!gebruiker;
+
+  // --- ROL BEPALEN (Nieuw) ---
+  // We normaliseren naar kleine letters om fouten te voorkomen
+  const rol = gebruiker?.gebruikerType?.toLowerCase();
 
   // --- Auth Handler ---
   const handleLogout = () => {
@@ -79,9 +82,7 @@ export default function Nav() {
     }
   };
   
-  // --- NAAM LOGICA (De Fix) ---
-  // We gebruiken 'gebruiker' ipv 'user'.
-  // We checken zowel op hoofdletters (C# API) als kleine letters (JS conventie).
+  // --- NAAM LOGICA ---
   const naam = [
     gebruiker?.Voornaam || gebruiker?.voornaam, 
     gebruiker?.Achternaam || gebruiker?.achternaam
@@ -121,6 +122,7 @@ export default function Nav() {
               <Link href="/veilingen" className={`nav-link ${isActive('/veilingen') ? 'is-active' : ''}`} onClick={handleLinkClick}>
                 Veilingen
               </Link>
+              
               <Link href="/account" className={`nav-link ${isActive('/account') ? 'is-active' : ''}`} onClick={handleLinkClick}>
                 Account
               </Link>

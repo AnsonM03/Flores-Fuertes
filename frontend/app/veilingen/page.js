@@ -11,7 +11,17 @@ export default function VeilingenPage() {
   useEffect(() => {
     async function fetchVeilingen() {
       try {
-        const res = await fetch("http://localhost:5281/api/Veilingen");
+        const res = await fetch("http://localhost:5281/api/Veilingen", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("gebruiker");
+          router.push("/login");
+          return;
+        }
+
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setVeilingen(data);
@@ -22,7 +32,7 @@ export default function VeilingenPage() {
     }
 
     fetchVeilingen();
-  }, []);
+  }, [router]);
 
   // ✅ Foutmelding of lege lijst
   if (error)

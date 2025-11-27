@@ -1,68 +1,52 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
+import { getCookie, deleteCookie } from "../cookies";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-    const [gebruiker, setGebruiker] = useState(null);
-    const [token, setToken] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const [gebruiker, setGebruiker] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    // Logged-in wanneer beide bestaan
-    const isLoggedIn = !!gebruiker && !!token;
+  // Probeer gebruiker automatisch te laden via cookie
+  useEffect(() => {
+    const cookieToken = getCookie("token");
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem("gebruiker");
-        const storedToken = localStorage.getItem("token");
+    if (!cookieToken) {
+      setLoading(false);
+      return;
+    }
 
-        if (storedUser && storedToken) {
-            try {
-                const parsed = JSON.parse(storedUser);
-                parsed.gebruikerType = parsed.gebruikerType?.trim().toLowerCase();
+    // Gebruiker staat nog in localStorage (alle overige data behalve token)
+    const stored = localStorage.getItem("gebruiker");
+    if (stored) {
+      setGebruiker(JSON.parse(stored));
+    }
 
-                setGebruiker(parsed);
-                setToken(storedToken);
-            } catch {
-                console.error("Kon gebruiker niet parsen uit localStorage");
-                localStorage.removeItem("gebruiker");
-                localStorage.removeItem("token");
-            }
-        }
+    setLoading(false);
+  }, []);
 
-        setLoading(false);
-    }, []);
+  // Login functie
+  const login = (userData) => {
+    localStorage.setItem("gebruiker", JSON.stringify(userData));
+    setGebruiker(userData);
+  };
 
-    const login = (userData) => {
-        const normalizedUser = {
-            ...userData,
-            gebruikerType: userData.gebruikerType?.trim().toLowerCase()
-        };
+  // Loguit functie
+  const logout = () => {
+    deleteCookie("token");
+    localStorage.removeItem("gebruiker");
+    setGebruiker(null);
+  };
 
-        setGebruiker(normalizedUser);
-        setToken(userData.token);
-
-        localStorage.setItem("gebruiker", JSON.stringify(normalizedUser));
-        localStorage.setItem("token", userData.token);
-    };
-
-    const logout = () => {
-        setGebruiker(null);
-        setToken(null);
-
-        localStorage.removeItem("gebruiker");
-        localStorage.removeItem("token");
-    };
-
-    return (
-        <AuthContext.Provider value={{ gebruiker, token, isLoggedIn, loading, login, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{ gebruiker, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-    const context = useContext(AuthContext);
-    if (!context) throw new Error("useAuth must be used within an AuthProvider");
-    return context;
+  return useContext(AuthContext);
 }
