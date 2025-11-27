@@ -1,0 +1,129 @@
+/* ====== PRODUCTEN PAGINA STYLING ====== */
+
+.producten-container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-family: "Inter", sans-serif;
+}
+
+.producten-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.producten-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.producten-header button {
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.producten-header button:hover {
+  background-color: #1e40af;
+}
+
+/* ===== FORMULIER ===== */
+.producten-form {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.producten-form h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.producten-form label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: #374151;
+}
+
+.producten-form input,
+.producten-form textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.producten-form textarea {
+  min-height: 90px;
+}
+
+.producten-form button {
+  background-color: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.producten-form button:hover {
+  background-color: #15803d;
+}
+
+/* ===== PRODUCTEN TABEL ===== */
+.producten-lijst {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.producten-lijst thead {
+  background-color: #f3f4f6;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.producten-lijst th,
+.producten-lijst td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.producten-lijst tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.producten-lijst td img {
+  width: 50px;
+  height: 50px;
+  border-radius: 0.25rem;
+  object-fit: cover;
+}
+
+.empty-message {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 1rem;
+}

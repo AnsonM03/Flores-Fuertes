@@ -1,0 +1,55 @@
+/* Wrapper */
+.veiling-table-wrapper {
+  margin-top: 25px;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+}
+
+/* Tabel */
+.veiling-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.veiling-table thead {
+  background: #f8fafc;
+}
+
+.veiling-table th {
+  text-align: left;
+  padding: 14px 16px;
+  font-weight: 700;
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.veiling-table td {
+  padding: 12px 16px;
+  color: #374151;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Hover row */
+.veiling-table tr:hover td {
+  background: #f9fafb;
+}
+
+/* Thumbnail */
+.product-thumbnail {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Geen data / errors */
+.veiling-message {
+  margin-top: 20px;
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+}

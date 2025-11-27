@@ -1,0 +1,136 @@
+/* General layout */
+.koppelen-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #f8fafc;
+}
+
+.koppelen-container {
+  width: 100%;
+  max-width: 900px;
+  background: white;
+  border-radius: 20px;
+  padding: 40px 50px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.koppelen-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 30px;
+  color: #0f172a;
+}
+
+.producten-ul {
+  list-style: none;
+  padding: 0;
+}
+
+.product-card {
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.koppel-btn {
+  background: #3b82f6;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.koppel-btn:hover {
+  background: #2563eb;
+}
+
+/* ---------------- */
+/* POPUP OVERLAY    */
+/* ---------------- */
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.popup {
+  background: white;
+  width: 400px;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 8px 35px rgba(0,0,0,0.2);
+  animation: popupScale 0.2s ease;
+}
+
+.popup-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.popup input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  margin-bottom: 15px;
+}
+
+.popup-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.popup-cancel {
+  background: #d1d5db;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.popup-confirm {
+  background: #22c55e;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.beschikbaar {
+  font-size: 0.85rem;
+  color: #374151;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.beschikbaar span {
+    background: #e0f2fe;
+  color: #0369a1;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+@keyframes popupScale {
+  from { transform: scale(0.9); opacity: 0; }
+}

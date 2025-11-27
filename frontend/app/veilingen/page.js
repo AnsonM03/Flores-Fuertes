@@ -1,167 +1,91 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import VeilingenLijst from "../components/VeilingenLijst";
-import VeilingKlok from "../components/VeilingKlok";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import "../styles/veilingen.css";
 
-export default function Veilingen() {
+export default function VeilingenPage() {
   const [veilingen, setVeilingen] = useState([]);
-  const [selectedVeiling, setSelectedVeiling] = useState(null);
   const [error, setError] = useState(null);
-  const [klanten, setKlanten] = useState([]);
-  const [gebruiker, setGebruiker] = useState(null);
-  const router = useRouter();
 
-  const rol = gebruiker?.gebruikerType?.toLowerCase();
-
-  // ------------------------
-  // AUTH CHECK
-  // ------------------------
-  useEffect(() => {
-    const stored = localStorage.getItem("gebruiker");
-    if (!stored) {
-      router.push("/login");
-      return;
-    }
-    setGebruiker(JSON.parse(stored));
-  }, [router]);
-
-  // ------------------------
-  // VEILINGEN OPHALEN + AANVOERDER KOPPELEN
-  // ------------------------
+  // ✅ Ophalen van veilingen
   useEffect(() => {
     async function fetchVeilingen() {
       try {
         const res = await fetch("http://localhost:5281/api/Veilingen");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const raw = await res.json();
-
-        const updated = await Promise.all(
-          raw.map(async (v) => {
-            const aanvoerderId = v.product?.aanvoerder_Id;
-
-            let aanvoerderNaam = "Onbekende Aanvoerder";
-            if (aanvoerderId) {
-              const r2 = await fetch(
-                `http://localhost:5281/api/Gebruikers/${aanvoerderId}`
-              );
-              if (r2.ok) {
-                const a = await r2.json();
-                aanvoerderNaam = `${a.voornaam} ${a.achternaam}`;
-              }
-            }
-
-            return {
-              ...v,
-              productNaam: v.product?.naam || "Onbekend product",
-              aanvoerderNaam,
-            };
-          })
-        ); // <-- Einde van Promise.all
-
-        // !! FIX: State updates moeten *na* de Promise.all gebeuren, niet erin !!
-        setVeilingen(updated);
-
-        // selecteer eerste actieve veiling
-        const actieve = updated.find(
-          (v) => new Date(v.eindTijd) > new Date()
-        );
-        setSelectedVeiling(actieve || updated[0]);
+        const data = await res.json();
+        setVeilingen(data);
       } catch (err) {
-        console.error(err);
-        setError("Kon veilingen niet ophalen");
+        console.error("❌ Fout bij ophalen veilingen:", err);
+        setError("Kon veilingen niet ophalen.");
       }
     }
 
     fetchVeilingen();
   }, []);
 
-  // ------------------------
-  // KLANTEN OPHALEN
-  // ------------------------
-  useEffect(() => {
-    async function fetchKlanten() {
-      try {
-        const res = await fetch("http://localhost:5281/api/Klanten");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setKlanten(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    fetchKlanten();
-  }, []);
-
-  // ------------------------
-  // LIVE STATUS UPDATES
-  // ------------------------
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const nu = new Date();
-      setVeilingen((prev) =>
-        prev.map((v) => {
-          let status = v.status;
-
-          if (nu >= new Date(v.startTijd) && nu < new Date(v.eindTijd)) {
-            status = "actief";
-          } else if (nu >= new Date(v.eindTijd)) {
-            status = "afgelopen";
-          } else {
-            status = "wachten";
-          }
-
-          // !! FIX: Je moet het nieuwe object returnen binnen de .map() !!
-          return { ...v, status };
-        })
-      );
-    }, 1000);
-
-    return () => clearInterval(interval); // Cleanup
-  }, []); // Lege dependency array, interval start 1x
-
-  // ------------------------
-  // BOD HANDLER
-  // ------------------------
-  const handleBod = (veilingId, bedrag) => {
-    if (rol !== "klant") {
-      alert("Alleen klanten mogen bieden.");
-      return;
-    }
-
-    console.log(
-      `Klant ${gebruiker.gebruiker_Id} biedt €${bedrag} op veiling ${veilingId}`
+  // ✅ Foutmelding of lege lijst
+  if (error)
+    return (
+      <p className="error-text">
+        {error}
+      </p>
     );
-    alert(`Bod geplaatst: €${bedrag}`);
-  };
+
+  if (veilingen.length === 0)
+    return (
+      <p className="empty-text">
+        Geen veilingen beschikbaar.
+      </p>
+    );
 
   return (
-    <main className="main veiling-pagina">
-      <div className="container veiling-layout">
-        {/* Veilingen lijst */}
-        <div className="veiling-lijst-kolom">
-          <VeilingenLijst
-            veilingen={veilingen}
-            error={error}
-            selectedVeiling={selectedVeiling}
-            onSelect={setSelectedVeiling}
-          />
-        </div>
+  <div className="veilingen-wrapper">
+    <div className="veilingen-container">
+      <h1>Beschikbare Veilingen</h1>
 
-        {/* Klok */}
-        <div className="veiling-klok-kolom">
-          {selectedVeiling ? (
-            <VeilingKlok
-              veiling={selectedVeiling}
-              gebruikerRol={rol}
-              onBod={handleBod}
-            />
-          ) : (
-            <p className="text-gray-500 italic">Selecteer een veiling</p>
-          )}
-        </div>
+      <div className="veilingen-grid">
+        {veilingen.map((v) => (
+          <Link
+            key={v.veiling_Id}
+            href={`/veilingen/${v.veiling_Id}`}
+            className="veilingen-card"
+          >
+            <div
+              className={`veilingen-card-header ${
+                v.status === "actief"
+                  ? "header-actief"
+                  : v.status === "afgelopen"
+                  ? "header-afgelopen"
+                  : "header-wachten"
+              }`}
+            >
+              {v.kloklocatie || "Veiling"}
+            </div>
+
+            <div className="veilingen-card-content">
+              <h2>{v.kloklocatie || "Naamloze Veiling"}</h2>
+              <p className="product">{v.product?.naam || "Onbekend product"}</p>
+              <p className="tijd">
+                {new Date(v.startTijd).toLocaleString()} <br />
+                {new Date(v.eindTijd).toLocaleString()}
+              </p>
+              <span
+                className={`veilingen-status ${
+                  v.status === "actief"
+                    ? "status-actief"
+                    : v.status === "afgelopen"
+                    ? "status-afgelopen"
+                    : "status-wachten"
+                }`}
+              >
+                {v.status || "In voorbereiding"}
+              </span>
+            </div>
+          </Link>
+        ))}
       </div>
-    </main>
-  );
+    </div>
+  </div>
+);
 }
