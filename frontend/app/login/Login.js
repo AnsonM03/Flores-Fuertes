@@ -37,6 +37,7 @@ export default function Login() {
 
       // ★ JWT zit nu in een HttpOnly cookie (gezet door de backend)
       // We slaan alleen de gebruiker op in localStorage
+      localStorage.setItem("token", gebruiker.token);
       localStorage.setItem("gebruiker", JSON.stringify(gebruiker));
 
       // Update AuthContext

@@ -13,21 +13,32 @@ export default function MijnVeilingenPage() {
 
   // ✔️ AUTH LADEN VIA COOKIE + localStorage gebruiker info
   useEffect(() => {
-    const user = localStorage.getItem("gebruiker");
+    const stored = localStorage.getItem("gebruiker");
+    const token = localStorage.getItem("token");
 
-    if (!user) {
+    console.log("LS gebruiker:", stored);
+    console.log("LS token:", token);
+
+    if (!stored || !token) {
       router.push("/login");
       return;
     }
 
-    const parsed = JSON.parse(user);
+    try {
+      const parsed = JSON.parse(stored);
+      const rol = parsed?.gebruikerType?.toLowerCase() || "";
 
-    if (parsed.gebruikerType.toLowerCase() !== "veilingmeester") {
-      router.push("/");
-      return;
+      if (rol !== "veilingmeester") {
+        alert("Je hebt geen toegang tot dit dashboard");
+        router.push("/");
+        return;
+      }
+
+      setGebruiker(parsed);
+    } catch (e) {
+      console.error("Kon gebruiker niet parsen uit localStorage:", e);
+      router.push("/login");
     }
-
-    setGebruiker(parsed);
   }, [router]);
 
   // ✔️ VEILINGEN LADEN — NU MET CREDENTIALS OM COOKIE MEE TE STUREN
@@ -66,7 +77,6 @@ export default function MijnVeilingenPage() {
       <div className="veilingen-container">
         <div className="veilingen-header-row">
           <h1>Mijn Veilingen</h1>
-
           <button
             className="nieuwe-veiling-btn"
             onClick={() => router.push("/dashboard/nieuwe-veiling")}
@@ -99,7 +109,9 @@ export default function MijnVeilingenPage() {
 
                 <div className="veilingen-card-content">
                   <h2>{v.titel || "Naamloze Veiling"}</h2>
-                  <p className="product">{v.product?.naam || "Onbekend product"}</p>
+                  <p className="product">
+                    {v.product?.naam || "Onbekend product"}
+                  </p>
 
                   <p className="tijd">
                     {new Date(v.startTijd).toLocaleString()} <br />
