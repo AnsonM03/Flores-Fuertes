@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import "../styles/veilingen.css";
 
 export default function VeilingenPage() {
   const [veilingen, setVeilingen] = useState([]);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   // ✅ Ophalen van veilingen
   useEffect(() => {
