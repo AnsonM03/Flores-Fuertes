@@ -1,253 +1,133 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import "../styles/veilingen.css";
 
-import VeilingenLijst from "../components/VeilingenLijst";
-import VeilingKlok from "../components/VeilingKlok";
-import KoperRij from "../components/Koperrij";
-
-import "../styles/dashboard.css";
-
-export default function Dashboard() {
+export default function MijnVeilingenPage() {
   const [veilingen, setVeilingen] = useState([]);
-  const [selectedVeiling, setSelectedVeiling] = useState(null);
   const [error, setError] = useState(null);
-  const [klanten, setKlanten] = useState([]);
   const [gebruiker, setGebruiker] = useState(null);
 
   const router = useRouter();
 
-  // ---------- AUTH LOAD ----------
+  // ✔️ AUTH LADEN
   useEffect(() => {
-    const storedGebruiker = localStorage.getItem("gebruiker");
+    const user = localStorage.getItem("gebruiker");
+    const token = localStorage.getItem("token");
 
-    if (!storedGebruiker) {
+    if (!user || !token) {
       router.push("/login");
       return;
     }
 
-    setGebruiker(JSON.parse(storedGebruiker));
+    const parsed = JSON.parse(user);
+
+    if (parsed.gebruikerType.toLowerCase() !== "veilingmeester") {
+      router.push("/");
+      return;
+    }
+
+    setGebruiker(parsed);
   }, [router]);
 
-  const rol = gebruiker?.gebruikerType?.toLowerCase();
-
-  // ---------- VEILINGEN OPHALEN ----------
+  // ✔️ VEILINGEN LADEN
   useEffect(() => {
     if (!gebruiker) return;
 
     async function fetchVeilingen() {
       try {
-        const res = await fetch("http://localhost:5281/api/Veilingen", {
-          method: "GET",
-          credentials: "include", // cookie meesturen
-        });
+        const res = await fetch("http://localhost:5281/api/Veilingen");
 
-        if (res.status === 401) {
-          localStorage.removeItem("gebruiker");
-          router.push("/login");
-          return;
-        }
-
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const data = await res.json();
-        setVeilingen(data);
-        if (data.length > 0) setSelectedVeiling(data[0]);
-      } catch {
-        setError("Kon veilingen niet ophalen");
+
+        const mijnVeilingen = data.filter(
+          (v) => v.veilingmeester_Id === gebruiker.gebruiker_Id
+        );
+
+        setVeilingen(mijnVeilingen);
+      } catch (err) {
+        console.error("Fout bij ophalen:", err);
+        setError("Kon veilingen niet ophalen.");
       }
     }
 
     fetchVeilingen();
-  }, [gebruiker, router]);
+  }, [gebruiker]);
 
-  // ---------- KLANTEN OPHALEN ----------
-  useEffect(() => {
-    if (!gebruiker) return;
-    if (rol !== "veilingmeester" && rol !== "aanvoerder") return;
+  // ✔️ ERRORS + EMPTY STATES
+  if (error) return <p className="error-text">{error}</p>;
+  if (!gebruiker) return <p className="empty-text">Laden...</p>;
 
-    async function fetchKlanten() {
-      try {
-        const res = await fetch("http://localhost:5281/api/Klanten", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (res.status === 401) {
-          localStorage.removeItem("gebruiker");
-          router.push("/login");
-          return;
-        }
-
-        if (!res.ok) throw new Error();
-
-        setKlanten(await res.json());
-      } catch (err) {
-        console.error("Kon klanten niet ophalen", err);
-      }
-    }
-
-    fetchKlanten();
-  }, [rol, gebruiker, router]);
-
-  // ---------- ACTIES ----------
-  async function handleKlantVerwijderen(id) {
-    if (!confirm("Weet je zeker dat je deze koper wilt verwijderen?")) return;
-
-    const res = await fetch(`http://localhost:5281/api/Klanten/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-
-    if (res.status === 401) {
-      localStorage.removeItem("gebruiker");
-      router.push("/login");
-      return;
-    }
-
-    if (!res.ok) {
-      alert("Fout bij verwijderen koper");
-      return;
-    }
-
-    setKlanten(prev => prev.filter(k => k.gebruiker_Id !== id));
-  }
-
-  async function handleVeilingVerwijderen(id) {
-    if (!confirm("Weet je zeker dat je deze veiling wilt verwijderen?")) return;
-
-    const res = await fetch(`http://localhost:5281/api/Veilingen/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-
-    if (res.status === 401) {
-      localStorage.removeItem("gebruiker");
-      router.push("/login");
-      return;
-    }
-
-    if (!res.ok) {
-      alert("Fout bij verwijderen veiling");
-      return;
-    }
-
-    setVeilingen(prev =>
-      prev.filter(v => v.veiling_Id !== id && v.Veiling_Id !== id)
-    );
-  }
-
-  async function maakRandomVeiling() {
-    if (rol !== "veilingmeester") return;
-
-    const nieuwe = {
-      veilingPrijs: 50,
-      veilingDatum: new Date().toISOString().split("T")[0],
-      startTijd: new Date().toISOString(),
-      eindTijd: new Date(Date.now() + 600000).toISOString(),
-      status: "open",
-      product_Id: "ce01670c-bc94-4dc3-8864-ddb756996006",
-      veilingmeester_Id: gebruiker.gebruiker_Id,
-    };
-
-    const res = await fetch("http://localhost:5281/api/Veilingen", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nieuwe),
-    });
-
-    if (res.status === 401) {
-      localStorage.removeItem("gebruiker");
-      router.push("/login");
-      return;
-    }
-
-    if (!res.ok) {
-      alert("Veiling aanmaken mislukt");
-      return;
-    }
-
-    const created = await res.json();
-    setVeilingen(prev => [created, ...prev]);
-    setSelectedVeiling(created);
-  }
-
-  // ---------- LOADING ----------
-  if (!gebruiker) {
-    return <div className="dashboard-loading">Laden...</div>;
-  }
-
-  // ---------- UI ----------
+  // ✔️ UI
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-card">
-        <h1 className="dashboard-title">Dashboard</h1>
+    <div className="veilingen-wrapper">
+      <div className="veilingen-container">
 
-        <div className="dashboard-layout">
-          {/* LINKERKANT */}
-          <div className="dashboard-column-left">
-            <div className="section-card">
-              <div className="section-header">
-                <h2 className="section-title">Aankomende veilingen</h2>
+        {/* HEADER MET KNOP */}
+        <div className="veilingen-header-row">
+          <h1>Mijn Veilingen</h1>
 
-                {rol === "veilingmeester" && (
-                  <button className="new-veiling-btn" onClick={maakRandomVeiling}>
-                    + Nieuwe veiling
-                  </button>
-                )}
-              </div>
-
-              <VeilingenLijst
-                veilingen={veilingen}
-                error={error}
-                selectedVeiling={selectedVeiling}
-                onSelect={setSelectedVeiling}
-                onDelete={
-                  rol === "veilingmeester"
-                    ? handleVeilingVerwijderen
-                    : undefined
-                }
-                rol={rol}
-              />
-            </div>
-
-            {(rol === "veilingmeester" || rol === "aanvoerder") && (
-              <div className="section-card">
-                <div className="section-header">
-                  <h2 className="section-title">Kopers</h2>
-                </div>
-
-                <table className="kopers-table">
-                  <tbody>
-                    {klanten.map(k => (
-                      <KoperRij
-                        key={k.gebruiker_Id}
-                        klant={k}
-                        onDelete={
-                          rol === "veilingmeester"
-                            ? () => handleKlantVerwijderen(k.gebruiker_Id)
-                            : undefined
-                        }
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* RECHTERKANT */}
-          <div className="dashboard-column-right">
-            <div className="klok-wrapper">
-              {selectedVeiling ? (
-                <VeilingKlok veiling={selectedVeiling} gebruikerRol={rol} />
-              ) : (
-                <p className="no-veiling">Geen actieve veiling geselecteerd</p>
-              )}
-            </div>
-          </div>
+          {/* Alleen veilingmeester */}
+          <button
+            className="nieuwe-veiling-btn"
+            onClick={() => router.push("/dashboard/nieuwe-veiling")}
+          >
+            + Nieuwe veiling
+          </button>
         </div>
+
+        {veilingen.length === 0 ? (
+          <p className="empty-text">Je hebt nog geen veilingen aangemaakt.</p>
+        ) : (
+          <div className="veilingen-grid">
+  {veilingen.map((v) => (
+    <Link
+      key={v.veiling_Id}
+      href={`/dashboard/${v.veiling_Id}`}
+      className="veilingen-card"
+    >
+      <div
+        className={`veilingen-card-header ${
+          v.status === "actief"
+            ? "header-actief"
+            : v.status === "afgelopen"
+            ? "header-afgelopen"
+            : "header-wachten"
+        }`}
+      >
+        {v.kloklocatie || "Veiling"}
+      </div>
+
+      <div className="veilingen-card-content">
+        <h2>{v.titel || "Naamloze Veiling"}</h2>
+        <p className="product">
+          {v.product?.naam || "Onbekend product"}
+        </p>
+
+        <p className="tijd">
+          {new Date(v.startTijd).toLocaleString()} <br />
+          {new Date(v.eindTijd).toLocaleString()}
+        </p>
+
+        <span
+          className={`veilingen-status ${
+            v.status === "actief"
+              ? "status-actief"
+              : v.status === "afgelopen"
+              ? "status-afgelopen"
+              : "status-wachten"
+          }`}
+        >
+          {v.status || "In voorbereiding"}
+        </span>
+      </div>
+    </Link>
+  ))}
+</div>
+        )}
       </div>
     </div>
   );

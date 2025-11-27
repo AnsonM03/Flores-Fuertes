@@ -56,24 +56,64 @@ namespace FloresFuertes.Controllers
                 EindTijd = dto.EindTijd,
                 Kloklocatie = dto.Kloklocatie,
                 Status = dto.Status,
-                Product_Id = dto.Product_Id,
-                Veilingmeester_Id = dto.Veilingmeester_Id
+                Veilingmeester_Id = dto.Veilingmeester_Id,
+
+                // ❌ geen product koppelen in deze stap
+                Product_Id = null!
             };
 
             _context.Veilingen.Add(nieuweVeiling);
             await _context.SaveChangesAsync();
 
-            // ✅ Haal de volledige veiling opnieuw op met relaties
+            // Relaat opnieuw ophalen met includes
             var completeVeiling = await _context.Veilingen
                 .Include(v => v.Product)
                 .Include(v => v.Veilingmeester)
                 .FirstOrDefaultAsync(v => v.Veiling_Id == nieuweVeiling.Veiling_Id);
 
-            if (completeVeiling == null)
-                return NotFound("Veiling niet gevonden na aanmaken");
-
-            return CreatedAtAction(nameof(GetById), new { id = completeVeiling.Veiling_Id }, completeVeiling);
+            return CreatedAtAction(nameof(GetById), new { id = nieuweVeiling.Veiling_Id }, completeVeiling);
         }
+
+        [HttpPost("{veilingId}/koppel")]
+public async Task<IActionResult> KoppelProduct(string veilingId, [FromBody] KoppelProductDto dto)
+{
+    var veiling = await _context.Veilingen.FindAsync(veilingId);
+    if (veiling == null)
+        return NotFound("Veiling niet gevonden.");
+
+    var product = await _context.Producten.FindAsync(dto.ProductId);
+    if (product == null)
+        return NotFound("Product niet gevonden.");
+
+    // check hoeveelheid
+    if (dto.Hoeveelheid <= 0)
+        return BadRequest("Hoeveelheid moet groter zijn dan 0.");
+
+    if (product.Hoeveelheid < dto.Hoeveelheid)
+        return BadRequest("Niet genoeg voorraad.");
+
+    // koppeling maken
+    var koppeling = new VeilingProduct
+    {
+        Veiling_Id = veilingId,
+        Product_Id = dto.ProductId,
+        Hoeveelheid = dto.Hoeveelheid,
+        Prijs = dto.Prijs // mag null zijn
+    };
+
+    _context.VeilingProducten.Add(koppeling);
+
+    // update voorraad product
+    product.Hoeveelheid -= dto.Hoeveelheid;
+
+    // prijs aanpassen indien opgegeven
+    if (dto.Prijs.HasValue)
+        product.StartPrijs = dto.Prijs.Value;
+
+    await _context.SaveChangesAsync();
+
+    return Ok(new { message = "Product gekoppeld!" });
+}
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVeiling(string id)
@@ -89,54 +129,5 @@ namespace FloresFuertes.Controllers
 
             return NoContent(); // 204 betekent: succesvol verwijderd, geen content terug
         }
-
-        // [HttpPost]
-        // public async Task<ActionResult<Veiling>> CreateVeiling([FromBody] VeilingCreateDto dto)
-        // {
-        //     if (dto == null)
-        //         return BadRequest("Ongeldige invoer");
-
-        //     var nieuweVeiling = new Veiling
-        //     {
-        //         Veiling_Id = Guid.NewGuid().ToString(),
-        //         VeilingPrijs = dto.VeilingPrijs,
-        //         VeilingDatum = dto.VeilingDatum,
-        //         StartTijd = dto.StartTijd,
-        //         EindTijd = dto.EindTijd,
-        //         Kloklocatie = dto.Kloklocatie,
-        //         Status = dto.Status,
-        //         Product_Id = dto.Product_Id,
-        //         Veilingmeester_Id = dto.Veilingmeester_Id
-        //     };
-
-        //     _context.Veilingen.Add(nieuweVeiling);
-        //     await _context.SaveChangesAsync();
-
-        //     // 201 Created met het nieuwe object als response
-        //     return CreatedAtAction(nameof(GetById), new { id = nieuweVeiling.Veiling_Id }, nieuweVeiling);
-        // }
-
-        // [HttpPost]
-        // public async Task<ActionResult<Veiling>> Create(VeilingCreateDto dto)
-        // {
-        //     var veiling = new Veiling
-        //     {
-        //         VeilingPrijs = dto.VeilingPrijs,
-        //         VeilingDatum = dto.VeilingDatum,
-        //         StartTijd = dto.StartTijd,
-        //         EindTijd = dto.EindTijd,
-        //         Kloklocatie = dto.Kloklocatie,
-        //         Status = dto.Status,
-        //         Product_Id = dto.Product_Id,
-        //         Veilingmeester_Id = dto.Veilingmeester_Id
-        //     };
-
-        //     _context.Veilingen.Add(veiling);
-        //     await _context.SaveChangesAsync();
-
-        //     return CreatedAtAction(nameof(GetAll),
-        //         new { id = veiling.Veiling_Id },
-        //         veiling);
-        // }
     }
 }

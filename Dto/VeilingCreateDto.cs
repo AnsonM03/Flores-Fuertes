@@ -6,7 +6,5 @@ public class VeilingCreateDto
     public DateTime EindTijd { get; set; }
     public string Kloklocatie { get; set; } = null!;
     public string Status { get; set; } = null!;
-
-    public string Product_Id { get; set; } = null!;
     public string Veilingmeester_Id { get; set; } = null!;
 }

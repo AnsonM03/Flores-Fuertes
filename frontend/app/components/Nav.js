@@ -126,15 +126,21 @@ export default function Nav() {
               <Link href="/account" className={`nav-link ${isActive('/account') ? 'is-active' : ''}`} onClick={handleLinkClick}>
                 Account
               </Link>
-
-              {/* !! CHECK: Alleen tonen voor Aanvoerder of Veilingmeester !! */}
-              {(rol === "aanvoerder" || rol === "veilingmeester") && (
-                <Link 
-                  href="/dashboard" 
-                  className={`nav-link ${isActive('/dashboard') ? 'is-active' : ''}`} 
+              {/* Alleen zichtbaar voor veilingmeester */}
+              {gebruiker?.gebruikerType?.toLowerCase() === "veilingmeester" && (
+              <Link href="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'is-active' : ''}`} onClick={handleLinkClick}>
+                Dashboard
+              </Link>
+              )}
+              
+              {/* Alleen zichtbaar voor aanvoerder */}
+              {gebruiker?.gebruikerType?.toLowerCase() === "aanvoerder" && (
+                <Link
+                  href="/producten"
+                  className={`nav-link ${isActive("/producten") ? "is-active" : ""}`}
                   onClick={handleLinkClick}
                 >
-                  Dashboard
+                  Producten
                 </Link>
               )}
               

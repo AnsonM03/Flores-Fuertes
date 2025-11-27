@@ -1,226 +1,185 @@
 /* ============================================
-   VEILING PAGINA – WCAG OPTIMALISATIES
-================================================= */
+   VEILINGEN LIJST – GEÏSOLEERDE LAYOUT
+   (geen globale overlap meer)
+================================================ */
 
-/* 1. Pagina Layout */
-.veiling-pagina {
-  width: var(--container);
-  margin: 0 auto;
-  padding: 40px 0;
-}
-
-.veiling-layout {
-  display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 32px;
+/* Pagina wrapper */
+.veilingen-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
   align-items: flex-start;
+  background: #f8fafc;
+  padding: 60px 20px;
+  box-sizing: border-box;
 }
 
-/* -----------------------------------------------
-   2. Kolom 1: Veiling Lijst
--------------------------------------------------- */
-.veiling-lijst-kolom h2 {
-  font-size: 24px;
+/* Container (unieke naam!) */
+.veilingen-container {
+  width: 100%;
+  max-width: 1200px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 50px 60px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+/* Titel */
+.veilingen-container h1 {
+  font-size: 2.2rem;
   font-weight: 800;
-  margin-bottom: 16px;
-  color: var(--ink);
+  margin-bottom: 45px;
+  color: #0f172a;
+  letter-spacing: -0.5px;
 }
 
-/* scrollbaar maar WCAG-vriendelijk */
-.veiling-lijst {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 70vh;
-  overflow-y: auto;
-  border: 1px solid #dfe2e6;
-  border-radius: 12px;
-  padding: 10px;
+/* Grid */
+.veilingen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 30px;
+  justify-items: center;
+}
+
+/* Veilingkaart */
+.veilingen-card {
   background: #ffffff;
-  scroll-behavior: smooth;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+  width: 100%;
+  max-width: 340px;
 }
 
-/* Scrollbar styling voor betere UX */
-.veiling-lijst::-webkit-scrollbar {
-  width: 8px;
-}
-.veiling-lijst::-webkit-scrollbar-thumb {
-  background: #bfc6cf;
-  border-radius: 12px;
-}
-.veiling-lijst::-webkit-scrollbar-thumb:hover {
-  background: #9aa1aa;
+.veilingen-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
 }
 
-.veiling-item {
+/* Header */
+.veilingen-card-header {
+  height: 130px;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  background: #ffffff;
-  border: 1px solid #e2e6ea;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow: 0px 3px 8px rgba(0,0,0,0.05);
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-}
-
-.veiling-item:hover,
-.veiling-item:focus-visible {
-  transform: translateY(-2px);
-  border-color: var(--brand);
-  box-shadow: 0px 6px 14px rgba(0,0,0,0.07);
-}
-
-/* Toegankelijke focus ring (WCAG) */
-.veiling-item:focus-visible {
-  outline: 3px solid var(--brand);
-  outline-offset: 3px;
-}
-
-/* Geselecteerde item */
-.veiling-item.selected {
-  background: #f3fbf6;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(94, 182, 130, 0.35);
-}
-
-/* Tekst */
-.veiling-item-info h3 {
-  font-size: 16px;
+  justify-content: center;
+  color: white;
   font-weight: 700;
-  margin: 0;
-  color: var(--ink);
+  font-size: 1.2rem;
 }
 
-.veiling-item-info p {
-  font-size: 14px;
-  margin: 4px 0 0;
-  color: var(--ink-weak);
+/* Status-afhankelijk headerkleur */
+.header-actief {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
 }
 
-/* Status labels met hoger contrast */
-.veiling-item-status {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 99px;
+.header-wachten {
+  background: linear-gradient(135deg, #facc15, #fde047);
+  color: #78350f;
+}
+
+.header-afgelopen {
+  background: linear-gradient(135deg, #9ca3af, #e5e7eb);
+  color: #1f2937;
+}
+
+/* Kaartinhoud */
+.veilingen-card-content {
+  padding: 18px 20px 24px;
+  text-align: left;
+}
+
+.veilingen-card-content h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 6px;
+  transition: color 0.2s ease;
+}
+
+.veilingen-card:hover .veilingen-card-content h2 {
+  color: #2563eb;
+}
+
+.veilingen-card-content p.product {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+
+.veilingen-card-content .tijd {
+  font-size: 0.88rem;
+  color: #374151;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+/* Statusbadge */
+.veilingen-status {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 7px 13px;
+  border-radius: 999px;
   text-transform: capitalize;
 }
 
 .status-actief {
-  background: #dff6e7;
-  color: #0a784f;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .status-wachten {
-  background: #fff2cf;
-  color: #8e6800;
+  background: #fef9c3;
+  color: #854d0e;
 }
 
 .status-afgelopen {
-  background: #eef0f2;
-  color: #6a6f77;
+  background: #f3f4f6;
+  color: #4b5563;
 }
 
-/* -----------------------------------------------
-   3. Kolom 2: Veiling Klok (sticky kaart)
--------------------------------------------------- */
-.veiling-klok-kolom {
-  position: sticky;
-  top: 90px;
-  z-index: 1;
+.veilingen-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
 }
 
-.veiling-klok-kaart {
-  width: auto;
-  margin: 0;
-}
-
-/* Teksten */
-.veiling-klok-details p {
-  font-size: 15px;
-  color: var(--ink-weak);
-  line-height: 1.55;
-  margin-bottom: 8px;
-}
-
-.veiling-klok-details p strong {
-  color: var(--ink);
-  font-weight: 700;
-}
-
-/* Klok UI */
-.klok-display {
-  text-align: center;
-  margin: 24px 0;
-  padding: 28px;
-  background: #f7f9fa;
-  border-radius: 12px;
-  border: 1px solid #dde2e7;
-}
-
-.klok-prijs {
-  font-size: 48px;
-  font-weight: 900;
-  color: var(--brand);
-}
-
-.klok-tijd {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--ink-weak);
-  letter-spacing: 1px;
-}
-
-/* Bid button — hergebruik .btn maar met aanpassingen */
-.klok-bod-knop {
-  width: 100%;
-  padding: 16px;
-  font-size: 18px;
-}
-
-.klok-bod-knop:disabled {
-  background: #c6cdd5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* Geen klant melding */
-.klok-geen-klant {
-  text-align: center;
-  font-style: italic;
-  color: var(--ink-weak);
-  padding: 16px;
-  background: #f7f9fa;
+.nieuwe-veiling-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 18px;
   border-radius: 8px;
-  margin-top: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-/* -----------------------------------------------
-   4. Reduced Motion Support
--------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  .veiling-item,
-  .btn {
-    transition: none !important;
-  }
+.nieuwe-veiling-btn:hover {
+  background: #2563eb;
 }
 
-/* -----------------------------------------------
-   5. Responsive (Mobiel)
--------------------------------------------------- */
-@media (max-width: 960px) {
-  .veiling-layout {
-    grid-template-columns: 1fr;
+/* Responsiveness */
+@media (max-width: 768px) {
+  .veilingen-container {
+    padding: 30px 20px;
   }
 
-  .veiling-lijst-kolom {
-    order: 2;
+  .veilingen-container h1 {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
   }
 
-  .veiling-klok-kolom {
-    order: 1;
-    position: static;
+  .veilingen-card {
+    max-width: 100%;
   }
 }

@@ -88,7 +88,7 @@ namespace FloresFuertes.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Sub, gebruiker.Gebruiker_Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, gebruiker.Email),
-                new Claim("rol", gebruiker.GebruikerType.ToLower())
+                new Claim("rol", gebruiker.GebruikerType.ToLower()), // rol claim in lowercase
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

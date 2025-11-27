@@ -18,10 +18,27 @@ namespace FloresFuertes.Data
         public DbSet<Product> Producten { get; set; }
         public DbSet<Veiling> Veilingen { get; set; }
         // Voeg hier andere tabellen toe, zoals Klant, Product, etc.
+        public DbSet<VeilingProduct> VeilingProducten { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Configuratie voor VeilingProduct (many-to-many)
+            modelBuilder.Entity<VeilingProduct>()
+                .HasKey(vp => vp.VeilingProduct_Id); // Primaire sleutel
+
+            modelBuilder.Entity<VeilingProduct>()
+                .HasOne(vp => vp.Veiling)
+                .WithMany()
+                .HasForeignKey(vp => vp.Veiling_Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<VeilingProduct>()
+                .HasOne(vp => vp.Product)
+                .WithMany()
+                .HasForeignKey(vp => vp.Product_Id)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configuratie voor Gebruiker en afgeleide klassen
             modelBuilder.Entity<Gebruiker>()
@@ -32,10 +49,10 @@ namespace FloresFuertes.Data
                 .HasValue<Veilingmeester>("Veilingmeester");
 
             // Configuratie voor relaties
-            modelBuilder.Entity<Veiling>()
-                .HasOne(v => v.Product)
-                .WithMany()
-                .HasForeignKey(v => v.Product_Id);
+            // modelBuilder.Entity<Veiling>()
+            //     .HasOne(v => v.Product)
+            //     .WithMany()
+            //     .HasForeignKey(v => v.Product_Id);
 
             modelBuilder.Entity<Veiling>()
                 .HasOne(v => v.Veilingmeester)

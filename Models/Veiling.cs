@@ -13,10 +13,12 @@ namespace FloresFuertes.Models
         public string Kloklocatie { get; set; }
         public string Status { get; set; }
 
-        public string Product_Id { get; set; }
-        public Product Product { get; set; }
+        public string? Product_Id { get; set; }
+        public Product? Product { get; set; }
 
         public string Veilingmeester_Id { get; set; }
         public Veilingmeester Veilingmeester { get; set; }
+
+        public ICollection<VeilingProduct>? VeilingProducten { get; set; }
     }
 }

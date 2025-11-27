@@ -1,0 +1,77 @@
+/* 🎨 Algemene container */
+.veiling-producten-lijst {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+}
+
+/* Titel */
+.veiling-producten-lijst h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Producten grid */
+.veiling-producten-lijst .producten-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* Product kaart */
+.product-card {
+  background-color: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Afbeelding */
+.product-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Tekst */
+.product-card h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.product-card p {
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.3;
+}
+
+.product-card .price {
+  color: #059669;
+  font-weight: 600;
+}
+
+.product-card .amount {
+  color: #2563eb;
+  font-size: 0.85rem;
+}
