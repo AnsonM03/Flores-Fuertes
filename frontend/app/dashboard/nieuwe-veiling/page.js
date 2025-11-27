@@ -12,8 +12,10 @@ export default function NieuweVeilingPage() {
     eindTijd: "",
     kloklocatie: "",
     status: "wachten",
+    product_Id: "",
   });
 
+  const [producten, setProducten] = useState([]);
   const [gebruiker, setGebruiker] = useState(null);
   const router = useRouter();
 
@@ -43,6 +45,7 @@ export default function NieuweVeilingPage() {
       eindTijd: new Date(`${formData.veilingDatum}T${formData.eindTijd}`),
       kloklocatie: formData.kloklocatie,
       status: formData.status,
+      product_Id: formData.product_Id,
       veilingmeester_Id: gebruiker.gebruiker_Id,
     };
 

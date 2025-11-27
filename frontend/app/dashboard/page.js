@@ -11,12 +11,11 @@ export default function MijnVeilingenPage() {
 
   const router = useRouter();
 
-  // ✔️ AUTH LADEN
+  // ✔️ AUTH LADEN VIA COOKIE + localStorage gebruiker info
   useEffect(() => {
     const user = localStorage.getItem("gebruiker");
-    const token = localStorage.getItem("token");
 
-    if (!user || !token) {
+    if (!user) {
       router.push("/login");
       return;
     }
@@ -31,13 +30,15 @@ export default function MijnVeilingenPage() {
     setGebruiker(parsed);
   }, [router]);
 
-  // ✔️ VEILINGEN LADEN
+  // ✔️ VEILINGEN LADEN — NU MET CREDENTIALS OM COOKIE MEE TE STUREN
   useEffect(() => {
     if (!gebruiker) return;
 
     async function fetchVeilingen() {
       try {
-        const res = await fetch("http://localhost:5281/api/Veilingen");
+        const res = await fetch("http://localhost:5281/api/Veilingen", {
+          credentials: "include",  
+        });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -57,20 +58,15 @@ export default function MijnVeilingenPage() {
     fetchVeilingen();
   }, [gebruiker]);
 
-  // ✔️ ERRORS + EMPTY STATES
   if (error) return <p className="error-text">{error}</p>;
   if (!gebruiker) return <p className="empty-text">Laden...</p>;
 
-  // ✔️ UI
   return (
     <div className="veilingen-wrapper">
       <div className="veilingen-container">
-
-        {/* HEADER MET KNOP */}
         <div className="veilingen-header-row">
           <h1>Mijn Veilingen</h1>
 
-          {/* Alleen veilingmeester */}
           <button
             className="nieuwe-veiling-btn"
             onClick={() => router.push("/dashboard/nieuwe-veiling")}
@@ -83,50 +79,48 @@ export default function MijnVeilingenPage() {
           <p className="empty-text">Je hebt nog geen veilingen aangemaakt.</p>
         ) : (
           <div className="veilingen-grid">
-  {veilingen.map((v) => (
-    <Link
-      key={v.veiling_Id}
-      href={`/dashboard/${v.veiling_Id}`}
-      className="veilingen-card"
-    >
-      <div
-        className={`veilingen-card-header ${
-          v.status === "actief"
-            ? "header-actief"
-            : v.status === "afgelopen"
-            ? "header-afgelopen"
-            : "header-wachten"
-        }`}
-      >
-        {v.kloklocatie || "Veiling"}
-      </div>
+            {veilingen.map((v) => (
+              <Link
+                key={v.veiling_Id}
+                href={`/dashboard/${v.veiling_Id}`}
+                className="veilingen-card"
+              >
+                <div
+                  className={`veilingen-card-header ${
+                    v.status === "actief"
+                      ? "header-actief"
+                      : v.status === "afgelopen"
+                      ? "header-afgelopen"
+                      : "header-wachten"
+                  }`}
+                >
+                  {v.kloklocatie || "Veiling"}
+                </div>
 
-      <div className="veilingen-card-content">
-        <h2>{v.titel || "Naamloze Veiling"}</h2>
-        <p className="product">
-          {v.product?.naam || "Onbekend product"}
-        </p>
+                <div className="veilingen-card-content">
+                  <h2>{v.titel || "Naamloze Veiling"}</h2>
+                  <p className="product">{v.product?.naam || "Onbekend product"}</p>
 
-        <p className="tijd">
-          {new Date(v.startTijd).toLocaleString()} <br />
-          {new Date(v.eindTijd).toLocaleString()}
-        </p>
+                  <p className="tijd">
+                    {new Date(v.startTijd).toLocaleString()} <br />
+                    {new Date(v.eindTijd).toLocaleString()}
+                  </p>
 
-        <span
-          className={`veilingen-status ${
-            v.status === "actief"
-              ? "status-actief"
-              : v.status === "afgelopen"
-              ? "status-afgelopen"
-              : "status-wachten"
-          }`}
-        >
-          {v.status || "In voorbereiding"}
-        </span>
-      </div>
-    </Link>
-  ))}
-</div>
+                  <span
+                    className={`veilingen-status ${
+                      v.status === "actief"
+                        ? "status-actief"
+                        : v.status === "afgelopen"
+                        ? "status-afgelopen"
+                        : "status-wachten"
+                    }`}
+                  >
+                    {v.status || "In voorbereiding"}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </div>
