@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../styles/veilingen.css";
+import { useRouter } from "next/navigation";
 
 export default function VeilingenPage() {
   const [veilingen, setVeilingen] = useState([]);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   // ✅ Ophalen van veilingen
   useEffect(() => {
