@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import VeilingenLijst from "../../components/VeilingenLijst";
-import VeilingKlok from "../../components/VeilingKlok";
+import VeilingKlok from "../../components/Veilingklok";
 import KoperRij from "../../components/Koperrij";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
 

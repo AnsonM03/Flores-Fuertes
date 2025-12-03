@@ -14,6 +14,5 @@ namespace FloresFuertes.Models
         public float StartPrijs { get; set; }
 
         public string Aanvoerder_Id { get; set; }
-        public ICollection<VeilingProduct>? VeilingProducten { get; set; }
     }
 }

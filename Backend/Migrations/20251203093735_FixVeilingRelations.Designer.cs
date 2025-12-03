@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FloresFuertes.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251126123132_AddPrijsToVeilingProduct")]
-    partial class AddPrijsToVeilingProduct
+    [Migration("20251203093735_FixVeilingRelations")]
+    partial class FixVeilingRelations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -197,9 +197,6 @@ namespace FloresFuertes.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Product_Id1")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("Veiling_Id")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -210,8 +207,6 @@ namespace FloresFuertes.Migrations
                     b.HasKey("VeilingProduct_Id");
 
                     b.HasIndex("Product_Id");
-
-                    b.HasIndex("Product_Id1");
 
                     b.HasIndex("Veiling_Id");
 
@@ -288,10 +283,6 @@ namespace FloresFuertes.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FloresFuertes.Models.Product", null)
-                        .WithMany("VeilingProducten")
-                        .HasForeignKey("Product_Id1");
-
                     b.HasOne("FloresFuertes.Models.Veiling", "Veiling")
                         .WithMany()
                         .HasForeignKey("Veiling_Id")
@@ -305,11 +296,6 @@ namespace FloresFuertes.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Veiling");
-                });
-
-            modelBuilder.Entity("FloresFuertes.Models.Product", b =>
-                {
-                    b.Navigation("VeilingProducten");
                 });
 
             modelBuilder.Entity("FloresFuertes.Models.Veiling", b =>
