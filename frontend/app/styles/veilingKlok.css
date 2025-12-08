@@ -107,3 +107,140 @@
   font-size: 0.9rem;
   margin-top: 15px;
 }
+
+/* Wrapper */
+.klok-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Titel */
+.klok-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+/* Status */
+.klok-status {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.klok-status--wachten {
+  color: #0ea5e9;
+}
+
+.klok-status--actief {
+  color: #16a34a;
+}
+
+.klok-status--afgelopen {
+  color: #dc2626;
+}
+
+/* ------------------- */
+/* DUTCH AUCTION CLOCK */
+/* ------------------- */
+
+.dutch-clock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dutch-clock {
+  width: 260px;
+  height: 260px;
+}
+
+.clock-ring {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 10;
+  opacity: 0.35;
+}
+
+.clock-hand {
+  stroke: #ef4444;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transform-origin: 100px 100px;
+  transition: transform 0.4s linear;
+}
+
+.clock-price {
+  font-size: 30px;
+  fill: #1e293b;
+  font-weight: 700;
+}
+
+.clock-label {
+  margin-top: 10px;
+  font-size: 15px;
+  color: #475569;
+}
+
+/* Info card */
+
+.klok-info-card {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  width: 260px;
+  margin-bottom: 20px;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.06);
+}
+
+.klok-product-name {
+  font-weight: 700;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.klok-field-label {
+  font-size: 15px;
+  margin: 4px 0;
+}
+
+.klok-field-value {
+  font-weight: bold;
+  color: #1e293b;
+}
+
+/* Buttons */
+.klok-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.klok-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-weight: 600;
+}
+
+.klok-btn--koop {
+  background: #16a34a;
+  color: white;
+}
+
+.klok-btn--koop:disabled {
+  background: #9ca3af;
+}
+
+.klok-btn--start {
+  background: #2563eb;
+  color: white;
+}
+
+.klok-btn--stop {
+  background: #dc2626;
+  color: white;
+}

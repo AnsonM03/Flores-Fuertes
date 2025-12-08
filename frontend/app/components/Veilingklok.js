@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import "../styles/veilingKlok.css"; // Zorg dat deze bestaat
 
 export default function VeilingKlok({ veiling, gebruikerRol }) {
   const [status, setStatus] = useState("wachten");
   const [huidigePrijs, setHuidigePrijs] = useState(veiling?.veilingPrijs || 100);
   const minimumPrijs = 5;
 
+  // ⭐ Prijs laten dalen
   useEffect(() => {
     if (!veiling?.startTijd || !veiling?.eindTijd) return;
 
@@ -45,34 +47,75 @@ export default function VeilingKlok({ veiling, gebruikerRol }) {
     return <p className="no-veiling">Geen actieve veiling geselecteerd</p>;
   }
 
-  const start = new Date(veiling.startTijd).toLocaleTimeString("nl-NL", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const eind = new Date(veiling.eindTijd).toLocaleTimeString("nl-NL", {
+  // ⭐ Wijzer rotatie berekenen
+  const rotatie = (() => {
+    const start = new Date(veiling.startTijd);
+    const eind = new Date(veiling.eindTijd);
+    const totaalSec = (eind - start) / 1000;
+
+    if (status !== "actief") return 0;
+
+    const verstreken = (new Date() - start) / 1000;
+    const percentage = Math.min(verstreken / totaalSec, 1);
+
+    return percentage * 360; // volledige draai
+  })();
+
+  // Format layout
+  const startTijd = new Date(veiling.startTijd).toLocaleTimeString("nl-NL", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  let statusClass = "klok-status-text";
-  if (status === "wachten") statusClass += " klok-status-text--wachten";
-  if (status === "actief") statusClass += " klok-status-text--actief";
-  if (status === "afgelopen") statusClass += " klok-status-text--afgelopen";
+  const eindTijd = new Date(veiling.eindTijd).toLocaleTimeString("nl-NL", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
-    <div>
+    <div className="klok-wrapper">
       <h2 className="klok-title">Klokveiling</h2>
 
-      <p className={statusClass}>
-        {status === "wachten" && `Veiling start om ${start}`}
+      {/* ⭐ STATUS */}
+      <p className={`klok-status klok-status--${status}`}>
+        {status === "wachten" && `Veiling start om ${startTijd}`}
         {status === "actief" && "Veiling is actief"}
         {status === "afgelopen" && "Veiling afgelopen"}
       </p>
 
-      {status === "actief" && (
-        <div className="klok-price-large">€{huidigePrijs.toFixed(2)}</div>
-      )}
+      {/* ⭐ DUTCH AUCTION CLOCK */}
+      <div className="dutch-clock-container">
+        <svg className="dutch-clock" viewBox="0 0 200 200">
 
+          {/* Buitenring */}
+          <circle cx="100" cy="100" r="90" className="clock-ring" />
+
+          {/* Wijzer */}
+          <line
+            x1="100"
+            y1="100"
+            x2="100"
+            y2="20"
+            className="clock-hand"
+            style={{ transform: `rotate(${rotatie}deg)` }}
+          />
+
+          {/* Prijs */}
+          <text x="100" y="115" textAnchor="middle" className="clock-price">
+            €{huidigePrijs.toFixed(2)}
+          </text>
+        </svg>
+
+        <p className="clock-label">
+          {status === "actief"
+            ? "Prijs daalt..."
+            : status === "wachten"
+            ? "Wachten..."
+            : "Afgelopen"}
+        </p>
+      </div>
+
+      {/* ⭐ PRODUCT INFO */}
       <div className="klok-info-card">
         <p className="klok-product-name">
           {veiling.product?.naam ?? "Onbekend product"}
@@ -88,54 +131,50 @@ export default function VeilingKlok({ veiling, gebruikerRol }) {
         </p>
 
         <p className="klok-field-label">
-          Starttijd:{" "}
-          <span className="klok-field-value">{start}</span>
+          Starttijd: <span className="klok-field-value">{startTijd}</span>
         </p>
+
         <p className="klok-field-label">
-          Eindtijd:{" "}
-          <span className="klok-field-value">{eind}</span>
+          Eindtijd: <span className="klok-field-value">{eindTijd}</span>
         </p>
+
         <p className="klok-field-label">
           Minimale prijs:{" "}
           <span className="klok-field-value">€{minimumPrijs}</span>
         </p>
       </div>
 
+      {/* ⭐ KNOPPEN */}
       <div className="klok-buttons">
+        {/* Klant knop */}
         {gebruikerRol === "klant" && (
           <button
             className="klok-btn klok-btn--koop"
-            onClick={() => {
-              if (status !== "actief") return;
-              setStatus("afgelopen");
-              alert(`🛒 Product verkocht voor €${huidigePrijs.toFixed(2)}!`);
-            }}
             disabled={status !== "actief"}
+            onClick={() => {
+              alert(`🛒 Product gekocht voor €${huidigePrijs.toFixed(2)}!`);
+              setStatus("afgelopen");
+            }}
           >
             {status === "actief" ? "Koop nu" : "Verkocht"}
           </button>
         )}
 
+        {/* Veilingmeester knoppen */}
         {gebruikerRol === "veilingmeester" && (
           <>
             <button
               className="klok-btn klok-btn--start"
-              onClick={() => {
-                setStatus("actief");
-                alert("🚀 De veiling is gestart!");
-              }}
               disabled={status === "actief"}
+              onClick={() => setStatus("actief")}
             >
-              Veiling starten
+              Start veiling
             </button>
 
             <button
               className="klok-btn klok-btn--stop"
-              onClick={() => {
-                setStatus("afgelopen");
-                alert("🛑 De veiling is gestopt door de veilingmeester.");
-              }}
               disabled={status !== "actief"}
+              onClick={() => setStatus("afgelopen")}
             >
               Stop veiling
             </button>
