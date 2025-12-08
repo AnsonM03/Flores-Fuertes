@@ -37,42 +37,50 @@ namespace FloresFuertes.Controllers
             return bieding;
         }
 
-        // [HttpPost]
-        // public async Task<ActionResult<Bieding>> Create(Bieding bieding)
-        // {
-        //     // Haal de bestaande Klant en Product op uit de database
-        //     var klant = await _context.Klanten.FindAsync(bieding.Klant_Id);
-        //     var product = await _context.Producten.FindAsync(bieding.Product_Id);
-
-        //     if (klant == null || product == null)
-        //         return BadRequest("Klant of Product bestaat niet.");
-
-        //     // Koppel alleen de foreign keys, geen nieuwe objecten toevoegen
-        //     bieding.Klant = klant;
-        //     bieding.Product = product;
-
-        //     _context.Biedingen.Add(bieding);
-        //     await _context.SaveChangesAsync();
-
-        //     return CreatedAtAction(nameof(GetById), new { id = bieding.Bieding_Id }, bieding);
-        // }
-
         [HttpPost]
-        public async Task<ActionResult<Bieding>> Create(BiedingCreateDto dto)
+        public async Task<ActionResult<BiedingDto>> Create(BiedingCreateDto dto)
         {
-            var bieding = new Bieding
+            // Check klant
+            var klant = await _context.Klanten.FindAsync(dto.Klant_Id);
+            if (klant == null)
+                return BadRequest("Klant bestaat niet.");
+
+            // Check product
+            var product = await _context.Producten.FindAsync(dto.Product_Id);
+            if (product == null)
+                return BadRequest("Product bestaat niet.");
+
+            // Hoogste bod check
+            var hoogsteBod= await _context.Biedingen
+                .Where(x => x.Product_Id == dto.Product_Id)
+                .OrderByDescending(x => x.Bedrag)
+                .FirstOrDefaultAsync();
+
+            if (hoogsteBod != null && dto.Bedrag <= hoogsteBod.Bedrag)
+                return BadRequest("Bod moet hoger zijn dan het huidige hoogste bod.");
+
+            var nieuweBieding = new Bieding
             {
                 Bedrag = dto.Bedrag,
                 Klant_Id = dto.Klant_Id,
                 Product_Id = dto.Product_Id,
-                Tijdstip = DateTime.Now
+                Tijdstip = DateTime.UtcNow
             };
 
-            _context.Biedingen.Add(bieding);
+            _context.Biedingen.Add(nieuweBieding);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetAll), new { id = bieding.Bieding_Id }, bieding);
-        
+            // DTO response
+            var response = new BiedingDto
+            {
+                Bieding_Id = nieuweBieding.Bieding_Id,
+                Bedrag = nieuweBieding.Bedrag,
+                Tijdstip = nieuweBieding.Tijdstip,
+                Klant_Id = nieuweBieding.Klant_Id,
+                Product_Id = nieuweBieding.Product_Id
+            };
+
+            return CreatedAtAction(nameof(GetById), new { id = nieuweBieding.Bieding_Id }, response);
         }
 
         [HttpPut("{id}")]
