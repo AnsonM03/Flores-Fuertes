@@ -75,45 +75,60 @@ namespace FloresFuertes.Controllers
         }
 
         [HttpPost("{veilingId}/koppel")]
-public async Task<IActionResult> KoppelProduct(string veilingId, [FromBody] KoppelProductDto dto)
-{
-    var veiling = await _context.Veilingen.FindAsync(veilingId);
-    if (veiling == null)
-        return NotFound("Veiling niet gevonden.");
+        public async Task<IActionResult> KoppelProduct(string veilingId, [FromBody] KoppelProductDto dto)
+        {
+            var veiling = await _context.Veilingen.FindAsync(veilingId);
+            if (veiling == null)
+                return NotFound("Veiling niet gevonden.");
 
-    var product = await _context.Producten.FindAsync(dto.ProductId);
-    if (product == null)
-        return NotFound("Product niet gevonden.");
+            var product = await _context.Producten.FindAsync(dto.ProductId);
+            if (product == null)
+                return NotFound("Product niet gevonden.");
 
-    // check hoeveelheid
-    if (dto.Hoeveelheid <= 0)
-        return BadRequest("Hoeveelheid moet groter zijn dan 0.");
+            // check hoeveelheid
+            if (dto.Hoeveelheid <= 0)
+                return BadRequest("Hoeveelheid moet groter zijn dan 0.");
 
-    if (product.Hoeveelheid < dto.Hoeveelheid)
-        return BadRequest("Niet genoeg voorraad.");
+            if (product.Hoeveelheid < dto.Hoeveelheid)
+                return BadRequest("Niet genoeg voorraad.");
 
-    // koppeling maken
-    var koppeling = new VeilingProduct
-    {
-        Veiling_Id = veilingId,
-        Product_Id = dto.ProductId,
-        Hoeveelheid = dto.Hoeveelheid,
-        Prijs = dto.Prijs // mag null zijn
-    };
+            // koppeling maken
+            var koppeling = new VeilingProduct
+            {
+                Veiling_Id = veilingId,
+                Product_Id = dto.ProductId,
+                Hoeveelheid = dto.Hoeveelheid,
+                Prijs = dto.Prijs // mag null zijn
+            };
 
-    _context.VeilingProducten.Add(koppeling);
+            _context.VeilingProducten.Add(koppeling);
 
-    // update voorraad product
-    product.Hoeveelheid -= dto.Hoeveelheid;
+            // update voorraad product
+            product.Hoeveelheid -= dto.Hoeveelheid;
 
-    // prijs aanpassen indien opgegeven
-    if (dto.Prijs.HasValue)
-        product.StartPrijs = dto.Prijs.Value;
+            // prijs aanpassen indien opgegeven
+            if (dto.Prijs.HasValue)
+                product.StartPrijs = dto.Prijs.Value;
 
-    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-    return Ok(new { message = "Product gekoppeld!" });
-}
+            return Ok(new { message = "Product gekoppeld!" });
+        }
+
+        [HttpPost("{id}/start")]
+        public async Task<IActionResult> StartVeiling(string id)
+        {
+            var veiling = await _context.Veilingen.FindAsync(id);
+            if (veiling == null) return NotFound();
+
+            var origineleDuur = veiling.EindTijd - veiling.StartTijd;
+            veiling.StartTijd = DateTime.UtcNow;
+            veiling.EindTijd = veiling.StartTijd + origineleDuur;
+            veiling.Status = "actief";
+
+            await _context.SaveChangesAsync();
+            return Ok(veiling);
+        }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVeiling(string id)

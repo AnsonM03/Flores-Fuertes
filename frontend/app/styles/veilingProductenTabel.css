@@ -32,6 +32,11 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
+.selected-row {
+  background-color: #dff0ff !important;
+  font-weight: 600;
+}
+
 /* Hover row */
 .veiling-table tr:hover td {
   background: #f9fafb;
