@@ -5,35 +5,37 @@ import { getCookie, deleteCookie } from "../cookies/cookies";
 
 const AuthContext = createContext();
 
+// Initialize gebruiker from localStorage synchronously
+const getInitialGebruiker = () => {
+  if (typeof window === "undefined") return null; // SSR safe
+  const stored = localStorage.getItem("gebruiker");
+  return stored ? JSON.parse(stored) : null;
+};
+
 export function AuthProvider({ children }) {
-  const [gebruiker, setGebruiker] = useState(null);
+  const [gebruiker, setGebruiker] = useState(getInitialGebruiker());
   const [loading, setLoading] = useState(true);
 
-  // Probeer gebruiker automatisch te laden via cookie
+  // Verify token on mount
   useEffect(() => {
     const cookieToken = getCookie("token");
 
     if (!cookieToken) {
-      setLoading(false);
-      return;
-    }
-
-    // Gebruiker staat nog in localStorage (alle overige data behalve token)
-    const stored = localStorage.getItem("gebruiker");
-    if (stored) {
-      setGebruiker(JSON.parse(stored));
+      // No valid token → logout
+      setGebruiker(null);
+    } else if (!gebruiker) {
+      // Token exists but gebruiker not in localStorage
+      setGebruiker(null);
     }
 
     setLoading(false);
   }, []);
 
-  // Login functie
   const login = (userData) => {
     localStorage.setItem("gebruiker", JSON.stringify(userData));
     setGebruiker(userData);
   };
 
-  // Loguit functie
   const logout = () => {
     deleteCookie("token");
     localStorage.removeItem("gebruiker");
