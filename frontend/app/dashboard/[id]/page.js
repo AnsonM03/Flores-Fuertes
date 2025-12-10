@@ -50,6 +50,7 @@ export default function Dashboard() {
     async function fetchVeilingen() {
       try {
         const res = await fetch("http://localhost:5281/api/Veilingen", {
+          credentials: "include",
           headers: { Authorization: `Bearer ${token}` },
         });
 

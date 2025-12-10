@@ -6,7 +6,7 @@ namespace FloresFuertes.Models
     {
         [Key]
         public string Veiling_Id { get; set; } = Guid.NewGuid().ToString();
-        public float VeilingPrijs { get; set; }
+        public decimal VeilingPrijs { get; set; }
         public DateOnly VeilingDatum { get; set; }
         public DateTime StartTijd { get; set; }
         public DateTime EindTijd { get; set; }

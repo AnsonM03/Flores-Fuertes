@@ -11,7 +11,7 @@ namespace FloresFuertes.Models
         public string Naam { get; set; }
         public string ArtikelKenmerken { get; set; }
         public int Hoeveelheid { get; set; }
-        public float StartPrijs { get; set; }
+        public decimal StartPrijs { get; set; }
 
         public string Aanvoerder_Id { get; set; }
     }

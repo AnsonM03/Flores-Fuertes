@@ -19,11 +19,21 @@ namespace FloresFuertes.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Veiling>>> GetAll()
         {
-            return await _context.Veilingen
+            try
+            {
+                var data = await _context.Veilingen
                 .Include(v => v.Product)
                 .Include(v => v.Veilingmeester)
                 .ToListAsync();
+
+            return Ok(data);
         }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+        }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Veiling>> GetById(string id)

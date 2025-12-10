@@ -14,10 +14,20 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowMyFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+
+    // Swagger moet ANY ORIGIN kunnen
+    options.AddPolicy("AllowSwagger", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
@@ -67,38 +77,23 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
-
 // ----------------------------
 // PIPELINE
 // ----------------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+    });
+    app.UseDeveloperExceptionPage();
 }
 
+app.UseRouting();
+
+app.UseCors("AllowSwagger");
 app.UseCors("AllowMyFrontend");
-
-// Zorgt ervoor dat cookies + credentials GEEN CORS-blokkade geven
-app.Use(async (context, next) =>
-{
-    var origin = context.Request.Headers["Origin"];
-
-    if (origin == "http://localhost:3000")
-    {
-        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-        context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
-    }
-
-    // Preflight fix
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.StatusCode = 204;
-        return;
-    }
-
-    await next();
-});
 
 app.UseAuthentication();
 app.UseAuthorization();

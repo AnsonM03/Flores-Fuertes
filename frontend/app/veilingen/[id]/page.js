@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
-import VeilingKlok from "../../components/VeilingKlok";
+//import VeilingKlok from "../../components/VeilingKlok";
 
 export default function VeilingDetailPage() {
   const { id } = useParams();

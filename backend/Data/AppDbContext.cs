@@ -59,6 +59,12 @@ namespace FloresFuertes.Data
                 .WithMany()
                 .HasForeignKey(v => v.Veilingmeester_Id);
 
+            modelBuilder.Entity<Veiling>()
+                .HasOne(v => v.Product)
+                .WithMany() // No navigation collection needed
+                .HasForeignKey(v => v.Product_Id)
+                .OnDelete(DeleteBehavior.Restrict);   // ⭐ IMPORTANT ⭐
+
             modelBuilder.Entity<Bieding>()
                 .HasKey(b => b.Bieding_Id);
 

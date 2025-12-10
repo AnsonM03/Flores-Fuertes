@@ -1,6 +1,6 @@
 public class VeilingCreateDto
 {
-    public float VeilingPrijs { get; set; }
+    public decimal VeilingPrijs { get; set; }
     public DateOnly VeilingDatum { get; set; }
     public DateTime StartTijd { get; set; }
     public DateTime EindTijd { get; set; }

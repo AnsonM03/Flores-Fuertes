@@ -17,6 +17,6 @@ public class VeilingProduct
 
     public int Hoeveelheid { get; set; }
 
-    public float? Prijs { get; set; }
+    public decimal? Prijs { get; set; }
 }
 }

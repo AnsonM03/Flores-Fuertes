@@ -74,6 +74,7 @@ export default function Register() {
     try {
       const res = await fetch("http://localhost:5281/api/Gebruikers", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
