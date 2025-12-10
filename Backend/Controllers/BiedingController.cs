@@ -92,6 +92,19 @@ namespace FloresFuertes.Controllers
             return NoContent();
         }
 
+        [HttpGet("hoogste/{productId}")]
+        public async Task<ActionResult<float>> GetHoogsteBod(string productId)
+        {
+            var bod = await _context.Biedingen
+                .Where(b => b.Product_Id == productId)
+                .OrderByDescending(b => b.Bedrag)
+                .FirstOrDefaultAsync();
+
+            if (bod == null) return Ok(0);  // geen biedingen yet
+
+            return Ok(bod.Bedrag);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
