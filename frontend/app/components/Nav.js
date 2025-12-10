@@ -1,14 +1,11 @@
-// app/components/Nav.js
 "use client";
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from "../context/AuthContext";
-import { useRouter } from "next/navigation";
 
 export default function Nav() {
-  // --- Hooks ---
   const lastY = useRef(0);
   const headerRef = useRef(null);
   const navRef = useRef(null);
@@ -16,27 +13,36 @@ export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // --- Auth Hooks ---
-  const { gebruiker, logout } = useAuth(); 
+  const { gebruiker, logout, loading } = useAuth(); 
   const isLoggedIn = !!gebruiker;
-
-  // --- ROL BEPALEN (Nieuw) ---
-  // We normaliseren naar kleine letters om fouten te voorkomen
   const rol = gebruiker?.gebruikerType?.toLowerCase();
 
-  // --- Auth Handler ---
   const handleLogout = () => {
     logout();
     router.push("/");
     handleLinkClick(); 
   };
 
-  // --- Animatie & Burger Menu Effect ---
+  const isActive = (path) => pathname === path;
+
+  const handleLinkClick = () => {
+    const nav = navRef.current;
+    const burger = burgerRef.current;
+    
+    if (nav && burger && nav.classList.contains('open')) {
+      nav.classList.remove('open');
+      burger.classList.remove('open');
+      burger.setAttribute('aria-expanded', 'false');
+    }
+  };
+
+  // !! FIX: Moved useEffect UP, before the 'if (loading)' check
   useEffect(() => {
     const header = headerRef.current;
     const nav = navRef.current;
     const burger = burgerRef.current;
 
+    // Safety check: if loading is true, these refs might be null, so we return safely
     if (!header || !nav || !burger) return;
 
     const handleBurgerClick = () => {
@@ -65,24 +71,12 @@ export default function Nav() {
       burger.removeEventListener('click', handleBurgerClick);
       window.removeEventListener('scroll', onScroll);
     };
-  }, []);
+  }, [loading]); // Added loading dependency to re-run when elements mount
 
-  // --- Styling Helper ---
-  const isActive = (path) => pathname === path;
+  // !! FIX: Now it is safe to return early
+  // Wait until auth loading is finished before rendering links
+  if (loading) return null;
 
-  // --- Mobiel Menu Helper ---
-  const handleLinkClick = () => {
-    const nav = navRef.current;
-    const burger = burgerRef.current;
-    
-    if (nav && burger && nav.classList.contains('open')) {
-      nav.classList.remove('open');
-      burger.classList.remove('open');
-      burger.setAttribute('aria-expanded', 'false');
-    }
-  };
-  
-  // --- NAAM LOGICA ---
   const naam = [
     gebruiker?.Voornaam || gebruiker?.voornaam, 
     gebruiker?.Achternaam || gebruiker?.achternaam
@@ -91,8 +85,6 @@ export default function Nav() {
   return (
     <header className="site-header" ref={headerRef}>
       <div className="header-inner">
-        
-        {/* Brand/Logo */}
         <Link className="brand" href="/" onClick={handleLinkClick}>
           <img
             src="https://www.royalfloraholland.com/assets/favicons/favicon-32x32.png"
@@ -102,55 +94,41 @@ export default function Nav() {
           <span className="brand-text">Royal<br />Flora<br />Holland</span>
         </Link>
 
-        {/* Welkom bericht (Desktop) */}
         {isLoggedIn && (
           <span className="nav-welcome hidden-mobile">
             Welkom, {naam}
           </span>
         )}
 
-        {/* Navigatie */}
         <nav className="nav" id="nav" ref={navRef}>
-          
           <Link href="/" className={`nav-link ${isActive('/') ? 'is-active' : ''}`} onClick={handleLinkClick}>
             Home
           </Link>
 
           {isLoggedIn ? (
             <>
-              {/* --- INGELOGDE LINKS --- */}
               <Link href="/veilingen" className={`nav-link ${isActive('/veilingen') ? 'is-active' : ''}`} onClick={handleLinkClick}>
                 Veilingen
               </Link>
-              
               <Link href="/account" className={`nav-link ${isActive('/account') ? 'is-active' : ''}`} onClick={handleLinkClick}>
                 Account
               </Link>
-              {/* Alleen zichtbaar voor veilingmeester */}
-              {gebruiker?.gebruikerType?.toLowerCase() === "veilingmeester" && (
-              <Link href="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'is-active' : ''}`} onClick={handleLinkClick}>
-                Dashboard
-              </Link>
+              {rol === "veilingmeester" && (
+                <Link href="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'is-active' : ''}`} onClick={handleLinkClick}>
+                  Dashboard
+                </Link>
               )}
-              
-              {/* Alleen zichtbaar voor aanvoerder */}
-              {gebruiker?.gebruikerType?.toLowerCase() === "aanvoerder" && (
-                <Link
-                  href="/producten"
-                  className={`nav-link ${isActive("/producten") ? "is-active" : ""}`}
-                  onClick={handleLinkClick}
-                >
+              {rol === "aanvoerder" && (
+                <Link href="/producten" className={`nav-link ${isActive("/producten") ? "is-active" : ""}`} onClick={handleLinkClick}>
                   Producten
                 </Link>
               )}
-              
               <button onClick={handleLogout} className="nav-link nav-link-button">
                 Uitloggen
               </button>
             </>
           ) : (
             <>
-              {/* --- UITGELOGDE LINKS --- */}
               <Link href="/veilingen" className={`nav-link ${isActive('/veilingen') ? 'is-active' : ''}`} onClick={handleLinkClick}>
                 Veilingen
               </Link>
@@ -164,7 +142,6 @@ export default function Nav() {
           )}
         </nav>
 
-        {/* Burger knop */}
         <button 
           className="hamburger" 
           aria-label="Open menu" 
