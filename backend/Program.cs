@@ -15,7 +15,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowMyFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3000",
+                        "http://frontend:3000")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -81,34 +82,33 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowMyFrontend");
 
-// Zorgt ervoor dat cookies + credentials GEEN CORS-blokkade geven
-// app.Use(async (context, next) =>
-// {
-//     var origin = context.Request.Headers["Origin"];
-
-//     if (origin == "http://localhost:3000")
-//     {
-//         context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-//         context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
-//     }
-
-//     // Preflight fix
-//     if (context.Request.Method == "OPTIONS")
-//     {
-//         context.Response.StatusCode = 204;
-//         return;
-//     }
-
-//     await next();
-// });
-
-app.UseStaticFiles(new StaticFileOptions
+// ⭐⭐⭐ THIS PART IS THE FIX ⭐⭐⭐
+// This ensures OPTIONS preflight gets full CORS headers
+app.Use(async (context, next) =>
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")
-    ),
-    RequestPath = ""
+    var origin = context.Request.Headers["Origin"];
+
+    if (origin == "http://localhost:3000")
+    {
+        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+        context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+        context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type";
+        context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
+    }
+
+    // Preflight handling
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 204;
+        return;
+    }
+
+    await next();
 });
+
+// ----------------------------
+// AUTH
+// ----------------------------
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles();
