@@ -14,7 +14,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowMyFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3000",
+                        "http://frontend:3000")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -79,7 +80,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowMyFrontend");
 
-// Zorgt ervoor dat cookies + credentials GEEN CORS-blokkade geven
+// ⭐⭐⭐ THIS PART IS THE FIX ⭐⭐⭐
+// This ensures OPTIONS preflight gets full CORS headers
 app.Use(async (context, next) =>
 {
     var origin = context.Request.Headers["Origin"];
@@ -88,9 +90,11 @@ app.Use(async (context, next) =>
     {
         context.Response.Headers["Access-Control-Allow-Origin"] = origin;
         context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+        context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type";
+        context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
     }
 
-    // Preflight fix
+    // Preflight handling
     if (context.Request.Method == "OPTIONS")
     {
         context.Response.StatusCode = 204;
@@ -100,6 +104,9 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// ----------------------------
+// AUTH
+// ----------------------------
 app.UseAuthentication();
 app.UseAuthorization();
 
