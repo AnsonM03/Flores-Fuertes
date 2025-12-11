@@ -73,7 +73,7 @@ namespace FloresFuertes.Controllers
                 Adres = dto.Adres,
                 Telefoonnr = dto.Telefoonnr,
                 Woonplaats = dto.Woonplaats,
-                GebruikerType = "klant" // of meegeven via DTO
+                GebruikerType = "Klant" // of meegeven via DTO
             };
 
             gebruiker.Wachtwoord = _passwordHasher.HashPassword(gebruiker, dto.Wachtwoord);

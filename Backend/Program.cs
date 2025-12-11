@@ -15,11 +15,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowMyFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000",
-                        "http://frontend:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://frontend:3000"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -43,15 +45,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         IssuerSigningKey = new SymmetricSecurityKey(key),
     };
 
-    // COOKIE → JWT
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
+            // JWT via cookies voor normale API calls
             if (context.Request.Cookies.ContainsKey("token"))
             {
                 context.Token = context.Request.Cookies["token"];
             }
+
+            // JWT voor SignalR WebSockets
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/hubs/auction"))
+            {
+                context.Token = accessToken;
+            }
+
             return Task.CompletedTask;
         }
     };
@@ -82,8 +94,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowMyFrontend");
 
-// ⭐⭐⭐ THIS PART IS THE FIX ⭐⭐⭐
-// This ensures OPTIONS preflight gets full CORS headers
+// ----------------------------
+// PRE-FLIGHT FIX (jouw versie – gewoon verbeterd)
+// ----------------------------
 app.Use(async (context, next) =>
 {
     var origin = context.Request.Headers["Origin"];
@@ -92,11 +105,11 @@ app.Use(async (context, next) =>
     {
         context.Response.Headers["Access-Control-Allow-Origin"] = origin;
         context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
-        context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type";
+        context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
         context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
     }
 
-    // Preflight handling
+    // OPTIONS stopt hier correct → GEEN 405 meer
     if (context.Request.Method == "OPTIONS")
     {
         context.Response.StatusCode = 204;
@@ -107,13 +120,19 @@ app.Use(async (context, next) =>
 });
 
 // ----------------------------
+// STATIC FILES (fotos uit /uploads werken nu altijd)
+// ----------------------------
+app.UseStaticFiles();
+
+// ----------------------------
 // AUTH
 // ----------------------------
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseStaticFiles();
 
-
+// ----------------------------
+// ROUTING
+// ----------------------------
 app.MapControllers();
 app.MapHub<AuctionHub>("/hubs/auction");
 
