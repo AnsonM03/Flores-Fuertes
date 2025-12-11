@@ -1,160 +1,159 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import "../styles/veilingKlok.css";
 
-export default function VeilingKlok({ veiling, gebruikerRol, onKoop }) {
+export default function VeilingKlok({ veiling, gebruikerRol, onKoop, setVeiling }) {
   const minimumPrijs = 5;
-
   const [status, setStatus] = useState("wachten");
-  const [huidigePrijs, setHuidigePrijs] = useState(
-    veiling?.veilingPrijs || 100
-  );
+  const [huidigePrijs, setHuidigePrijs] = useState(veiling?.veilingPrijs);
+
+  // Popup state
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [duur, setDuur] = useState(20); // seconden
 
   useEffect(() => {
     if (!veiling?.startTijd || !veiling?.eindTijd) return;
 
     const start = new Date(veiling.startTijd);
     const eind = new Date(veiling.eindTijd);
+    const totaal = (eind - start) / 1000;
+    const dalingPerSeconde = (veiling.veilingPrijs - minimumPrijs) / totaal;
 
-    const totaleSeconden = Math.max((eind - start) / 1000, 1);
-    const startPrijs = veiling.veilingPrijs;
-    const dalingPerSeconde = (startPrijs - minimumPrijs) / totaleSeconden;
-
-    function updatePrijs() {
+    function update() {
       const nu = new Date();
 
       if (nu < start) {
         setStatus("wachten");
-        setHuidigePrijs(startPrijs);
+        setHuidigePrijs(veiling.veilingPrijs);
       } else if (nu >= start && nu < eind) {
         setStatus("actief");
         const verstreken = (nu - start) / 1000;
-        const nieuwePrijs = Math.max(
-          startPrijs - verstreken * dalingPerSeconde,
-          minimumPrijs
+        setHuidigePrijs(
+          Math.max(
+            veiling.veilingPrijs - verstreken * dalingPerSeconde,
+            minimumPrijs
+          )
         );
-        setHuidigePrijs(nieuwePrijs);
       } else {
         setStatus("afgelopen");
         setHuidigePrijs(minimumPrijs);
       }
     }
 
-    updatePrijs();
-    const interval = setInterval(updatePrijs, 1000);
-    return () => clearInterval(interval);
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
   }, [veiling]);
 
-  if (!veiling) {
-    return <p className="no-veiling">Geen actieve veiling geselecteerd</p>;
+  // ⭐ Start veiling vanuit popup
+  async function startVeiling() {
+    try {
+      const res = await fetch("http://localhost:5281/api/Veilingen/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          veiling_Id: veiling.veiling_Id,
+          duurInSeconden: duur
+        })
+      });
+
+      if (!res.ok) {
+        alert("Kon veiling niet starten.");
+        return;
+      }
+
+      const data = await res.json();
+
+      setVeiling(prev => ({
+        ...prev,
+        startTijd: data.startTijd,
+        eindTijd: data.eindTijd
+      }));
+
+      alert("Veiling gestart!");
+      setPopupOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Serverfout bij starten veiling.");
+    }
   }
-
-  const start = new Date(veiling.startTijd);
-  const eind = new Date(veiling.eindTijd);
-
-  const rotatie = (() => {
-    if (status !== "actief") return 0;
-
-    const totaalSec = (eind - start) / 1000;
-    const verstreken = (new Date() - start) / 1000;
-    const percentage = Math.min(verstreken / totaalSec, 1);
-
-    return percentage * 360;
-  })();
-
-  const startTijd = start.toLocaleTimeString("nl-NL", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const eindTijd = eind.toLocaleTimeString("nl-NL", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   return (
     <div className="klok-wrapper">
       <h2 className="klok-title">Klokveiling</h2>
 
       <p className={`klok-status klok-status--${status}`}>
-        {status === "wachten" && `Veiling start om ${startTijd}`}
-        {status === "actief" && "Veiling is actief"}
-        {status === "afgelopen" && "Veiling afgelopen"}
+        {status === "wachten" && "Wachten op start..."}
+        {status === "actief" && "Veiling actief"}
+        {status === "afgelopen" && "Afgelopen"}
       </p>
 
       <div className="dutch-clock-container">
         <svg className="dutch-clock" viewBox="0 0 200 200">
           <circle cx="100" cy="100" r="90" className="clock-ring" />
-
-          <line
-            x1="100"
-            y1="100"
-            x2="100"
-            y2="20"
-            className="clock-hand"
-            style={{
-              transform: `rotate(${rotatie}deg)`,
-              transformOrigin: "100px 100px",
-            }}
-          />
-
           <text x="100" y="115" textAnchor="middle" className="clock-price">
-            €{huidigePrijs.toFixed(2)}
+            €{huidigePrijs?.toFixed(2)}
           </text>
         </svg>
       </div>
 
-      <p className="clock-label">
-        {status === "actief"
-          ? "Prijs daalt..."
-          : status === "wachten"
-          ? "Wachten..."
-          : "Afgelopen"}
-      </p>
+      {/* KOPER */}
+      {gebruikerRol === "klant" && (
+        <button
+          className="klok-btn klok-btn--koop"
+          disabled={status !== "actief"}
+          onClick={() => onKoop(huidigePrijs)}
+        >
+          Koop nu
+        </button>
+      )}
 
-      <div className="klok-buttons">
-        {gebruikerRol === "klant" && (
-          <button
-            className="klok-btn klok-btn--koop"
-            disabled={status !== "actief"}
-            onClick={() => onKoop && onKoop(huidigePrijs)}
-          >
-            {status === "actief" ? "Koop nu" : "Verkocht"}
-          </button>
-        )}
+      {/* VEILINGMEESTER START KNOP */}
+      {gebruikerRol === "veilingmeester" && status !== "actief" && (
+        <button
+          className="klok-btn klok-btn--start"
+          onClick={() => setPopupOpen(true)}
+        >
+          Start veilen
+        </button>
+      )}
 
-        {gebruikerRol === "veilingmeester" && (
-          <>
-            <button
-              className="klok-btn klok-btn--start"
-              disabled={status === "actief" || status === "afgelopen"}
-            >
-              Start veiling
-            </button>
+      {/* ⭐ POPUP */}
+      {popupOpen && (
+        <div className="popup-overlay">
+          <div className="popup">
+            <h3 className="popup-title">Start veiling</h3>
 
-            <button
-              className="klok-btn klok-btn--stop"
-              disabled={status !== "actief"}
-              onClick={() => setStatus("afgelopen")}
-            >
-              Stop veiling
-            </button>
-          </>
-        )}
-      </div>
+            <label className="block mb-2 font-medium">
+              Duur (seconden)
+            </label>
+            <input
+              type="number"
+              min="5"
+              max="120"
+              value={duur}
+              onChange={(e) => setDuur(Number(e.target.value))}
+              className="popup-input"
+            />
 
-      <div className="klok-info-card">
-        <p className="klok-field-label">
-          Starttijd: <span className="klok-field-value">{startTijd}</span>
-        </p>
-        <p className="klok-field-label">
-          Eindtijd: <span className="klok-field-value">{eindTijd}</span>
-        </p>
-        <p className="klok-field-label">
-          Minimale prijs:{" "}
-          <span className="klok-field-value">€{minimumPrijs.toFixed(2)}</span>
-        </p>
-      </div>
+            <div className="popup-buttons">
+              <button
+                className="popup-btn cancel"
+                onClick={() => setPopupOpen(false)}
+              >
+                Annuleren
+              </button>
+
+              <button
+                className="popup-btn confirm"
+                onClick={startVeiling}
+              >
+                Start veilen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

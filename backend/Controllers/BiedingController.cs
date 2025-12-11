@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FloresFuertes.Data;
 using FloresFuertes.Models;
+using Microsoft.AspNetCore.SignalR;
+using FloresFuertes.Hubs;
 
 namespace FloresFuertes.Controllers
 {
@@ -10,48 +12,27 @@ namespace FloresFuertes.Controllers
     public class BiedingenController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IHubContext<AuctionHub> _hub;
 
-        public BiedingenController(AppDbContext context)
+        public BiedingenController(AppDbContext context, IHubContext<AuctionHub> hub)
         {
             _context = context;
+            _hub = hub;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Bieding>>> GetAll()
-        {
-            return await _context.Biedingen
-                .Include(b => b.Klant)
-                .Include(b => b.Product)
-                .ToListAsync();
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Bieding>> GetById(string id)
-        {
-            var bieding = await _context.Biedingen
-                .Include(b => b.Klant)
-                .Include(b => b.Product)
-                .FirstOrDefaultAsync(b => b.Bieding_Id == id);
-
-            if (bieding == null) return NotFound();
-            return bieding;
-        }
-
+        // ---------------------------------------
+        // NORMALE BIEDING
+        // ---------------------------------------
         [HttpPost]
         public async Task<ActionResult<BiedingDto>> Create(BiedingCreateDto dto)
         {
-            // Check klant
             var klant = await _context.Klanten.FindAsync(dto.Klant_Id);
-            if (klant == null)
-                return BadRequest("Klant bestaat niet.");
+            if (klant == null) return BadRequest("Klant bestaat niet.");
 
-            // Check product
             var product = await _context.Producten.FindAsync(dto.Product_Id);
-            if (product == null)
-                return BadRequest("Product bestaat niet.");
+            if (product == null) return BadRequest("Product bestaat niet.");
 
-            // Hoogste bod check
-            var hoogsteBod= await _context.Biedingen
+            var hoogsteBod = await _context.Biedingen
                 .Where(x => x.Product_Id == dto.Product_Id)
                 .OrderByDescending(x => x.Bedrag)
                 .FirstOrDefaultAsync();
@@ -59,7 +40,7 @@ namespace FloresFuertes.Controllers
             if (hoogsteBod != null && dto.Bedrag <= hoogsteBod.Bedrag)
                 return BadRequest("Bod moet hoger zijn dan het huidige hoogste bod.");
 
-            var nieuweBieding = new Bieding
+            var bieding = new Bieding
             {
                 Bedrag = dto.Bedrag,
                 Klant_Id = dto.Klant_Id,
@@ -67,31 +48,78 @@ namespace FloresFuertes.Controllers
                 Tijdstip = DateTime.UtcNow
             };
 
-            _context.Biedingen.Add(nieuweBieding);
+            _context.Biedingen.Add(bieding);
             await _context.SaveChangesAsync();
 
-            // DTO response
-            var response = new BiedingDto
+            return Ok(new BiedingDto
             {
-                Bieding_Id = nieuweBieding.Bieding_Id,
-                Bedrag = nieuweBieding.Bedrag,
-                Tijdstip = nieuweBieding.Tijdstip,
-                Klant_Id = nieuweBieding.Klant_Id,
-                Product_Id = nieuweBieding.Product_Id
+                Bieding_Id = bieding.Bieding_Id,
+                Bedrag = bieding.Bedrag,
+                Tijdstip = bieding.Tijdstip,
+                Klant_Id = bieding.Klant_Id,
+                Product_Id = bieding.Product_Id
+            });
+        }
+
+
+        // ---------------------------------------
+        // DUTCH AUCTION KOOP
+        // ---------------------------------------
+        [HttpPost("koop")]
+        public async Task<IActionResult> Koop(KoopDto dto)
+        {
+            // Bestaat klant?
+            var klant = await _context.Klanten.FindAsync(dto.Klant_Id);
+            if (klant == null)
+                return BadRequest("Klant bestaat niet.");
+
+            // Bestaat product?
+            var product = await _context.Producten.FindAsync(dto.Product_Id);
+            if (product == null)
+                return BadRequest("Product bestaat niet.");
+
+            // Genoeg voorraad?
+            if (dto.Aantal > product.Hoeveelheid)
+                return BadRequest("Niet genoeg voorraad.");
+
+            // Totaalprijs
+            var totaal = dto.PrijsPerStuk * dto.Aantal;
+
+            // Maak aankoop (bieding)
+            var aankoop = new Bieding
+            {
+                Klant_Id = dto.Klant_Id,
+                Product_Id = dto.Product_Id,
+                Bedrag = totaal,         // totaalprijs
+                Tijdstip = DateTime.UtcNow
             };
 
-            return CreatedAtAction(nameof(GetById), new { id = nieuweBieding.Bieding_Id }, response);
-        }
+            _context.Biedingen.Add(aankoop);
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, Bieding bieding)
-        {
-            if (id != bieding.Bieding_Id) return BadRequest();
-            _context.Entry(bieding).State = EntityState.Modified;
+            // ❗ VOORRAAD AANPASSEN
+            product.Hoeveelheid -= dto.Aantal;
+
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            // ❗ REALTIME UPDATE versturen naar alle clients
+            await _hub.Clients.All.SendAsync(
+                "ProductGekocht",
+                dto.Veiling_Id,
+                dto.Product_Id,
+                product.Hoeveelheid
+            );
+
+            return Ok(new
+            {
+                message = "Aankoop succesvol",
+                nieuweVoorraad = product.Hoeveelheid
+            });
         }
 
+        // ---------------------------------------
+        // OVERIGE ENDPOINTS
+        // ---------------------------------------
+        
         [HttpGet("hoogste/{productId}")]
         public async Task<ActionResult<float>> GetHoogsteBod(string productId)
         {
@@ -100,19 +128,7 @@ namespace FloresFuertes.Controllers
                 .OrderByDescending(b => b.Bedrag)
                 .FirstOrDefaultAsync();
 
-            if (bod == null) return Ok(0);  // geen biedingen yet
-
-            return Ok(bod.Bedrag);
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
-        {
-            var bieding = await _context.Biedingen.FindAsync(id);
-            if (bieding == null) return NotFound();
-            _context.Biedingen.Remove(bieding);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return Ok(bod?.Bedrag ?? 0);
         }
     }
 }

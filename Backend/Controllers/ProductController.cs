@@ -25,6 +25,51 @@ namespace FloresFuertes.Controllers
             return await _context.Producten.ToListAsync();
         }
 
+        [HttpGet("veiling/{veilingId}")]
+        public async Task<ActionResult<IEnumerable<VeilingProductDto>>> GetProductenVanVeiling(string veilingId)
+        {
+            var koppelingen = await _context.VeilingProducten
+                .Where(vp => vp.Veiling_Id == veilingId)
+                .Include(vp => vp.Product)
+                .ToListAsync();
+
+            var result = koppelingen.Select(vp => new VeilingProductDto
+            {
+                VeilingProduct_Id = vp.VeilingProduct_Id,
+                Product_Id = vp.Product!.Product_Id,
+                Hoeveelheid = vp.Hoeveelheid,
+                Naam = vp.Product.Naam,
+                ArtikelKenmerken = vp.Product.ArtikelKenmerken,
+                StartPrijs = vp.Prijs ?? vp.Product.StartPrijs,
+                Foto = vp.Product.Foto // 👈 hier komt de foto mee
+            });
+
+    return Ok(result);
+}
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadFoto(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Geen bestand ontvangen.");
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var url = $"{Request.Scheme}://{Request.Host}/uploads/{fileName}";
+
+            return Ok(new { url });
+        }
+
         [HttpPost]
         public async Task<ActionResult<ProductDto>> Create(ProductCreateDto dto)
         {

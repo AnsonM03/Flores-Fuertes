@@ -16,6 +16,7 @@ export default function ProductenPage() {
   });
   const router = useRouter();
   const [editId, setEditId] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   // -------------------------
   // AUTH + PRODUCTEN LADEN
@@ -151,6 +152,51 @@ export default function ProductenPage() {
     fetchProducten(token);
   }
 
+  async function handleFotoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  setUploading(true);
+
+  const formDataUpload = new FormData();
+  formDataUpload.append("file", file);
+
+  const res = await fetch("http://localhost:5281/api/Producten/upload", {
+    method: "POST",
+    body: formDataUpload,
+  });
+
+  setUploading(false);
+
+  if (!res.ok) {
+    alert("❌ Fout bij uploaden afbeelding");
+    return;
+  }
+
+  const data = await res.json();
+
+  // URL zit in: data.url
+  setFormData((prev) => ({ ...prev, foto: data.url }));
+  alert("📸 Afbeelding geüpload!");
+}
+
+async function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch("http://localhost:5281/api/Producten/upload", {
+    method: "POST",
+    body: form
+  });
+
+  const data = await res.json();
+
+  setFormData({ ...formData, foto: data.url });
+}
+
   return (
     <div className="producten-container">
       <div className="producten-header">
@@ -207,14 +253,19 @@ export default function ProductenPage() {
           }}
         />
 
-        <label htmlFor="foto">Afbeelding (URL)</label>
-        <input
-          id="foto"
-          value={formData.foto}
-          onChange={(e) =>
-            setFormData({ ...formData, foto: e.target.value })
-          }
-        />
+        <label>Afbeelding uploaden</label>
+        <input type="file" accept="image/*" onChange={handleFileUpload} />
+
+        {uploading && <p>⏳ Uploaden...</p>}
+
+        {/* Preview van geüploade foto */}
+        {formData.foto && (
+          <img
+            src={formData.foto}
+            alt="preview"
+            style={{ width: "120px", marginTop: "10px", borderRadius: "8px" }}
+          />
+        )}
 
         <button type="submit">Product opslaan</button>
       </form>

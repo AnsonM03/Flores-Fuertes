@@ -3,6 +3,7 @@ using FloresFuertes.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using FloresFuertes.Hubs;
 using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,6 +63,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -80,29 +82,39 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowMyFrontend");
 
 // Zorgt ervoor dat cookies + credentials GEEN CORS-blokkade geven
-app.Use(async (context, next) =>
+// app.Use(async (context, next) =>
+// {
+//     var origin = context.Request.Headers["Origin"];
+
+//     if (origin == "http://localhost:3000")
+//     {
+//         context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+//         context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+//     }
+
+//     // Preflight fix
+//     if (context.Request.Method == "OPTIONS")
+//     {
+//         context.Response.StatusCode = 204;
+//         return;
+//     }
+
+//     await next();
+// });
+
+app.UseStaticFiles(new StaticFileOptions
 {
-    var origin = context.Request.Headers["Origin"];
-
-    if (origin == "http://localhost:3000")
-    {
-        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-        context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
-    }
-
-    // Preflight fix
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.StatusCode = 204;
-        return;
-    }
-
-    await next();
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")
+    ),
+    RequestPath = ""
 });
-
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseStaticFiles();
+
 
 app.MapControllers();
+app.MapHub<AuctionHub>("/hubs/auction");
 
 app.Run();
