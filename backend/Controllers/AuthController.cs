@@ -118,5 +118,45 @@ namespace FloresFuertes.Controllers
 
             return Ok(responseDto);
         }
+        
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(RegisterDto dto)
+        {
+            // 1. Check of gebruiker al bestaat
+            if (await _context.Gebruikers.AnyAsync(u => u.Email == dto.Email))
+            {
+                return BadRequest("E-mailadres is al in gebruik.");
+            }
+
+            // 2. Wachtwoord validatie (simpel voorbeeld voor de test)
+            if (dto.Wachtwoord.Length < 8)
+            {
+                return BadRequest("Wachtwoord moet minimaal 8 tekens bevatten.");
+            }
+
+            // 3. Nieuwe gebruiker aanmaken
+            var nieuweGebruiker = new Gebruiker
+            {
+                Gebruiker_Id = Guid.NewGuid().ToString(),
+                Email = dto.Email,
+                Voornaam = dto.Voornaam,
+                Achternaam = dto.Achternaam,
+                Adres = dto.Adres,
+                Woonplaats = dto.Woonplaats,
+                Telefoonnr = dto.Telefoonnr,
+                GebruikerType = "klant", // Standaard rol
+                LockoutEndTime = null,
+                FailedLoginAttempts = 0
+            };
+
+            // 4. Wachtwoord hashen (BELANGRIJK voor Test 9)
+            nieuweGebruiker.Wachtwoord = _passwordHasher.HashPassword(nieuweGebruiker, dto.Wachtwoord);
+
+            // 5. Opslaan in database
+            _context.Gebruikers.Add(nieuweGebruiker);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Registratie succesvol!" });
+        }
     }
 }
