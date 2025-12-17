@@ -21,12 +21,18 @@ export default function Login() {
     };
 
     try {
-      const response = await fetch("http://localhost:5281/api/Auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // ★ cookies meesturen én ontvangen
-        body: JSON.stringify(loginData),
-      });
+      const API_URL =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5281";
+
+      const response = await fetch(
+      `${API_URL}/api/Auth/login`,
+    {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(loginData),
+  }
+);
 
       if (!response.ok) {
         alert("Inloggen mislukt!");

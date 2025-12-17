@@ -98,7 +98,7 @@ namespace FloresFuertes.Controllers
             {
                 HttpOnly = true,
                 Secure = false,      // op productie: true!
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Expires = DateTime.UtcNow.AddHours(2)
             });
 
