@@ -26,11 +26,11 @@ namespace FloresFuertes.Data
 
             // Configuratie voor VeilingProduct (many-to-many)
             modelBuilder.Entity<VeilingProduct>()
-                .HasKey(vp => vp.VeilingProduct_Id); // Primaire sleutel
+                .HasKey(vp => vp.VeilingProduct_Id);
 
             modelBuilder.Entity<VeilingProduct>()
                 .HasOne(vp => vp.Veiling)
-                .WithMany()
+                .WithMany(v => v.VeilingProducten)
                 .HasForeignKey(vp => vp.Veiling_Id)
                 .OnDelete(DeleteBehavior.Cascade);
 

@@ -47,8 +47,11 @@ export default function Login() {
 
       if (rol === "klant") {
         router.push("/");
-      } else if (rol === "aanvoerder" || rol === "veilingmeester") {
+      } else if (rol === "aanvoerder") {
         router.push("/producten");
+      } 
+        else if (rol === "veilingmeester") {
+        router.push("/dashboard");
       } else {
         router.push("/");
       }

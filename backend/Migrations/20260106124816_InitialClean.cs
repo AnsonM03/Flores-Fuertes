@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FloresFuertes.Migrations
 {
     /// <inheritdoc />
-    public partial class AddBiedingPrimaryKey : Migration
+    public partial class InitialClean : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -23,6 +23,8 @@ namespace FloresFuertes.Migrations
                     Telefoonnr = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Woonplaats = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Wachtwoord = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FailedLoginAttempts = table.Column<int>(type: "int", nullable: false),
+                    LockoutEndTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     GebruikerType = table.Column<string>(type: "nvarchar(21)", maxLength: 21, nullable: false),
                     Saldo = table.Column<float>(type: "real", nullable: true)
                 },
@@ -46,6 +48,30 @@ namespace FloresFuertes.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Producten", x => x.Product_Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Veilingen",
+                columns: table => new
+                {
+                    Veiling_Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    VeilingPrijs = table.Column<float>(type: "real", nullable: false),
+                    VeilingDatum = table.Column<DateOnly>(type: "date", nullable: false),
+                    StartTijd = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EindTijd = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Kloklocatie = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Veilingmeester_Id = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Veilingen", x => x.Veiling_Id);
+                    table.ForeignKey(
+                        name: "FK_Veilingen_Gebruikers_Veilingmeester_Id",
+                        column: x => x.Veilingmeester_Id,
+                        principalTable: "Gebruikers",
+                        principalColumn: "Gebruiker_Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -76,33 +102,30 @@ namespace FloresFuertes.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Veilingen",
+                name: "VeilingProducten",
                 columns: table => new
                 {
+                    VeilingProduct_Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Veiling_Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    VeilingPrijs = table.Column<float>(type: "real", nullable: false),
-                    VeilingDatum = table.Column<DateOnly>(type: "date", nullable: false),
-                    StartTijd = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EindTijd = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Kloklocatie = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Product_Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Veilingmeester_Id = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    Hoeveelheid = table.Column<int>(type: "int", nullable: false),
+                    Prijs = table.Column<float>(type: "real", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Veilingen", x => x.Veiling_Id);
+                    table.PrimaryKey("PK_VeilingProducten", x => x.VeilingProduct_Id);
                     table.ForeignKey(
-                        name: "FK_Veilingen_Gebruikers_Veilingmeester_Id",
-                        column: x => x.Veilingmeester_Id,
-                        principalTable: "Gebruikers",
-                        principalColumn: "Gebruiker_Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Veilingen_Producten_Product_Id",
+                        name: "FK_VeilingProducten_Producten_Product_Id",
                         column: x => x.Product_Id,
                         principalTable: "Producten",
                         principalColumn: "Product_Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_VeilingProducten_Veilingen_Veiling_Id",
+                        column: x => x.Veiling_Id,
+                        principalTable: "Veilingen",
+                        principalColumn: "Veiling_Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -117,14 +140,19 @@ namespace FloresFuertes.Migrations
                 column: "Product_Id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Veilingen_Product_Id",
-                table: "Veilingen",
-                column: "Product_Id");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Veilingen_Veilingmeester_Id",
                 table: "Veilingen",
                 column: "Veilingmeester_Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VeilingProducten_Product_Id",
+                table: "VeilingProducten",
+                column: "Product_Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VeilingProducten_Veiling_Id",
+                table: "VeilingProducten",
+                column: "Veiling_Id");
         }
 
         /// <inheritdoc />
@@ -134,13 +162,16 @@ namespace FloresFuertes.Migrations
                 name: "Biedingen");
 
             migrationBuilder.DropTable(
+                name: "VeilingProducten");
+
+            migrationBuilder.DropTable(
+                name: "Producten");
+
+            migrationBuilder.DropTable(
                 name: "Veilingen");
 
             migrationBuilder.DropTable(
                 name: "Gebruikers");
-
-            migrationBuilder.DropTable(
-                name: "Producten");
         }
     }
 }

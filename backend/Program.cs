@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using FloresFuertes.Hubs;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,8 +74,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // SERVICES
 // ----------------------------
 builder.Services.AddAuthorization();
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 

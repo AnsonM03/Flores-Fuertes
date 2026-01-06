@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FloresFuertes.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251124140705_MakeProductIdNullable")]
-    partial class MakeProductIdNullable
+    [Migration("20260106124816_InitialClean")]
+    partial class InitialClean
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -150,12 +150,6 @@ namespace FloresFuertes.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Product_Id")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Product_Id1")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<DateTime>("StartTijd")
                         .HasColumnType("datetime2");
 
@@ -175,8 +169,6 @@ namespace FloresFuertes.Migrations
 
                     b.HasKey("Veiling_Id");
 
-                    b.HasIndex("Product_Id1");
-
                     b.HasIndex("Veilingmeester_Id");
 
                     b.ToTable("Veilingen");
@@ -187,29 +179,29 @@ namespace FloresFuertes.Migrations
                     b.Property<string>("VeilingProduct_Id")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("Hoeveelheid")
+                        .HasColumnType("int");
+
+                    b.Property<float?>("Prijs")
+                        .HasColumnType("real");
+
                     b.Property<string>("Product_Id")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Product_Id1")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Veiling_Id")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Veiling_Id1")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("VeilingProduct_Id");
 
                     b.HasIndex("Product_Id");
 
-                    b.HasIndex("Product_Id1");
-
                     b.HasIndex("Veiling_Id");
-
-                    b.HasIndex("Veiling_Id1");
 
                     b.ToTable("VeilingProducten");
                 });
@@ -259,17 +251,11 @@ namespace FloresFuertes.Migrations
 
             modelBuilder.Entity("FloresFuertes.Models.Veiling", b =>
                 {
-                    b.HasOne("FloresFuertes.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("Product_Id1");
-
                     b.HasOne("FloresFuertes.Models.Veilingmeester", "Veilingmeester")
                         .WithMany()
                         .HasForeignKey("Veilingmeester_Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Product");
 
                     b.Navigation("Veilingmeester");
                 });
@@ -282,28 +268,15 @@ namespace FloresFuertes.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FloresFuertes.Models.Product", null)
-                        .WithMany("VeilingProducten")
-                        .HasForeignKey("Product_Id1");
-
                     b.HasOne("FloresFuertes.Models.Veiling", "Veiling")
-                        .WithMany()
+                        .WithMany("VeilingProducten")
                         .HasForeignKey("Veiling_Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FloresFuertes.Models.Veiling", null)
-                        .WithMany("VeilingProducten")
-                        .HasForeignKey("Veiling_Id1");
-
                     b.Navigation("Product");
 
                     b.Navigation("Veiling");
-                });
-
-            modelBuilder.Entity("FloresFuertes.Models.Product", b =>
-                {
-                    b.Navigation("VeilingProducten");
                 });
 
             modelBuilder.Entity("FloresFuertes.Models.Veiling", b =>

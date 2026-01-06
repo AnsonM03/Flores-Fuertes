@@ -1,70 +1,74 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import "../../styles/koppelen.css";
 
 export default function KoppelProductPage() {
   const router = useRouter();
-  const { id: veilingId } = useParams();
 
+  const [veilingen, setVeilingen] = useState([]);
   const [producten, setProducten] = useState([]);
-  const [gebruiker, setGebruiker] = useState(null);
 
-  const [popupProduct, setPopupProduct] = useState(null);
+  const [gekozenVeiling, setGekozenVeiling] = useState(null);
+  const [gekozenProduct, setGekozenProduct] = useState(null);
+
   const [hoeveelheid, setHoeveelheid] = useState("");
   const [prijs, setPrijs] = useState("");
 
   // -----------------------------
-  // USER LADEN
+  // USER + DATA LADEN
   // -----------------------------
   useEffect(() => {
-    const stored = localStorage.getItem("gebruiker");
-    if (!stored) {
+    const gebruiker = JSON.parse(localStorage.getItem("gebruiker"));
+    if (!gebruiker) {
       router.push("/login");
       return;
     }
-    setGebruiker(JSON.parse(stored));
+
+    loadVeilingen();
+    loadProducten(gebruiker.gebruiker_Id);
   }, []);
 
-  // -----------------------------
-  // PRODUCTEN LADEN
-  // -----------------------------
-  useEffect(() => {
-    async function load() {
-      const res = await fetch("http://localhost:5281/api/Producten");
-      const data = await res.json();
+  async function loadVeilingen() {
+    const res = await fetch("http://localhost:5281/api/Veilingen");
+    const data = await res.json();
+    setVeilingen(data);
+  }
 
-      const user = JSON.parse(localStorage.getItem("gebruiker"));
+  async function loadProducten(aanvoerderId) {
+    const res = await fetch("http://localhost:5281/api/Producten");
+    const data = await res.json();
 
-      const eigen = data.filter(
-        (p) => p.aanvoerder_Id === user.gebruiker_Id
-      );
+    const eigen = data.filter(
+      (p) => p.aanvoerder_Id === aanvoerderId
+    );
 
-      setProducten(eigen);
-    }
-    load();
-  }, []);
+    setProducten(eigen);
+  }
 
   // -----------------------------
-  // KOPPELEN — (GOEDE API ROUTE)
+  // KOPPELEN
   // -----------------------------
   async function bevestigKoppeling() {
     const token = localStorage.getItem("token");
 
-    if (!hoeveelheid) {
-      alert("Vul hoeveelheid in!");
+    if (!gekozenProduct || !gekozenVeiling) {
+      alert("Kies een product en een veiling");
+      return;
+    }
+
+    if (!hoeveelheid || hoeveelheid <= 0) {
+      alert("Vul een geldige hoeveelheid in");
       return;
     }
 
     const payload = {
-      veilingId: veilingId,
-      productId: popupProduct.product_Id,
+      veilingId: gekozenVeiling.veiling_Id,
+      productId: gekozenProduct.product_Id,
       hoeveelheid: Number(hoeveelheid),
-      prijs: prijs === "" ? null : Number(prijs), // optioneel
+      prijs: prijs === "" ? null : Number(prijs),
     };
-
-    console.log("Verstuur:", payload);
 
     const res = await fetch(
       "http://localhost:5281/api/VeilingProducten/koppel",
@@ -79,17 +83,11 @@ export default function KoppelProductPage() {
     );
 
     if (res.ok) {
-      alert("Product succesvol gekoppeld!");
-
-      setPopupProduct(null);
-      setHoeveelheid("");
-      setPrijs("");
-
-      router.push(`/veilingen/${veilingId}`);
+      alert("✅ Product gekoppeld!");
+      router.push(`/veilingen/${gekozenVeiling.veiling_Id}`);
     } else {
-      const errorText = await res.text();
-      console.error("❌ Error:", errorText);
-      alert("❌ Er ging iets mis: " + errorText);
+      const text = await res.text();
+      alert("❌ Fout: " + text);
     }
   }
 
@@ -99,43 +97,60 @@ export default function KoppelProductPage() {
   return (
     <div className="koppelen-wrapper">
       <div className="koppelen-container">
+        <h1 className="koppelen-title">Kies een veiling</h1>
 
-        <h1 className="koppelen-title">Koppel product aan veiling</h1>
-
-        {producten.length === 0 ? (
-          <p className="empty-products">Je hebt nog geen producten.</p>
+        {veilingen.length === 0 ? (
+          <p className="empty-products">Geen veilingen gevonden.</p>
         ) : (
           <ul className="producten-ul">
-            {producten.map((p) => (
-              <li key={p.product_Id} className="product-card">
-
+            {veilingen.map((v) => (
+              <li
+                key={v.veiling_Id}
+                className="product-card"
+              >
                 <div className="product-info">
-                  <strong>{p.naam}</strong>
-                  <p>{p.artikelKenmerken}</p>
+                  <strong>{v.kloklocatie}</strong>
+                  <p>{v.omschrijving}</p>
                 </div>
 
                 <button
                   className="koppel-btn"
-                  onClick={() => setPopupProduct(p)}
+                  onClick={() => setGekozenVeiling(v)}
                 >
-                  Koppel
+                  Koppel product
                 </button>
-
               </li>
             ))}
           </ul>
         )}
 
         {/* ========================== */}
-        {/*         POPUP MODAL        */}
+        {/*           POPUP            */}
         {/* ========================== */}
-        {popupProduct && (
+        {gekozenVeiling && (
           <div className="popup-overlay">
             <div className="popup">
 
               <h2 className="popup-title">
-                {popupProduct.naam} koppelen
+                Koppel product aan “{gekozenVeiling.titel}”
               </h2>
+
+              <label>Product</label>
+              <select
+                value={gekozenProduct?.product_Id || ""}
+                onChange={(e) =>
+                  setGekozenProduct(
+                    producten.find(p => p.product_Id === e.target.value)
+                  )
+                }
+              >
+                <option value="">-- kies product --</option>
+                {producten.map((p) => (
+                  <option key={p.product_Id} value={p.product_Id}>
+                    {p.naam} (voorraad: {p.hoeveelheid})
+                  </option>
+                ))}
+              </select>
 
               <label>Hoeveelheid *</label>
               <input
@@ -144,9 +159,6 @@ export default function KoppelProductPage() {
                 value={hoeveelheid}
                 onChange={(e) => setHoeveelheid(e.target.value)}
               />
-              <p className="beschikbaar">
-                Beschikbaar: <span>{popupProduct.hoeveelheid}</span>
-              </p>
 
               <label>Prijs (€) (optioneel)</label>
               <input
@@ -155,15 +167,13 @@ export default function KoppelProductPage() {
                 value={prijs}
                 onChange={(e) => setPrijs(e.target.value)}
               />
-              <p className="beschikbaar">
-                Huidige prijs: <span>{popupProduct.startPrijs}</span>
-              </p>
 
               <div className="popup-buttons">
                 <button
                   className="popup-cancel"
                   onClick={() => {
-                    setPopupProduct(null);
+                    setGekozenVeiling(null);
+                    setGekozenProduct(null);
                     setHoeveelheid("");
                     setPrijs("");
                   }}

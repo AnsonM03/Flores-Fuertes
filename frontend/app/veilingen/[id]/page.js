@@ -14,20 +14,26 @@ export default function VeilingDetailPage() {
   const [error, setError] = useState(null);
   const [connection, setConnection] = useState(null);
   const [gebruiker, setGebruiker] = useState(null);
+
+  // 👇 dit is nu een VeilingProduct (koppeling), niet los Product
   const [geselecteerdProduct, setGeselecteerdProduct] = useState(null);
 
-  // Koop popup (Dutch auction)
+  // Koop popup
   const [popupOpen, setPopupOpen] = useState(false);
   const [aantal, setAantal] = useState(1);
-  const [koopPrijs, setKoopPrijs] = useState(null); // prijs uit de klok
+  const [koopPrijs, setKoopPrijs] = useState(null);
 
+  // -------------------------
   // Gebruiker laden
+  // -------------------------
   useEffect(() => {
     const stored = localStorage.getItem("gebruiker");
     if (stored) setGebruiker(JSON.parse(stored));
   }, []);
 
+  // -------------------------
   // Veiling laden
+  // -------------------------
   useEffect(() => {
     async function fetchVeiling() {
       try {
@@ -44,8 +50,10 @@ export default function VeilingDetailPage() {
     fetchVeiling();
   }, [id]);
 
+  // -------------------------
+  // SignalR
+  // -------------------------
   useEffect(() => {
-    // alleen connecten als veiling geladen is
     if (!veiling) return;
 
     const conn = new signalR.HubConnectionBuilder()
@@ -56,37 +64,33 @@ export default function VeilingDetailPage() {
     conn.on("VeilingGestart", (veilingId, startTijd, eindTijd) => {
       if (veilingId !== veiling.veiling_Id) return;
 
-      // ⏱ veiling tijden updaten → klok gaat lopen
-      setVeiling((prev) =>
-        prev
-          ? { ...prev, startTijd, eindTijd }
-          : prev
-      );
+      setVeiling((prev) => (prev ? { ...prev, startTijd, eindTijd } : prev));
     });
 
+    // 👇 update op basis van productId binnen VeilingProducten
     conn.on("ProductGekocht", (veilingId, productId, nieuweHoeveelheid) => {
       if (veilingId !== veiling.veiling_Id) return;
 
-      // update lijst
-      setVeiling(prev => ({
+      // update veiling state als je veilingProducten toevallig in veiling hebt zitten
+      setVeiling((prev) => ({
         ...prev,
-        producten: prev.producten.map(p =>
-          (p.product_Id === productId || p.Product_Id === productId)
-            ? { ...p, hoeveelheid: nieuweHoeveelheid }
-            : p
-        )
+        veilingProducten: (prev.veilingProducten || []).map((vp) => {
+          const vpProductId =
+            vp.product_Id || vp.Product_Id || vp.product?.product_Id;
+          return vpProductId === productId
+            ? { ...vp, hoeveelheid: nieuweHoeveelheid }
+            : vp;
+        }),
       }));
 
       // update geselecteerd product
-      setGeselecteerdProduct(prev => {
-        if (!prev) return prev;
-
+      setGeselecteerdProduct((prevVp) => {
+        if (!prevVp) return prevVp;
         const prevId =
-          prev.product_Id || prev.Product_Id || prev.product_id;
-
+          prevVp.product_Id || prevVp.Product_Id || prevVp.product?.product_Id;
         return prevId === productId
-          ? { ...prev, hoeveelheid: nieuweHoeveelheid }
-          : prev;
+          ? { ...prevVp, hoeveelheid: nieuweHoeveelheid }
+          : prevVp;
       });
     });
 
@@ -102,57 +106,81 @@ export default function VeilingDetailPage() {
     };
   }, [veiling]);
 
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!veiling) return <p className="text-gray-500">Veiling laden...</p>;
-
-  const isAanvoerder =
-    gebruiker?.gebruikerType?.toLowerCase() === "aanvoerder";
-
-  // 🔹 wordt aangeroepen door VeilingKlok → “Koop nu”
-  function handleKoopStart(huidigePrijsUitKlok) {
-    if (!geselecteerdProduct) {
-      alert("Selecteer eerst een product in de lijst.");
-      return;
-    }
-
-    setKoopPrijs(huidigePrijsUitKlok);
-    setPopupOpen(true);
-  }
-
-  function handleKoopStart(huidigePrijsUitKlok) {
-    if (!geselecteerdProduct) {
-      alert("Selecteer eerst een product in de lijst.");
-      return;
-    }
-
-    setKoopPrijs(huidigePrijsUitKlok);
-    setPopupOpen(true);
-  }
-
+  // -------------------------
+  // Helpers (VeilingProduct-safe)
+  // -------------------------
   function getVoorraad() {
-    if (!geselecteerdProduct) return 0;
-
     return (
-      geselecteerdProduct.Hoeveelheid ??
-      geselecteerdProduct.hoeveelheid ??
-      geselecteerdProduct.Voorraad ??
-      geselecteerdProduct.aantal ??
+      geselecteerdProduct?.hoeveelheid ??
+      geselecteerdProduct?.Hoeveelheid ??
       0
     );
   }
 
-  // 🔥 Koop bevestigen
+  function getProductId() {
+    return (
+      geselecteerdProduct?.product_Id ||
+      geselecteerdProduct?.Product_Id ||
+      geselecteerdProduct?.product?.product_Id ||
+      geselecteerdProduct?.product?.Product_Id
+    );
+  }
+
+  function getNaam() {
+    return (
+      geselecteerdProduct?.product?.naam ||
+      geselecteerdProduct?.naam ||
+      "Product"
+    );
+  }
+
+  function getKenmerken() {
+    return (
+      geselecteerdProduct?.product?.artikelKenmerken ||
+      geselecteerdProduct?.artikelKenmerken ||
+      "-"
+    );
+  }
+
+  function getFoto() {
+    return (
+      geselecteerdProduct?.product?.foto ||
+      geselecteerdProduct?.foto ||
+      null
+    );
+  }
+
+  function getStartPrijs() {
+    return (
+      geselecteerdProduct?.prijs ??
+      geselecteerdProduct?.Prijs ??
+      geselecteerdProduct?.product?.startPrijs ??
+      geselecteerdProduct?.product?.StartPrijs ??
+      0
+    );
+  }
+
+  // -------------------------
+  // Koop
+  // -------------------------
+  function handleKoopStart(huidigePrijsUitKlok) {
+    if (!geselecteerdProduct) {
+      alert("Selecteer eerst een product in de lijst.");
+      return;
+    }
+
+    setKoopPrijs(huidigePrijsUitKlok);
+    setPopupOpen(true);
+  }
+
   async function handleKoopSubmit(e) {
-    const voorraad =
-    geselecteerdProduct.Hoeveelheid ??
-    geselecteerdProduct.hoeveelheid ??
-    geselecteerdProduct.Voorraad ??
-    geselecteerdProduct.aantal ??
-    0;
     e.preventDefault();
 
     if (!geselecteerdProduct) return alert("Geen product geselecteerd.");
     if (!gebruiker) return alert("Je moet ingelogd zijn.");
+
+    const voorraad = getVoorraad();
+
     if (aantal <= 0) return alert("Aantal moet minstens 1 zijn.");
     if (aantal > voorraad)
       return alert("Je kunt niet meer kopen dan de voorraad.");
@@ -160,10 +188,7 @@ export default function VeilingDetailPage() {
     const totaalPrijs = (koopPrijs || 0) * aantal;
     const token = localStorage.getItem("token");
 
-    const productId =
-      geselecteerdProduct.product_Id ||
-      geselecteerdProduct.Product_Id ||
-      geselecteerdProduct.product_id;
+    const productId = getProductId();
 
     try {
       const res = await fetch("http://localhost:5281/api/Biedingen/koop", {
@@ -193,7 +218,6 @@ export default function VeilingDetailPage() {
       setAantal(1);
       setKoopPrijs(null);
 
-      // Optioneel voorraad refreshen
       window.location.reload();
     } catch (err) {
       console.error(err);
@@ -201,44 +225,31 @@ export default function VeilingDetailPage() {
     }
   }
 
+  // -------------------------
+  // UI guards
+  // -------------------------
+  if (error) return <p className="text-red-600">{error}</p>;
+  if (!veiling) return <p className="text-gray-500">Veiling laden...</p>;
+
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-10">
-      {/* TITEL */}
-      <h1 className="text-4xl font-bold text-gray-800 mb-2">
-        {veiling.titel}
-      </h1>
-
+      <h1 className="text-4xl font-bold text-gray-800 mb-2">{veiling.titel}</h1>
       <p className="text-gray-600 mb-6 text-lg max-w-3xl">
         {veiling.omschrijving}
       </p>
 
-      {/* ACTIEKNOPPEN */}
-      <div className="mb-6 flex flex-wrap gap-4">
-        {isAanvoerder && (
-          <button
-            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            onClick={() => router.push(`/koppelen/${id}`)}
-          >
-            + Koppel product aan deze veiling
-          </button>
-        )}
-      </div>
-
-      {/* GRID */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mt-10">
-        {/* LINKERKOLOM – Producten */}
+        {/* LINKS */}
         <section className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4">
-            Producten in deze veiling
-          </h2>
+          <h2 className="text-xl font-semibold mb-4">Producten in deze veiling</h2>
 
           <VeilingProductenLijst
             veilingId={id}
-            onSelect={(product) => setGeselecteerdProduct(product)}
+            onSelect={(vp) => setGeselecteerdProduct(vp)} // 👈 vp is VeilingProduct
           />
         </section>
 
-        {/* RECHTERKOLOM – Veilingklok + geselecteerd product */}
+        {/* RECHTS */}
         <section className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
           <VeilingKlok
             veiling={veiling}
@@ -247,112 +258,103 @@ export default function VeilingDetailPage() {
           />
 
           {geselecteerdProduct && (
-  <div className="mt-6 p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
-    <h3 className="text-xl font-bold mb-4 text-gray-900 tracking-wide">
-      Geselecteerd product
-    </h3>
+            <div className="mt-6 p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
+              <h3 className="text-xl font-bold mb-4 text-gray-900 tracking-wide">
+                Geselecteerd product
+              </h3>
 
-    {/* FOTO */}
-    {geselecteerdProduct?.foto ? (
-      <img
-        src={geselecteerdProduct.foto}
-        alt={geselecteerdProduct.naam}
-        className="w-full h-56 object-cover rounded-xl shadow-sm mb-5"
-      />
-    ) : (
-      <div className="w-full h-56 bg-gray-100 rounded-xl mb-5 flex items-center justify-center text-gray-500">
-        Geen foto beschikbaar
-      </div>
-    )}
+              {getFoto() ? (
+                <img
+                  src={getFoto()}
+                  alt={getNaam()}
+                  className="w-full h-56 object-cover rounded-xl shadow-sm mb-5"
+                />
+              ) : (
+                <div className="w-full h-56 bg-gray-100 rounded-xl mb-5 flex items-center justify-center text-gray-500">
+                  Geen foto beschikbaar
+                </div>
+              )}
 
-    {/* INFO GRID */}
-    <div className="grid grid-cols-2 gap-y-3 text-gray-800 text-sm">
-      <p className="font-semibold">Naam:</p>
-      <p>{geselecteerdProduct.naam}</p>
+              <div className="grid grid-cols-2 gap-y-3 text-gray-800 text-sm">
+                <p className="font-semibold">Naam:</p>
+                <p>{getNaam()}</p>
 
-      <p className="font-semibold">Kenmerken:</p>
-      <p>{geselecteerdProduct.artikelKenmerken}</p>
+                <p className="font-semibold">Kenmerken:</p>
+                <p>{getKenmerken()}</p>
 
-      <p className="font-semibold">Hoeveelheid:</p>
-      <p>{getVoorraad()}</p>
+                <p className="font-semibold">Hoeveelheid:</p>
+                <p>{getVoorraad()}</p>
 
-      <p className="font-semibold">Startprijs:</p>
-      <p>€{geselecteerdProduct.startPrijs ?? geselecteerdProduct.prijs}</p>
-    </div>
-  </div>
-)}
+                <p className="font-semibold">Startprijs:</p>
+                <p>€{getStartPrijs()}</p>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 
-      {/* 🟢 KOOP POPUP */}
+      {/* POPUP */}
       {popupOpen && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
-    <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-md border border-gray-200">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900">
-        Koop {geselecteerdProduct?.naam}
-      </h2>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-md border border-gray-200">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">
+              Koop {getNaam()}
+            </h2>
 
-      <form onSubmit={handleKoopSubmit} className="space-y-5">
+            <form onSubmit={handleKoopSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Aantal
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max={getVoorraad()}
+                  value={aantal}
+                  onChange={(e) => setAantal(Number(e.target.value))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Voorraad: {getVoorraad()}
+                </p>
+              </div>
 
-        {/* Aantal */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Aantal
-          </label>
-          <input
-            type="number"
-            min="1"
-            max={getVoorraad()}
-            value={aantal}
-            onChange={(e) => setAantal(Number(e.target.value))}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Voorraad: {getVoorraad()}
-          </p>
+              <div className="flex justify-between text-sm text-gray-700">
+                <span>Prijs per stuk:</span>
+                <strong className="text-gray-900">
+                  €{koopPrijs ? koopPrijs.toFixed(2) : "0.00"}
+                </strong>
+              </div>
+
+              <div className="flex justify-between text-lg font-bold mt-3">
+                <span>Totaal:</span>
+                <span>€{((koopPrijs || 0) * (aantal || 0)).toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-end gap-4 pt-4">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+                  onClick={() => {
+                    setPopupOpen(false);
+                    setAantal(1);
+                    setKoopPrijs(null);
+                  }}
+                >
+                  Annuleren
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
+                >
+                  Bevestig aankoop
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        {/* Prijs per stuk */}
-        <div className="flex justify-between text-sm text-gray-700">
-          <span>Prijs per stuk:</span>
-          <strong className="text-gray-900">
-            €{koopPrijs ? koopPrijs.toFixed(2) : "0.00"}
-          </strong>
-        </div>
-
-        {/* Totaalprijs */}
-        <div className="flex justify-between text-lg font-bold mt-3">
-          <span>Totaal:</span>
-          <span>
-            €{((koopPrijs || 0) * (aantal || 0)).toFixed(2)}
-          </span>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-4 pt-4">
-          <button
-            type="button"
-            className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
-            onClick={() => {
-              setPopupOpen(false);
-              setAantal(1);
-              setKoopPrijs(null);
-            }}
-          >
-            Annuleren
-          </button>
-
-          <button
-            type="submit"
-            className="px-5 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
-          >
-            Bevestig aankoop
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </main>
   );
 }
