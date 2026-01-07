@@ -27,7 +27,12 @@ export default function VeilingenPage() {
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setVeilingen(data);
+
+        const zichtbareVeilingen = data.filter(
+          (v) => v.status === "actief" || v.status === "wachten"
+        );
+
+        setVeilingen(zichtbareVeilingen);
       } catch (err) {
         console.error("❌ Fout bij ophalen veilingen:", err);
         setError("Kon veilingen niet ophalen.");

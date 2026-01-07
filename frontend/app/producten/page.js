@@ -6,7 +6,13 @@ import HamburgerMenu from "../components/Hamburger";
 import "../styles/producten.css";
 
 export default function ProductenPage() {
+  const router = useRouter();
+
   const [producten, setProducten] = useState([]);
+  const [geselecteerdProduct, setGeselecteerdProduct] = useState(null);
+  const [editId, setEditId] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
   const [formData, setFormData] = useState({
     naam: "",
     artikelKenmerken: "",
@@ -14,9 +20,6 @@ export default function ProductenPage() {
     startPrijs: 0,
     foto: "",
   });
-  const router = useRouter();
-  const [editId, setEditId] = useState(null);
-  const [uploading, setUploading] = useState(false);
 
   // -------------------------
   // AUTH + PRODUCTEN LADEN
@@ -31,33 +34,26 @@ export default function ProductenPage() {
     }
 
     fetchProducten(token);
-  }, [router]);
+  }, []);
 
   async function fetchProducten(token) {
     const gebruiker = JSON.parse(localStorage.getItem("gebruiker"));
     const aanvoerderId = gebruiker?.gebruiker_Id;
-    console.log("Aanvoerder ID:", aanvoerderId);
 
     const res = await fetch("http://localhost:5281/api/Producten", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!res.ok) {
-      const text = await res.text();
-      console.error("❌ Fout bij ophalen producten:", text);
+      console.error(await res.text());
       return;
     }
 
     const data = await res.json();
-
-    if (!Array.isArray(data)) {
-      console.warn("⚠️ Verwachtte een array, kreeg:", data);
-      return;
-    }
-
     const eigenProducten = data.filter(
       (p) => p.aanvoerder_Id === aanvoerderId
     );
+
     setProducten(eigenProducten);
   }
 
@@ -76,22 +72,19 @@ export default function ProductenPage() {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      console.error("❌ Fout bij verwijderen product:", text);
+      console.error(await res.text());
       return;
     }
 
-    // direct uit de UI halen
     setProducten((prev) => prev.filter((p) => p.product_Id !== productId));
-
-    console.log("✅ Product verwijderd:", productId);
+    setGeselecteerdProduct(null);
   }
 
   // -------------------------
   // PRODUCT BEWERKEN
   // -------------------------
   function handleEdit(product) {
-    setEditId(product.product_Id); // 👈 belangrijk!
+    setEditId(product.product_Id);
     setFormData({
       naam: product.naam,
       artikelKenmerken: product.artikelKenmerken,
@@ -102,7 +95,7 @@ export default function ProductenPage() {
   }
 
   // -------------------------
-  // PRODUCT AANMAKEN
+  // PRODUCT OPSLAAN
   // -------------------------
   async function handleSubmit(e) {
     e.preventDefault();
@@ -118,7 +111,6 @@ export default function ProductenPage() {
     let url = "http://localhost:5281/api/Producten";
     let method = "POST";
 
-    // 👉 Als editId bestaat → UPDATE i.p.v. nieuw product
     if (editId) {
       url = `http://localhost:5281/api/Producten/${editId}`;
       method = "PUT";
@@ -134,11 +126,9 @@ export default function ProductenPage() {
     });
 
     if (!res.ok) {
-      alert("❌ Fout bij opslaan.");
+      alert("❌ Fout bij opslaan");
       return;
     }
-
-    alert(editId ? "✏️ Product bijgewerkt!" : "✅ Product aangemaakt!");
 
     setFormData({
       naam: "",
@@ -147,55 +137,33 @@ export default function ProductenPage() {
       startPrijs: 0,
       foto: "",
     });
-    setEditId(null); // reset edit state
 
+    setEditId(null);
     fetchProducten(token);
   }
 
-  async function handleFotoUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  // -------------------------
+  // FOTO UPLOAD
+  // -------------------------
+  async function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  setUploading(true);
+    setUploading(true);
 
-  const formDataUpload = new FormData();
-  formDataUpload.append("file", file);
+    const form = new FormData();
+    form.append("file", file);
 
-  const res = await fetch("http://localhost:5281/api/Producten/upload", {
-    method: "POST",
-    body: formDataUpload,
-  });
+    const res = await fetch("http://localhost:5281/api/Producten/upload", {
+      method: "POST",
+      body: form,
+    });
 
-  setUploading(false);
+    const data = await res.json();
+    setFormData((prev) => ({ ...prev, foto: data.url }));
 
-  if (!res.ok) {
-    alert("❌ Fout bij uploaden afbeelding");
-    return;
+    setUploading(false);
   }
-
-  const data = await res.json();
-
-  // URL zit in: data.url
-  setFormData((prev) => ({ ...prev, foto: data.url }));
-  alert("📸 Afbeelding geüpload!");
-}
-
-async function handleFileUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const form = new FormData();
-  form.append("file", file);
-
-  const res = await fetch("http://localhost:5281/api/Producten/upload", {
-    method: "POST",
-    body: form
-  });
-
-  const data = await res.json();
-
-  setFormData({ ...formData, foto: data.url });
-}
 
   return (
     <div className="producten-container">
@@ -203,113 +171,196 @@ async function handleFileUpload(e) {
         <h1>Mijn Producten</h1>
       </div>
 
-      <form className="producten-form" onSubmit={handleSubmit}>
-        <h2>Nieuw product toevoegen</h2>
+      <div className="producten-layout">
+        {/* LINKS – PRODUCTEN */}
+        <div className="producten-links">
+          {producten.length > 0 ? (
+            <>
+              <table className="producten-lijst">
+                <thead>
+                  <tr>
+                    <th>Naam</th>
+                    <th>Kenmerken</th>
+                    <th>Hoeveelheid</th>
+                    <th>Startprijs</th>
+                    {/* <th></th> */}
+                  </tr>
+                </thead>
+                <tbody>
+                  {producten.map((p) => (
+                    <tr
+                      key={p.product_Id}
+                      className={
+                        "product-row " +
+                        (geselecteerdProduct?.product_Id === p.product_Id ? "selected" : "")
+                      }
+                      onClick={() => {
+                        setGeselecteerdProduct(p);
+                        setEditId(p.product_Id);
+                        setFormData({
+                          naam: p.naam,
+                          artikelKenmerken: p.artikelKenmerken,
+                          hoeveelheid: p.hoeveelheid,
+                          startPrijs: p.startPrijs,
+                          foto: p.foto || "",
+                        });
+                      }}
+                    >
+                      <td>{p.naam}</td>
+                      <td>{p.artikelKenmerken}</td>
+                      <td>{p.hoeveelheid}</td>
+                      <td>€{p.startPrijs}</td>
+                      {/* <td
+                        className="menu-cell"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <HamburgerMenu
+                          items={[
+                            {
+                              label: "Bewerken",
+                              onClick: () => handleEdit(p),
+                            },
+                            {
+                              label: "Verwijderen",
+                              danger: true,
+                              onClick: () =>
+                                handleProductDelete(p.product_Id),
+                            },
+                          ]}
+                        />
+                      </td> */}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            <p className="empty-message">Nog geen producten toegevoegd.</p>
+          )}
+        </div>
 
-        <label htmlFor="naam">Naam</label>
-        <input
-          id="naam"
-          value={formData.naam}
-          onChange={(e) => setFormData({ ...formData, naam: e.target.value })}
-          required
-        />
+        {/* RECHTS – FORMULIER */}
+        <div className="producten-rechts">
+          <form className="producten-form" onSubmit={handleSubmit}>
+            <h2>{geselecteerdProduct ? "Product bewerken" : "Nieuw product toevoegen"}</h2>
 
-        <label htmlFor="artikelKenmerken">Artikelkenmerken</label>
-        <textarea
-          id="artikelKenmerken"
-          value={formData.artikelKenmerken}
-          onChange={(e) =>
-            setFormData({ ...formData, artikelKenmerken: e.target.value })
-          }
-        />
+            <label>Naam</label>
+            <input
+              value={formData.naam}
+              onChange={(e) =>
+                setFormData({ ...formData, naam: e.target.value })
+              }
+              required
+            />
 
-        <label htmlFor="hoeveelheid">Hoeveelheid</label>
-        <input
-          id="hoeveelheid"
-          type="number"
-          min="1"
-          value={formData.hoeveelheid || ""}
-          onChange={(e) => {
-            const val = e.target.value;
-            setFormData({
-              ...formData,
-              hoeveelheid: val === "" ? 0 : parseInt(val),
-            });
-          }}
-        />
+            <label>Artikelkenmerken</label>
+            <textarea
+              value={formData.artikelKenmerken}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  artikelKenmerken: e.target.value,
+                })
+              }
+            />
 
-        <label htmlFor="startPrijs">Startprijs (€)</label>
-        <input
-          id="startPrijs"
-          type="number"
-          step="0.01"
-          value={formData.startPrijs || ""}
-          onChange={(e) => {
-            const val = e.target.value;
-            setFormData({
-              ...formData,
-              startPrijs: val === "" ? 0 : parseFloat(val),
-            });
-          }}
-        />
+            <label>Hoeveelheid</label>
+            <input
+              type="number"
+              min="1"
+              value={formData.hoeveelheid || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  hoeveelheid: Number(e.target.value),
+                })
+              }
+            />
 
-        <label>Afbeelding uploaden</label>
-        <input type="file" accept="image/*" onChange={handleFileUpload} />
+            <label>Startprijs (€)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.startPrijs || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  startPrijs: Number(e.target.value),
+                })
+              }
+            />
 
-        {uploading && <p>⏳ Uploaden...</p>}
+            <label>Afbeelding uploaden</label>
+            <input type="file" accept="image/*" onChange={handleFileUpload} />
 
-        {/* Preview van geüploade foto */}
-        {formData.foto && (
-          <img
-            src={formData.foto}
-            alt="preview"
-            style={{ width: "120px", marginTop: "10px", borderRadius: "8px" }}
-          />
-        )}
+            {uploading && <p>⏳ Uploaden...</p>}
 
-        <button type="submit">Product opslaan</button>
-      </form>
+            {formData.foto && (
+              <img
+                src={formData.foto}
+                alt="preview"
+                className="foto-preview"
+              />
+            )}
 
-      {producten.length > 0 ? (
-        <table className="producten-lijst">
-          <thead>
-            <tr>
-              <th>Naam</th>
-              <th>Kenmerken</th>
-              <th>Hoeveelheid</th>
-              <th>Startprijs</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {producten.map((p) => (
-              <tr key={p.product_Id}>
-                <td>{p.naam}</td>
-                <td>{p.artikelKenmerken}</td>
-                <td>{p.hoeveelheid}</td>
-                <td>€{p.startPrijs}</td>
-                <td className="menu-cell">
-                  <HamburgerMenu
-                    items={[
-                      {
-                        label: "Bewerken",
-                        onClick: () => handleEdit(p),
-                      },
-                      {
-                        label: "Verwijderen",
-                        danger: true,
-                        onClick: () => handleProductDelete(p.product_Id),
-                      },
-                    ]}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p className="empty-message">Nog geen producten toegevoegd.</p>
-      )}
+            {/* <button type="submit">
+              {editId ? "Opslaan" : "Product toevoegen"}
+            </button> */}
+
+            {geselecteerdProduct && (
+              <button
+                type="button"
+                className="koppel-knop formulier-koppel"
+                onClick={() => 
+                  router.push(`/koppelen/${geselecteerdProduct.product_Id}`)
+                }
+              >
+                Koppel “{geselecteerdProduct.naam}” aan veiling
+              </button>
+            )}
+
+            <div className="formulier-acties">
+              {geselecteerdProduct ? (
+                <>
+                  <button type="submit" className="btn-blauw">
+                    Opslaan
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn-rood"
+                    onClick={() => handleProductDelete(geselecteerdProduct.product_Id)}
+                  >
+                    Verwijderen
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn-grijs"
+                    onClick={() => {
+                      setGeselecteerdProduct(null);
+                      setEditId(null);
+                      setFormData({
+                        naam: "",
+                        artikelKenmerken: "",
+                        hoeveelheid: 0,
+                        startPrijs: 0,
+                        foto: "",
+                      });
+                    }}
+                  >
+                    Annuleren
+                  </button>
+                </>
+              ) : (
+                <button type="submit" className="btn-groen">
+                  Product toevoegen
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

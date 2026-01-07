@@ -84,7 +84,8 @@ namespace FloresFuertes.Controllers
                 Veiling_Id = dto.VeilingId,
                 Product_Id = dto.ProductId,
                 Hoeveelheid = dto.Hoeveelheid,
-                Prijs = dto.Prijs
+                Prijs = dto.Prijs,
+                Status = "wachtend"
             };
 
             // Voorraad verminderen

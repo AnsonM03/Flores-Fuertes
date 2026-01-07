@@ -18,5 +18,9 @@ public class VeilingProduct
     public int Hoeveelheid { get; set; }
 
     public float? Prijs { get; set; }
+
+    public string Status { get; set; } = "wachtend";
+    // wachtend | actief | afgerond | geweigerd
+
 }
 }

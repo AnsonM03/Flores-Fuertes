@@ -1,73 +1,146 @@
-/* ====== PRODUCTEN PAGINA STYLING ====== */
+/* ==============================
+   PRODUCTEN PAGINA
+================================ */
 
 .producten-container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 2rem auto;
   padding: 2rem;
   background: #ffffff;
   border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   font-family: "Inter", sans-serif;
 }
 
 .producten-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 1.5rem;
 }
 
 .producten-header h1 {
-  font-size: 1.75rem;
+  font-size: 1.9rem;
   font-weight: 700;
   color: #1f2937;
 }
 
-.producten-header button {
-  background-color: #2563eb;
-  color: #fff;
-  border: none;
+/* ==============================
+   LAYOUT
+================================ */
+
+.producten-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* ==============================
+   PRODUCTEN LINKS
+================================ */
+
+.producten-links {
+  background: #f9fafb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.producten-lijst {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.producten-lijst thead {
+  background: #eef2f7;
+}
+
+.producten-lijst th {
+  text-align: left;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #374151;
+}
+
+.producten-lijst td {
+  padding: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  color: #1f2937;
+}
+
+.product-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.product-row:hover {
+  background: #f3f4f6;
+}
+
+.product-row.selected {
+  background: #e0f2fe;
+}
+
+.menu-cell {
+  text-align: right;
+}
+
+/* ==============================
+   ACTIES
+================================ */
+
+.producten-acties {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.koppel-knop {
+  background: #2563eb;
+  color: white;
   padding: 0.6rem 1.2rem;
   border-radius: 0.5rem;
-  font-weight: 500;
+  border: none;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
-.producten-header button:hover {
-  background-color: #1e40af;
+.koppel-knop:hover {
+  background: #1e40af;
 }
 
-/* ===== FORMULIER ===== */
-.producten-form {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+/* ==============================
+   FORMULIER RECHTS
+================================ */
+
+.producten-rechts {
+  background: #f9fafb;
   border-radius: 0.75rem;
   padding: 1.5rem;
-  margin-bottom: 2rem;
+  border: 1px solid #e5e7eb;
 }
 
 .producten-form h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #111827;
   margin-bottom: 1rem;
+  color: #111827;
 }
 
 .producten-form label {
   display: block;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 0.25rem;
   color: #374151;
 }
 
 .producten-form input,
 .producten-form textarea {
   width: 100%;
+  margin-top: 0.25rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #d1d5db;
   border-radius: 0.5rem;
-  margin-bottom: 0.75rem;
+  border: 1px solid #d1d5db;
   font-size: 0.95rem;
 }
 
@@ -76,54 +149,143 @@
 }
 
 .producten-form button {
-  background-color: #16a34a;
-  color: #fff;
+  margin-top: 1.25rem;
+  width: 100%;
+  background: #16a34a;
+  color: white;
   border: none;
-  padding: 0.6rem 1.5rem;
-  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 1rem;
   font-weight: 600;
+  border-radius: 0.6rem;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .producten-form button:hover {
-  background-color: #15803d;
+  background: #15803d;
 }
 
-/* ===== PRODUCTEN TABEL ===== */
-.producten-lijst {
-  border-collapse: collapse;
+.producten-form .koppel-knop {
+  background-color: #2563eb;
+}
+
+.producten-form .koppel-knop:hover {
+  background-color: #1e40af;
+}
+
+.producten-form .btn-rood {
+  background-color: #dc2626;
+}
+
+.producten-form .btn-rood:hover {
+  background-color: #b91c1c;
+}
+
+.producten-form .btn-grijs {
+  background-color: #9ca3af;
+}
+
+.producten-form .btn-grijs:hover {
+  background-color: #6b7280;
+}
+
+/* ==============================
+   FOTO PREVIEW
+================================ */
+
+.foto-preview {
   width: 100%;
-}
-
-.producten-lijst thead {
-  background-color: #f3f4f6;
-  color: #374151;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-}
-
-.producten-lijst th,
-.producten-lijst td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-}
-
-.producten-lijst tbody tr:hover {
-  background-color: #f9fafb;
-}
-
-.producten-lijst td img {
-  width: 50px;
-  height: 50px;
-  border-radius: 0.25rem;
+  max-height: 180px;
   object-fit: cover;
+  margin-top: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
 }
+
+/* ==============================
+   EMPTY MESSAGE
+================================ */
 
 .empty-message {
+  padding: 2rem;
   text-align: center;
   color: #6b7280;
   font-style: italic;
+}
+
+
+/* ===== SELECTEERBARE PRODUCT RIJ ===== */
+.product-row {
+  cursor: pointer;
+}
+
+.product-row:hover {
+  background-color: #f1f5f9;
+}
+
+.product-row.selected {
+  background-color: #e0e7ff;
+}
+
+/* ===== FORMULIER ACTIES ===== */
+.formulier-acties {
+  display: flex;
+  gap: 0.75rem;
   margin-top: 1rem;
+}
+
+/* Buttons */
+.btn-groen {
+  background-color: #16a34a;
+}
+
+.btn-groen:hover {
+  background-color: #15803d;
+}
+
+.btn-blauw {
+  background-color: #2563eb;
+}
+
+.btn-blauw:hover {
+  background-color: #1e40af;
+}
+
+.btn-rood {
+  background-color: #dc2626;
+}
+
+.btn-rood:hover {
+  background-color: #b91c1c;
+}
+
+.btn-grijs {
+  background-color: #9ca3af;
+}
+
+.btn-grijs:hover {
+  background-color: #6b7280;
+}
+
+.formulier-acties button {
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+/* ==============================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 900px) {
+  .producten-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .producten-acties {
+    justify-content: center;
+  }
 }
