@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import VeilingKlok from "../../components/VeilingKlok";
-import VeilingenLijst from "../../components/VeilingenLijst";
-import KoperRij from "../../components/Koperrij";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
+import WachtlijstPanel from "../../components/WachtlijstPanel";
+import KoperRij from "../../components/Koperrij";
 
 import "../../styles/dashboard.css";
 
@@ -18,7 +18,6 @@ export default function Dashboard() {
   const [token, setToken] = useState(null);
   const [geselecteerdProduct, setGeselecteerdProduct] = useState(null);
 
-  const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const veilingIdFromUrl = searchParams.get("veiling");
@@ -59,10 +58,10 @@ export default function Dashboard() {
         setVeilingen(data);
 
         const match = veilingIdFromUrl
-          ? data.find(v => v.veiling_Id === veilingIdFromUrl)
+          ? data.find((v) => v.veiling_Id === veilingIdFromUrl)
           : data[0];
 
-        setSelectedVeiling(match);
+        setSelectedVeiling(match || null);
       } catch {
         setError("Kon veilingen niet ophalen");
       }
@@ -71,83 +70,73 @@ export default function Dashboard() {
     fetchVeilingen();
   }, [token, veilingIdFromUrl]);
 
-  // ------------------------------
-  // KLANTEN LADEN
-  // ------------------------------
-  useEffect(() => {
-    if (!token || (rol !== "veilingmeester" && rol !== "aanvoerder")) return;
+  const [actiefProduct, setActiefProduct] = useState(null);
 
-    async function fetchKlanten() {
-      try {
-        const res = await fetch("http://localhost:5281/api/Klanten", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+async function fetchActiefProduct() {
+  if (!selectedVeiling?.veiling_Id || !token) return;
 
-        if (!res.ok) throw new Error();
+  const res = await fetch(
+    `http://localhost:5281/api/Veilingen/veiling/${selectedVeiling.veiling_Id}/actief`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
 
-        setKlanten(await res.json());
-      } catch {
-        console.error("Kon klanten niet ophalen");
-      }
-    }
+  if (!res.ok) return;
 
-    fetchKlanten();
-  }, [rol, token]);
+  const data = await res.json();
+  // data is lijst, maar er hoort 1 actief te zijn
+  setActiefProduct(data?.[0] ?? null);
+}
 
-  // ------------------------------
-  // ACTIES
-  // ------------------------------
-  async function handleKlantVerwijderen(id) {
-    if (!confirm("Weet je zeker?")) return;
+useEffect(() => {
+  fetchActiefProduct();
+}, [selectedVeiling?.veiling_Id, token]);
 
-    await fetch(`http://localhost:5281/api/Klanten/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    setKlanten(prev => prev.filter(k => k.gebruiker_Id !== id));
-  }
-
-  // ------------------------------
-  // LOADING
-  // ------------------------------
   if (!gebruiker || !token) return <div className="dashboard-loading">Laden...</div>;
 
-  // ------------------------------
-  // UI
-  // ------------------------------
   return (
     <div className="dashboard-container">
       <div className="dashboard-card">
         <h1 className="dashboard-title">Dashboard</h1>
 
-        <div className="dashboard-layout">
+        {error && <p style={{ color: "crimson" }}>{error}</p>}
 
+        <div className="dashboard-layout">
           {/* ------------------ LINKERKANT ------------------ */}
           <div className="dashboard-column-left">
+            {/* ✅ WACHTLIJST BOVEN PRODUCTEN */}
+            {rol === "veilingmeester" && (
+              <WachtlijstPanel
+                veilingId={selectedVeiling?.veiling_Id}
+                token={token}
+                onChanged={() => {
+                  // optioneel: als je actieve lijst intern cached, kun je hier refresh triggeren
+                }}
+              />
+            )}
 
-            {/* PRODUCTEN IN DEZE VEILING */}
-            <div className="section-card">
+            {/* ✅ ACTIEVE PRODUCTEN */}
+            <div className="section-card actieve-veiling">
               <div className="section-header">
-                <h2 className="section-title">Producten</h2>
+                <h2 className="section-title">Actieve producten</h2>
               </div>
 
               <VeilingProductenLijst
                 veilingId={selectedVeiling?.veiling_Id}
                 onSelect={(product) => setGeselecteerdProduct(product)}
+                // als jouw component token nodig heeft:
+                // token={token}
               />
             </div>
-
-            {/* BIDERS */}
+            {/* ✅ BIEDERS ONDERAAN */}
             {(rol === "veilingmeester" || rol === "aanvoerder") && (
-              <div className="section-card">
+              <div className="section-card bieders-panel">
                 <div className="section-header">
-                  <h2 className="section-title">Biedingen</h2>
+                  <h2 className="section-title">Bieders</h2>
                 </div>
 
                 <table className="kopers-table">
                   <tbody>
-                    {klanten.map(k => (
+                    {klanten.map((k) => (
                       <KoperRij
                         key={k.gebruiker_Id}
                         klant={k}
@@ -166,12 +155,19 @@ export default function Dashboard() {
 
           {/* ------------------ RECHTERKANT ------------------ */}
           <div className="dashboard-column-right">
-
             {/* VEILINGKLOK */}
             <div className="klok-wrapper">
               {selectedVeiling ? (
-                <VeilingKlok veiling={selectedVeiling} gebruikerRol={rol} />
-              ) : (
+                <VeilingKlok
+  veiling={selectedVeiling}
+  gebruikerRol={rol}
+  token={token}
+  actiefProduct={actiefProduct}
+  setVeiling={(updater) => {
+    // updater kan functie zijn
+    setSelectedVeiling((prev) => (typeof updater === "function" ? updater(prev) : updater));
+  }}
+/>              ) : (
                 <p>Geen veiling geselecteerd</p>
               )}
             </div>
@@ -201,9 +197,7 @@ export default function Dashboard() {
                 <p className="mb-1"><strong>Startprijs:</strong> €{geselecteerdProduct.startPrijs}</p>
               </div>
             )}
-
           </div>
-
         </div>
       </div>
     </div>

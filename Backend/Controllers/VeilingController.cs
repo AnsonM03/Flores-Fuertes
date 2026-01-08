@@ -17,39 +17,78 @@ namespace FloresFuertes.Controllers
             _context = context;
         }
 
-        // ✅ Alle veilingen + veilingmeester + gekoppelde producten
+        // ✅ Alle veilingen (zonder cycles)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Veiling>>> GetAll()
+        public async Task<ActionResult<IEnumerable<VeilingListDto>>> GetAll()
         {
-            return await _context.Veilingen
+            var data = await _context.Veilingen
                 .Include(v => v.Veilingmeester)
-                .Include(v => v.VeilingProducten)
-                    .ThenInclude(vp => vp.Product)
+                .AsNoTracking()
+                .Select(v => new VeilingListDto
+                {
+                    Veiling_Id = v.Veiling_Id,
+                    VeilingPrijs = v.VeilingPrijs,
+                    VeilingDatum = v.VeilingDatum,
+                    StartTijd = v.StartTijd,
+                    EindTijd = v.EindTijd,
+                    Kloklocatie = v.Kloklocatie,
+                    Status = v.Status,
+                    Veilingmeester_Id = v.Veilingmeester_Id,
+                    VeilingmeesterNaam = v.Veilingmeester.Voornaam + " " + v.Veilingmeester.Achternaam
+                })
                 .ToListAsync();
+
+            return Ok(data);
         }
 
-        // ✅ 1 veiling + veilingmeester + gekoppelde producten
+        // ✅ 1 veiling detail (zonder cycles)
         [HttpGet("{id}")]
-        public async Task<ActionResult<Veiling>> GetById(string id)
+        public async Task<ActionResult<VeilingDetailDto>> GetById(string id)
         {
             var veiling = await _context.Veilingen
                 .Include(v => v.Veilingmeester)
                 .Include(v => v.VeilingProducten)
                     .ThenInclude(vp => vp.Product)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Veiling_Id == id);
 
-            if (veiling == null)
-                return NotFound();
+            if (veiling == null) return NotFound();
 
-            return Ok(veiling);
+            var dto = new VeilingDetailDto
+            {
+                Veiling_Id = veiling.Veiling_Id,
+                VeilingPrijs = veiling.VeilingPrijs,
+                VeilingDatum = veiling.VeilingDatum,
+                StartTijd = veiling.StartTijd,
+                EindTijd = veiling.EindTijd,
+                Kloklocatie = veiling.Kloklocatie,
+                Status = veiling.Status,
+                Veilingmeester_Id = veiling.Veilingmeester_Id,
+                VeilingmeesterNaam = veiling.Veilingmeester.Voornaam + " " + veiling.Veilingmeester.Achternaam,
+
+                VeilingProducten = veiling.VeilingProducten.Select(vp => new VeilingProductDto
+                {
+                    VeilingProduct_Id = vp.VeilingProduct_Id,
+                    Veiling_Id = vp.Veiling_Id,
+                    Product_Id = vp.Product_Id,
+                    Hoeveelheid = vp.Hoeveelheid,
+                    Status = vp.Status,
+
+                    Naam = vp.Product?.Naam ?? "",
+                    ArtikelKenmerken = vp.Product?.ArtikelKenmerken ?? "",
+                    Foto = vp.Product?.Foto,
+                    StartPrijs = vp.Product?.StartPrijs ?? 0
+                }).ToList()
+            };
+
+            return Ok(dto);
         }
 
         // ✅ Veiling aanmaken (zonder product)
         [HttpPost]
-        public async Task<ActionResult<Veiling>> CreateVeiling([FromBody] VeilingCreateDto dto)
+        public async Task<IActionResult> CreateVeiling([FromBody] VeilingCreateDto dto)
         {
-            if (dto == null)
-                return BadRequest("Ongeldige invoer");
+            if (dto == null) return BadRequest("Ongeldige invoer");
 
             var nieuweVeiling = new Veiling
             {
@@ -66,43 +105,65 @@ namespace FloresFuertes.Controllers
             _context.Veilingen.Add(nieuweVeiling);
             await _context.SaveChangesAsync();
 
-            var completeVeiling = await _context.Veilingen
-                .Include(v => v.Veilingmeester)
-                .Include(v => v.VeilingProducten)
-                    .ThenInclude(vp => vp.Product)
-                .FirstOrDefaultAsync(v => v.Veiling_Id == nieuweVeiling.Veiling_Id);
-
-            return CreatedAtAction(nameof(GetById), new { id = nieuweVeiling.Veiling_Id }, completeVeiling);
+            return CreatedAtAction(nameof(GetById),
+                new { id = nieuweVeiling.Veiling_Id },
+                new { nieuweVeiling.Veiling_Id });
         }
 
-        // ✅ Wachtlijst per veiling (alleen veilingmeester)
+        // ✅ Wachtlijst per veiling
         [HttpGet("veiling/{veilingId}/wachtlijst")]
-        [Authorize(Roles = "Veilingmeester")]
         public async Task<IActionResult> GetWachtlijst(string veilingId)
         {
             var lijst = await _context.VeilingProducten
                 .Where(vp => vp.Veiling_Id == veilingId && vp.Status == "wachtend")
                 .Include(vp => vp.Product)
+                .AsNoTracking()
+                .Select(vp => new VeilingProductDto
+                {
+                    VeilingProduct_Id = vp.VeilingProduct_Id,
+                    Veiling_Id = vp.Veiling_Id,
+                    Product_Id = vp.Product_Id,
+                    Hoeveelheid = vp.Hoeveelheid,
+                    Status = vp.Status,
+
+                    Naam = vp.Product!.Naam,
+                    ArtikelKenmerken = vp.Product!.ArtikelKenmerken,
+                    Foto = vp.Product!.Foto,
+                    StartPrijs = vp.Product!.StartPrijs
+                })
                 .ToListAsync();
 
             return Ok(lijst);
         }
 
-        // ✅ Actieve producten per veiling (handig voor klok)
+        // ✅ Actieve producten per veiling (voor klok)
         [HttpGet("veiling/{veilingId}/actief")]
         public async Task<IActionResult> GetActieveProducten(string veilingId)
         {
             var lijst = await _context.VeilingProducten
                 .Where(vp => vp.Veiling_Id == veilingId && vp.Status == "actief")
                 .Include(vp => vp.Product)
+                .AsNoTracking()
+                .Select(vp => new VeilingProductDto
+                {
+                    VeilingProduct_Id = vp.VeilingProduct_Id,
+                    Veiling_Id = vp.Veiling_Id,
+                    Product_Id = vp.Product_Id,
+                    Hoeveelheid = vp.Hoeveelheid,
+                    Status = vp.Status,
+
+                    Naam = vp.Product!.Naam,
+                    ArtikelKenmerken = vp.Product!.ArtikelKenmerken,
+                    Foto = vp.Product!.Foto,
+                    StartPrijs = vp.Product!.StartPrijs
+                })
                 .ToListAsync();
 
             return Ok(lijst);
         }
 
-        // ✅ Product activeren (alleen veilingmeester)
+        // ✅ Product activeren
         [HttpPut("{veilingProductId}/activeer")]
-        [Authorize(Roles = "Veilingmeester")]
         public async Task<IActionResult> ActiveerProduct(string veilingProductId)
         {
             var vp = await _context.VeilingProducten
@@ -110,9 +171,11 @@ namespace FloresFuertes.Controllers
 
             if (vp == null) return NotFound("Koppeling niet gevonden.");
 
-            // (OPTIONEEL) Zorg dat er maar 1 tegelijk actief is binnen dezelfde veiling
+            // 1 tegelijk actief in dezelfde veiling
             var andereActieve = await _context.VeilingProducten
-                .Where(x => x.Veiling_Id == vp.Veiling_Id && x.Status == "actief" && x.VeilingProduct_Id != vp.VeilingProduct_Id)
+                .Where(x => x.Veiling_Id == vp.Veiling_Id &&
+                            x.Status == "actief" &&
+                            x.VeilingProduct_Id != vp.VeilingProduct_Id)
                 .ToListAsync();
 
             foreach (var item in andereActieve)
@@ -124,9 +187,8 @@ namespace FloresFuertes.Controllers
             return Ok(new { message = "Product geactiveerd", veilingProductId });
         }
 
-        // ✅ Product weigeren (alleen veilingmeester)
+        // ✅ Product weigeren
         [HttpPut("{veilingProductId}/weiger")]
-        [Authorize(Roles = "Veilingmeester")]
         public async Task<IActionResult> WeigerProduct(string veilingProductId)
         {
             var vp = await _context.VeilingProducten
@@ -144,24 +206,17 @@ namespace FloresFuertes.Controllers
         [HttpPost("{veilingId}/koppel")]
         public async Task<IActionResult> KoppelProduct(string veilingId, [FromBody] KoppelProductDto dto)
         {
-            if (dto == null)
-                return BadRequest("Ongeldige invoer");
+            if (dto == null) return BadRequest("Ongeldige invoer");
 
             var veiling = await _context.Veilingen.FindAsync(veilingId);
-            if (veiling == null)
-                return NotFound("Veiling niet gevonden.");
+            if (veiling == null) return NotFound("Veiling niet gevonden.");
 
             var product = await _context.Producten.FindAsync(dto.ProductId);
-            if (product == null)
-                return NotFound("Product niet gevonden.");
+            if (product == null) return NotFound("Product niet gevonden.");
 
-            if (dto.Hoeveelheid <= 0)
-                return BadRequest("Hoeveelheid moet groter zijn dan 0.");
+            if (dto.Hoeveelheid <= 0) return BadRequest("Hoeveelheid moet groter zijn dan 0.");
+            if (product.Hoeveelheid < dto.Hoeveelheid) return BadRequest("Niet genoeg voorraad.");
 
-            if (product.Hoeveelheid < dto.Hoeveelheid)
-                return BadRequest("Niet genoeg voorraad.");
-
-            // koppeling maken -> wachtend
             var koppeling = new VeilingProduct
             {
                 Veiling_Id = veilingId,
@@ -173,7 +228,7 @@ namespace FloresFuertes.Controllers
 
             _context.VeilingProducten.Add(koppeling);
 
-            // update voorraad product
+            // voorraad afboeken
             product.Hoeveelheid -= dto.Hoeveelheid;
 
             // prijs aanpassen indien opgegeven
@@ -182,23 +237,37 @@ namespace FloresFuertes.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Product staat in wachtlijst", veilingProductId = koppeling.VeilingProduct_Id });
+            return Ok(new
+            {
+                message = "Product staat in wachtlijst",
+                veilingProductId = koppeling.VeilingProduct_Id
+            });
         }
 
-        // ✅ Veiling starten
+        // ✅ Veiling starten (Dutch auction klok) — return start/eind
         [HttpPost("{id}/start")]
-        public async Task<IActionResult> StartVeiling(string id)
+        public async Task<IActionResult> StartVeiling(string id, [FromBody] StartVeilingDto? dto)
         {
-            var veiling = await _context.Veilingen.FindAsync(id);
-            if (veiling == null) return NotFound();
+            var veiling = await _context.Veilingen.FirstOrDefaultAsync(v => v.Veiling_Id == id);
+            if (veiling == null) return NotFound(new { message = "Veiling niet gevonden" });
 
-            var origineleDuur = veiling.EindTijd - veiling.StartTijd;
+            var duur = dto?.DuurInSeconden ?? 20;
+            if (duur < 5) duur = 5;
+            if (duur > 120) duur = 120;
+
             veiling.StartTijd = DateTime.UtcNow;
-            veiling.EindTijd = veiling.StartTijd + origineleDuur;
+            veiling.EindTijd = veiling.StartTijd.AddSeconds(duur);
             veiling.Status = "actief";
 
             await _context.SaveChangesAsync();
-            return Ok(veiling);
+
+            return Ok(new
+            {
+                veiling_Id = veiling.Veiling_Id,
+                startTijd = veiling.StartTijd,
+                eindTijd = veiling.EindTijd,
+                status = veiling.Status
+            });
         }
 
         // ✅ Veiling verwijderen
@@ -206,8 +275,7 @@ namespace FloresFuertes.Controllers
         public async Task<IActionResult> DeleteVeiling(string id)
         {
             var veiling = await _context.Veilingen.FindAsync(id);
-            if (veiling == null)
-                return NotFound(new { message = "Veiling niet gevonden" });
+            if (veiling == null) return NotFound(new { message = "Veiling niet gevonden" });
 
             _context.Veilingen.Remove(veiling);
             await _context.SaveChangesAsync();
