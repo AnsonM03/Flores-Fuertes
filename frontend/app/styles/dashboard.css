@@ -417,6 +417,53 @@
   color: #4b5563;
 }
 
+/* Linkerkolom stack */
+.dashboard-column-left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Wachtlijst extra nadruk */
+.wachtlijst-panel {
+  border: 2px solid #f59e0b; /* amber */
+  background: #fff7ed;
+}
+
+/* Titel wachtlijst */
+.wachtlijst-panel .section-title {
+  color: #92400e;
+  font-weight: 700;
+}
+
+/* Actieve veiling subtieler */
+.actieve-veiling {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+/* Product cards */
+.product-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.product-card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
+
+/* Actieve product visueel onderscheid */
+.product-card.actief {
+  border-left: 6px solid #22c55e;
+}
+
 /* Responsive */
 @media (max-width: 980px) {
   .dashboard-layout {
@@ -426,4 +473,49 @@
   .dashboard-card {
     padding: 24px;
   }
+}
+
+/* Linkerkolom: items onder elkaar met ruimte */
+.dashboard-column-left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+}
+
+.bieders-panel {
+  margin-top: auto; /* duwt deze sectie naar onderen */
+}
+
+/* Wachtlijst opvallender */
+.wachtlijst-panel {
+  border: 2px solid #f59e0b;
+  background: #fff7ed;
+}
+
+/* Actieve producten “normaal” */
+.actieve-veiling {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+/* Mooie cards in lijst */
+.product-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+/* List spacing */
+.producten-ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 0;
+  margin: 0;
+  list-style: none;
 }

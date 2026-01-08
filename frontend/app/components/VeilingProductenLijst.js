@@ -1,76 +1,100 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import "../styles/veilingProductenTabel.css";
 
-export default function VeilingProductenLijst({ veilingId, onSelect }) {
-  const [producten, setProducten] = useState([]);
-  const [selectedProductId, setSelectedProductId] = useState(null);
-  const [error, setError] = useState(null);
+export default function VeilingProductenLijst({ veilingId, token, onSelect }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
+  async function load() {
     if (!veilingId) return;
 
-    async function fetchData() {
-      try {
-        const res = await fetch(
-          `http://localhost:5281/api/VeilingProducten/veiling/${veilingId}`,
-          { credentials: "include" }
-        );
+    try {
+      setLoading(true);
+      setError("");
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(
+        `http://localhost:5281/api/Veilingen/veiling/${veilingId}/actief`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
+      );
 
-        const data = await res.json();
-        console.log("🔎 Producten ontvangen:", data); // Debug
-
-        setProducten(data);
-      } catch (err) {
-        console.error(err);
-        setError("Kon producten niet ophalen.");
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `HTTP ${res.status}`);
       }
-    }
 
-    fetchData();
+      setItems(await res.json());
+    } catch (e) {
+      console.error(e);
+      setError("Kon actieve producten niet ophalen.");
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [veilingId]);
 
-  if (error) return <p className="veiling-message">{error}</p>;
-  if (producten.length === 0)
-    return <p className="veiling-message">Geen producten gekoppeld...</p>;
+  // helper: pakt velden ongeacht casing
+  const get = (obj, ...keys) => keys.find(k => obj?.[k] !== undefined) ? obj[keys.find(k => obj?.[k] !== undefined)] : undefined;
 
   return (
-    <div className="veiling-table-wrapper">
-      <table className="veiling-table">
-        <thead>
-          <tr>
-            <th>Naam</th>
-            <th>Kenmerken</th>
-            <th>Hoeveelheid</th>
-            <th>Startprijs (€)</th>
-          </tr>
-        </thead>
+    <div>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
+        <button className="koppel-btn" onClick={load} disabled={loading || !veilingId}>
+          Refresh
+        </button>
+        {loading && <span>laden…</span>}
+      </div>
 
-        <tbody>
-          {producten.map((p) => (
-            <tr
-              key={p.veilingProduct_Id}
-              className={
-                selectedProductId === p.veilingProduct_Id
-                  ? "selected-row"
-                  : "hover:bg-gray-100 cursor-pointer"
-              }
-              onClick={() => {
-                setSelectedProductId(p.veilingProduct_Id);
-                onSelect(p); // 👈 FOTO WORDT MEEGEGEVEN
-              }}
-            >
-              <td>{p.naam}</td>
-              <td>{p.artikelKenmerken}</td>
-              <td>{p.hoeveelheid}</td>
-              <td>€{p.startPrijs}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {error && <p style={{ color: "crimson" }}>{error}</p>}
+
+      {!loading && items.length === 0 ? (
+        <p>Geen actieve producten.</p>
+      ) : (
+        <ul className="producten-ul">
+          {items.map((vp) => {
+            const id = get(vp, "veilingProduct_Id", "VeilingProduct_Id");
+            const naam = get(vp, "naam", "Naam") ?? "";
+            const kenmerken = get(vp, "artikelKenmerken", "ArtikelKenmerken") ?? "";
+            const hoeveelheid = get(vp, "hoeveelheid", "Hoeveelheid") ?? 0;
+            const startPrijs = get(vp, "startPrijs", "StartPrijs") ?? 0;
+            const foto = get(vp, "foto", "Foto");
+
+            return (
+              <li
+                key={id}
+                className="product-card"
+                style={{ cursor: "pointer" }}
+                onClick={() => onSelect?.(vp)}
+              >
+                <div className="product-info">
+                  <strong>{naam}</strong>
+                  <p>{kenmerken}</p>
+                  <p>
+                    Hoeveelheid: <strong>{hoeveelheid}</strong> · Startprijs:{" "}
+                    <strong>€{Number(startPrijs).toFixed(2)}</strong>
+                  </p>
+                </div>
+
+                {foto ? (
+                  <img
+                    src={foto}
+                    alt={naam}
+                    style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 10 }}
+                  />
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

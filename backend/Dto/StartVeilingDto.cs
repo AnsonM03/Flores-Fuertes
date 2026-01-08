@@ -1,5 +1,5 @@
 public class StartVeilingDto
 {
-    public string VeilingProduct_Id { get; set; }
-    public int DuurInSeconden { get; set; }
+    public int DuurInSeconden { get; set; } = 20;
+    public decimal MinimumPrijs { get; set; } = 5;
 }
