@@ -36,13 +36,11 @@ export default function Nav() {
     }
   };
 
-  // !! FIX: Moved useEffect UP, before the 'if (loading)' check
   useEffect(() => {
     const header = headerRef.current;
     const nav = navRef.current;
     const burger = burgerRef.current;
 
-    // Safety check: if loading is true, these refs might be null, so we return safely
     if (!header || !nav || !burger) return;
 
     const handleBurgerClick = () => {
@@ -71,10 +69,8 @@ export default function Nav() {
       burger.removeEventListener('click', handleBurgerClick);
       window.removeEventListener('scroll', onScroll);
     };
-  }, [loading]); // Added loading dependency to re-run when elements mount
+  }, [loading]); 
 
-  // !! FIX: Now it is safe to return early
-  // Wait until auth loading is finished before rendering links
   if (loading) return null;
 
   const naam = [
@@ -86,12 +82,16 @@ export default function Nav() {
     <header className="site-header" ref={headerRef}>
       <div className="header-inner">
         <Link className="brand" href="/" onClick={handleLinkClick}>
+          {/* UPDATED LOGO SECTION */}
+          {/* Ensure the file is saved as /public/logo.png */}
           <img
-            src="https://www.royalfloraholland.com/assets/favicons/favicon-32x32.png"
-            alt="Royal Flora Holland"
+            src="/flores-fuertes-logo.png" 
+            alt="Flores Fuertes"
             className="brand-logo"
+            // Optional: You might need to adjust height depending on your CSS
+            // style={{ height: '50px', width: 'auto' }} 
           />
-          <span className="brand-text">Royal<br />Flora<br />Holland</span>
+          <span className="brand-text">FLORES<br />FUERTES</span>
         </Link>
 
         {isLoggedIn && (
