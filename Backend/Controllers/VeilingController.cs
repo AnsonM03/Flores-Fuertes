@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using FloresFuertes.Data;
 using FloresFuertes.Models;
 
@@ -34,7 +33,8 @@ namespace FloresFuertes.Controllers
                     Kloklocatie = v.Kloklocatie,
                     Status = v.Status,
                     Veilingmeester_Id = v.Veilingmeester_Id,
-                    VeilingmeesterNaam = v.Veilingmeester.Voornaam + " " + v.Veilingmeester.Achternaam
+                    VeilingmeesterNaam = v.Veilingmeester.Voornaam + " " + v.Veilingmeester.Achternaam,
+                    MinimumPrijs = v.MinimumPrijs
                 })
                 .ToListAsync();
 
@@ -52,7 +52,7 @@ namespace FloresFuertes.Controllers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Veiling_Id == id);
 
-            if (veiling == null) return NotFound();
+            if (veiling == null) return NotFound(new { message = "Veiling niet gevonden" });
 
             var dto = new VeilingDetailDto
             {
@@ -65,6 +65,7 @@ namespace FloresFuertes.Controllers
                 Status = veiling.Status,
                 Veilingmeester_Id = veiling.Veilingmeester_Id,
                 VeilingmeesterNaam = veiling.Veilingmeester.Voornaam + " " + veiling.Veilingmeester.Achternaam,
+                MinimumPrijs = veiling.MinimumPrijs,
 
                 VeilingProducten = veiling.VeilingProducten.Select(vp => new VeilingProductDto
                 {
@@ -84,22 +85,27 @@ namespace FloresFuertes.Controllers
             return Ok(dto);
         }
 
-        // ✅ Veiling aanmaken (zonder product)
+        // ✅ Veiling aanmaken (Dutch auction: GEEN prijs/tijden hier)
         [HttpPost]
         public async Task<IActionResult> CreateVeiling([FromBody] VeilingCreateDto dto)
         {
             if (dto == null) return BadRequest("Ongeldige invoer");
+            if (string.IsNullOrWhiteSpace(dto.Kloklocatie)) return BadRequest("Kloklocatie is verplicht.");
+            if (string.IsNullOrWhiteSpace(dto.Veilingmeester_Id)) return BadRequest("Veilingmeester_Id is verplicht.");
 
             var nieuweVeiling = new Veiling
             {
                 Veiling_Id = Guid.NewGuid().ToString(),
-                VeilingPrijs = dto.VeilingPrijs,
-                VeilingDatum = dto.VeilingDatum,
-                StartTijd = dto.StartTijd,
-                EindTijd = dto.EindTijd,
+                VeilingDatum = dto.VeilingDatum ?? DateOnly.FromDateTime(DateTime.UtcNow),
                 Kloklocatie = dto.Kloklocatie,
-                Status = dto.Status,
-                Veilingmeester_Id = dto.Veilingmeester_Id
+                Status = string.IsNullOrWhiteSpace(dto.Status) ? "wachtend" : dto.Status,
+                Veilingmeester_Id = dto.Veilingmeester_Id,
+
+                // Dutch auction: pas invullen bij StartVeiling
+                StartTijd = null,
+                EindTijd = null,
+                VeilingPrijs = null,
+                MinimumPrijs = null
             };
 
             _context.Veilingen.Add(nieuweVeiling);
@@ -136,7 +142,7 @@ namespace FloresFuertes.Controllers
             return Ok(lijst);
         }
 
-        // ✅ Actieve producten per veiling (voor klok)
+        // ✅ Actieve producten per veiling
         [HttpGet("veiling/{veilingId}/actief")]
         public async Task<IActionResult> GetActieveProducten(string veilingId)
         {
@@ -162,7 +168,7 @@ namespace FloresFuertes.Controllers
             return Ok(lijst);
         }
 
-        // ✅ Product activeren
+        // ✅ Product activeren (1 tegelijk actief)
         [HttpPut("{veilingProductId}/activeer")]
         public async Task<IActionResult> ActiveerProduct(string veilingProductId)
         {
@@ -171,7 +177,6 @@ namespace FloresFuertes.Controllers
 
             if (vp == null) return NotFound("Koppeling niet gevonden.");
 
-            // 1 tegelijk actief in dezelfde veiling
             var andereActieve = await _context.VeilingProducten
                 .Where(x => x.Veiling_Id == vp.Veiling_Id &&
                             x.Status == "actief" &&
@@ -202,7 +207,7 @@ namespace FloresFuertes.Controllers
             return Ok(new { message = "Product geweigerd", veilingProductId });
         }
 
-        // ✅ Aanvoerder koppelt product aan veiling -> standaard "wachtend"
+        // ✅ Koppel product aan veiling -> standaard "wachtend"
         [HttpPost("{veilingId}/koppel")]
         public async Task<IActionResult> KoppelProduct(string veilingId, [FromBody] KoppelProductDto dto)
         {
@@ -231,7 +236,7 @@ namespace FloresFuertes.Controllers
             // voorraad afboeken
             product.Hoeveelheid -= dto.Hoeveelheid;
 
-            // prijs aanpassen indien opgegeven
+            // als je een prijs meegeeft bij koppelen, zet je die als StartPrijs op product
             if (dto.Prijs.HasValue)
                 product.StartPrijs = dto.Prijs.Value;
 
@@ -244,20 +249,38 @@ namespace FloresFuertes.Controllers
             });
         }
 
-        // ✅ Veiling starten (Dutch auction klok) — return start/eind
+        // ✅ Veiling starten (Dutch auction klok)
         [HttpPost("{id}/start")]
         public async Task<IActionResult> StartVeiling(string id, [FromBody] StartVeilingDto? dto)
         {
             var veiling = await _context.Veilingen.FirstOrDefaultAsync(v => v.Veiling_Id == id);
             if (veiling == null) return NotFound(new { message = "Veiling niet gevonden" });
 
+            // vereist actief product
+            var actiefVp = await _context.VeilingProducten
+                .Include(vp => vp.Product)
+                .FirstOrDefaultAsync(vp => vp.Veiling_Id == id && vp.Status == "actief");
+
+            if (actiefVp == null)
+                return BadRequest(new { message = "Geen actief product. Activeer eerst een product." });
+
             var duur = dto?.DuurInSeconden ?? 20;
             if (duur < 5) duur = 5;
             if (duur > 120) duur = 120;
 
+            var minPrijs = dto?.MinimumPrijs ?? 0m;
+            if (minPrijs < 0) minPrijs = 0;
+
+            // startprijs uit actief product
+            var startPrijs = (decimal)(actiefVp.Prijs ?? (actiefVp.Product?.StartPrijs ?? 0));
+
+            if (startPrijs <= minPrijs)
+                return BadRequest(new { message = "Minimum prijs moet lager zijn dan startprijs." });
+
             veiling.StartTijd = DateTime.UtcNow;
-            veiling.EindTijd = veiling.StartTijd.AddSeconds(duur);
+            veiling.EindTijd = veiling.StartTijd.Value.AddSeconds(duur);
             veiling.Status = "actief";
+            veiling.MinimumPrijs = minPrijs;
 
             await _context.SaveChangesAsync();
 
@@ -266,7 +289,10 @@ namespace FloresFuertes.Controllers
                 veiling_Id = veiling.Veiling_Id,
                 startTijd = veiling.StartTijd,
                 eindTijd = veiling.EindTijd,
-                status = veiling.Status
+                status = veiling.Status,
+                startPrijs,
+                minimumPrijs = minPrijs,
+                actiefVeilingProductId = actiefVp.VeilingProduct_Id
             });
         }
 

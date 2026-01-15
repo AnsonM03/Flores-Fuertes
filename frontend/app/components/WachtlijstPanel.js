@@ -1,32 +1,44 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import "../styles/wachtlijstPanel.css";
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ||
+  "http://localhost:5281/api";
 
 export default function WachtlijstPanel({ veilingId, onActivated }) {
   const [items, setItems] = useState([]);
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   async function load() {
-    if (!veilingId) return;
+    if (!veilingId) {
+      setItems([]);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const token = localStorage.getItem("token");
+
       const res = await fetch(
-        `http://localhost:5281/api/Veilingen/veiling/${veilingId}/wachtlijst`,
+        `${API_BASE}/Veilingen/veiling/${veilingId}/wachtlijst`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setItems(await res.json());
+
+      const data = await res.json();
+      setItems(Array.isArray(data) ? data : []);
     } catch (e) {
-      setError(e.message);
+      console.error("❌ Wachtlijst error:", e);
+      setError("Kon wachtlijst niet laden.");
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -34,100 +46,97 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [veilingId]);
 
   async function activeer(veilingProductId) {
-    const token = localStorage.getItem("token");
+    if (!veilingProductId) return;
 
-    const res = await fetch(
-      `http://localhost:5281/api/Veilingen/${veilingProductId}/activeer`,
-      {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE}/Veilingen/${veilingProductId}/activeer`, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
-    if (!res.ok) {
-      alert("Activeren mislukt");
-      return;
+      if (!res.ok) throw new Error();
+
+      await load();
+      onActivated?.();
+    } catch {
+      alert("Activeren mislukt.");
     }
-
-    // refresh wachtlijst
-    await load();
-
-    // optioneel: laat parent opnieuw actief lijst ophalen / klok syncen
-    onActivated?.();
   }
 
   async function weiger(veilingProductId) {
-    const token = localStorage.getItem("token");
+    if (!veilingProductId) return;
 
-    const res = await fetch(
-      `http://localhost:5281/api/Veilingen/${veilingProductId}/weiger`,
-      {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE}/Veilingen/${veilingProductId}/weiger`, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
-    if (!res.ok) {
-      alert("Weigeren mislukt");
-      return;
+      if (!res.ok) throw new Error();
+
+      await load();
+      onActivated?.(); // ook na weigeren handig
+    } catch {
+      alert("Weigeren mislukt.");
     }
-
-    await load();
   }
 
   return (
-    <div className="section-card">
-      <div className="section-header">
-        <h2 className="section-title">Wachtlijst</h2>
+    <div className="wachtlijst-card">
+      <div className="wachtlijst-header">
+        <h2 className="wachtlijst-title">Wachtlijst</h2>
       </div>
 
-      {loading && <p>Laden...</p>}
-      {error && <p className="text-red-600">Fout: {error}</p>}
+      {loading && <p className="wachtlijst-loading">Laden...</p>}
+      {error && <p className="wachtlijst-error">{error}</p>}
 
       {!loading && !error && items.length === 0 && (
-        <p className="text-gray-500">Geen producten in wachtrij.</p>
+        <p className="wachtlijst-empty">Geen producten in wachtrij.</p>
       )}
 
-      <ul className="space-y-3">
-        {items.map((vp) => (
-          <li
-            key={vp.veilingProduct_Id || vp.veilingProduct_Id}
-            className="p-3 bg-white border rounded-lg flex justify-between items-center"
-          >
-            <div>
-              <div className="font-semibold">{vp.naam}</div>
-              <div className="text-sm text-gray-600">
-                {vp.artikelKenmerken}
-              </div>
-              <div className="text-sm">
-                Aantal: <b>{vp.hoeveelheid}</b> — Startprijs:{" "}
-                <b>€{vp.startPrijs}</b>
-              </div>
-            </div>
+      <ul className="wachtlijst-list">
+        {items.map((vp) => {
+          const id = vp.veilingProduct_Id ?? vp.VeilingProduct_Id; // ✅ casing fix
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => activeer(vp.veilingProduct_Id)}
-                className="px-3 py-2 bg-green-600 text-white rounded"
-              >
-                Activeer
-              </button>
-              <button
-                onClick={() => weiger(vp.veilingProduct_Id)}
-                className="px-3 py-2 bg-red-600 text-white rounded"
-              >
-                Weiger
-              </button>
-            </div>
-          </li>
-        ))}
+          return (
+            <li key={id} className="wachtlijst-item">
+              <div className="wachtlijst-info">
+                <div className="wachtlijst-naam">{vp.naam || vp.Naam || "Onbekend product"}</div>
+                <div className="wachtlijst-kenmerken">
+                  {vp.artikelKenmerken || vp.ArtikelKenmerken || "-"}
+                </div>
+                <div className="wachtlijst-meta">
+                  Aantal: <b>{vp.hoeveelheid ?? vp.Hoeveelheid ?? 0}</b> — Startprijs:{" "}
+                  <b>€{vp.startPrijs ?? vp.StartPrijs ?? 0}</b>
+                </div>
+              </div>
+
+              <div className="wachtlijst-actions">
+                <button
+                  className="wachtlijst-btn wachtlijst-btn--activeer"
+                  onClick={() => activeer(id)}
+                >
+                  Activeer
+                </button>
+
+                <button
+                  className="wachtlijst-btn wachtlijst-btn--weiger"
+                  onClick={() => weiger(id)}
+                >
+                  Weiger
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
