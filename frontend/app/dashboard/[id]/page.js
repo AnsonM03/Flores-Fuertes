@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import VeilingKlok from "../../components/VeilingKlok";
+import VeilingKlok from "../../components/Veilingklok";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
 import WachtlijstPanel from "../../components/WachtlijstPanel";
 import KoperRij from "../../components/Koperrij";

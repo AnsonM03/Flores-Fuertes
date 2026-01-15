@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import VeilingKlok from "../../components/VeilingKlok";
+import VeilingKlok from "../../components/Veilingklok";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
 import * as signalR from "@microsoft/signalr";
 
@@ -198,13 +198,13 @@ export default function VeilingDetailPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          prijsPerStuk: koopPrijs,
-          aantal,
-          totaal: totaalPrijs,
-          klant_Id: gebruiker.gebruiker_Id,
-          product_Id: productId,
-          veiling_Id: veiling.veiling_Id,
-        }),
+        PrijsPerStuk: koopPrijs,      // Matcht KoopDto.cs
+        Aantal: aantal,                // Matcht KoopDto.cs
+        Totaal: totaalPrijs,           // Matcht KoopDto.cs
+        Klant_Id: gebruiker.gebruiker_Id, // Matcht KoopDto.cs
+        Product_Id: productId,         // Matcht KoopDto.cs
+        Veiling_Id: veiling.veiling_Id // Matcht KoopDto.cs
+      }),
       });
 
       if (!res.ok) {
