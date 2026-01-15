@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import VeilingKlok from "../../components/Veilingklok";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
 import * as signalR from "@microsoft/signalr";
+import "../../styles/veiling-detail.css";
 
 export default function VeilingDetailPage() {
   const { id } = useParams();
@@ -12,10 +13,11 @@ export default function VeilingDetailPage() {
 
   const [veiling, setVeiling] = useState(null);
   const [error, setError] = useState(null);
-  const [connection, setConnection] = useState(null);
-  const [gebruiker, setGebruiker] = useState(null);
 
-  // 👇 dit is nu een VeilingProduct (koppeling), niet los Product
+  const [gebruiker, setGebruiker] = useState(null);
+  const rol = gebruiker?.gebruikerType?.toLowerCase();
+
+  // Geselecteerd = VeilingProduct (koppeling)
   const [geselecteerdProduct, setGeselecteerdProduct] = useState(null);
 
   // Koop popup
@@ -35,26 +37,31 @@ export default function VeilingDetailPage() {
   // Veiling laden
   // -------------------------
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchVeiling() {
       try {
         const res = await fetch(`http://localhost:5281/api/Veilingen/${id}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setVeiling(data);
+        if (!cancelled) setVeiling(data);
       } catch (err) {
         console.error(err);
-        setError("Kon deze veiling niet ophalen.");
+        if (!cancelled) setError("Kon deze veiling niet ophalen.");
       }
     }
 
     fetchVeiling();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   // -------------------------
-  // SignalR
+  // SignalR (updates)
   // -------------------------
   useEffect(() => {
-    if (!veiling) return;
+    if (!veiling?.veiling_Id) return;
 
     const conn = new signalR.HubConnectionBuilder()
       .withUrl("http://localhost:5281/hubs/auction")
@@ -63,20 +70,18 @@ export default function VeilingDetailPage() {
 
     conn.on("VeilingGestart", (veilingId, startTijd, eindTijd) => {
       if (veilingId !== veiling.veiling_Id) return;
-
       setVeiling((prev) => (prev ? { ...prev, startTijd, eindTijd } : prev));
     });
 
-    // 👇 update op basis van productId binnen VeilingProducten
     conn.on("ProductGekocht", (veilingId, productId, nieuweHoeveelheid) => {
       if (veilingId !== veiling.veiling_Id) return;
 
-      // update veiling state als je veilingProducten toevallig in veiling hebt zitten
+      // update lijst in veiling (als die aanwezig is)
       setVeiling((prev) => ({
         ...prev,
-        veilingProducten: (prev.veilingProducten || []).map((vp) => {
+        veilingProducten: (prev?.veilingProducten || []).map((vp) => {
           const vpProductId =
-            vp.product_Id || vp.Product_Id || vp.product?.product_Id;
+            vp.product_Id || vp.Product_Id || vp.product?.product_Id || vp.product?.Product_Id;
           return vpProductId === productId
             ? { ...vp, hoeveelheid: nieuweHoeveelheid }
             : vp;
@@ -87,7 +92,7 @@ export default function VeilingDetailPage() {
       setGeselecteerdProduct((prevVp) => {
         if (!prevVp) return prevVp;
         const prevId =
-          prevVp.product_Id || prevVp.Product_Id || prevVp.product?.product_Id;
+          prevVp.product_Id || prevVp.Product_Id || prevVp.product?.product_Id || prevVp.product?.Product_Id;
         return prevId === productId
           ? { ...prevVp, hoeveelheid: nieuweHoeveelheid }
           : prevVp;
@@ -99,76 +104,59 @@ export default function VeilingDetailPage() {
       .then(() => console.log("✅ SignalR verbonden"))
       .catch((err) => console.error("SignalR error:", err));
 
-    setConnection(conn);
-
     return () => {
       conn.stop();
     };
-  }, [veiling]);
+  }, [veiling?.veiling_Id]);
 
   // -------------------------
   // Helpers (VeilingProduct-safe)
   // -------------------------
-  function getVoorraad() {
-    return (
+  const productInfo = useMemo(() => {
+    const voorraad =
       geselecteerdProduct?.hoeveelheid ??
       geselecteerdProduct?.Hoeveelheid ??
-      0
-    );
-  }
+      0;
 
-  function getProductId() {
-    return (
+    const productId =
       geselecteerdProduct?.product_Id ||
       geselecteerdProduct?.Product_Id ||
       geselecteerdProduct?.product?.product_Id ||
-      geselecteerdProduct?.product?.Product_Id
-    );
-  }
+      geselecteerdProduct?.product?.Product_Id;
 
-  function getNaam() {
-    return (
+    const naam =
       geselecteerdProduct?.product?.naam ||
       geselecteerdProduct?.naam ||
-      "Product"
-    );
-  }
+      "Product";
 
-  function getKenmerken() {
-    return (
+    const kenmerken =
       geselecteerdProduct?.product?.artikelKenmerken ||
       geselecteerdProduct?.artikelKenmerken ||
-      "-"
-    );
-  }
+      "-";
 
-  function getFoto() {
-    return (
+    const foto =
       geselecteerdProduct?.product?.foto ||
       geselecteerdProduct?.foto ||
-      null
-    );
-  }
+      null;
 
-  function getStartPrijs() {
-    return (
+    const startPrijs =
       geselecteerdProduct?.prijs ??
       geselecteerdProduct?.Prijs ??
       geselecteerdProduct?.product?.startPrijs ??
       geselecteerdProduct?.product?.StartPrijs ??
-      0
-    );
-  }
+      0;
+
+    return { voorraad, productId, naam, kenmerken, foto, startPrijs };
+  }, [geselecteerdProduct]);
 
   // -------------------------
-  // Koop
+  // Koop flow
   // -------------------------
   function handleKoopStart(huidigePrijsUitKlok) {
     if (!geselecteerdProduct) {
       alert("Selecteer eerst een product in de lijst.");
       return;
     }
-
     setKoopPrijs(huidigePrijsUitKlok);
     setPopupOpen(true);
   }
@@ -179,16 +167,13 @@ export default function VeilingDetailPage() {
     if (!geselecteerdProduct) return alert("Geen product geselecteerd.");
     if (!gebruiker) return alert("Je moet ingelogd zijn.");
 
-    const voorraad = getVoorraad();
-
     if (aantal <= 0) return alert("Aantal moet minstens 1 zijn.");
-    if (aantal > voorraad)
+    if (aantal > productInfo.voorraad) {
       return alert("Je kunt niet meer kopen dan de voorraad.");
+    }
 
     const totaalPrijs = (koopPrijs || 0) * aantal;
     const token = localStorage.getItem("token");
-
-    const productId = getProductId();
 
     try {
       const res = await fetch("http://localhost:5281/api/Biedingen/koop", {
@@ -198,13 +183,13 @@ export default function VeilingDetailPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-        PrijsPerStuk: koopPrijs,      // Matcht KoopDto.cs
-        Aantal: aantal,                // Matcht KoopDto.cs
-        Totaal: totaalPrijs,           // Matcht KoopDto.cs
-        Klant_Id: gebruiker.gebruiker_Id, // Matcht KoopDto.cs
-        Product_Id: productId,         // Matcht KoopDto.cs
-        Veiling_Id: veiling.veiling_Id // Matcht KoopDto.cs
-      }),
+          prijsPerStuk: koopPrijs,
+          aantal,
+          totaal: totaalPrijs,
+          klant_Id: gebruiker.gebruiker_Id,
+          product_Id: productInfo.productId,
+          veiling_Id: veiling.veiling_Id,
+        }),
       });
 
       if (!res.ok) {
@@ -218,6 +203,7 @@ export default function VeilingDetailPage() {
       setAantal(1);
       setKoopPrijs(null);
 
+      // simpele refresh
       window.location.reload();
     } catch (err) {
       console.error(err);
@@ -228,113 +214,250 @@ export default function VeilingDetailPage() {
   // -------------------------
   // UI guards
   // -------------------------
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!veiling) return <p className="text-gray-500">Veiling laden...</p>;
+  if (error) {
+    return (
+      <main className="min-h-screen bg-slate-50 px-6 py-10">
+        <div className="mx-auto max-w-5xl">
+          <button
+            onClick={() => router.back()}
+            className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50"
+          >
+            ← Terug
+          </button>
+
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
+            {error}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!veiling) {
+    return (
+      <main className="min-h-screen bg-slate-50 px-6 py-10">
+        <div className="mx-auto max-w-5xl">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            Veiling laden…
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const status = (veiling.status || "wachtend").toLowerCase();
+  const statusBadge =
+    status === "actief"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : status === "afgelopen"
+      ? "bg-slate-100 text-slate-700 border-slate-200"
+      : "bg-amber-50 text-amber-700 border-amber-200";
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10 px-10">
-      <h1 className="text-4xl font-bold text-gray-800 mb-2">{veiling.titel}</h1>
-      <p className="text-gray-600 mb-6 text-lg max-w-3xl">
-        {veiling.omschrijving}
-      </p>
+    <main className="min-h-screen bg-slate-50 px-6 py-10">
+      <div className="mx-auto max-w-6xl">
+        {/* Header */}
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <button
+              onClick={() => router.back()}
+              className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50"
+            >
+              ← Terug
+            </button>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mt-10">
-        {/* LINKS */}
-        <section className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4">Producten in deze veiling</h2>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+              {veiling.titel || "Veiling"}
+            </h1>
 
-          <VeilingProductenLijst
-            veilingId={id}
-            onSelect={(vp) => setGeselecteerdProduct(vp)} // 👈 vp is VeilingProduct
-          />
-        </section>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span
+                className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold ${statusBadge}`}
+              >
+                {status}
+              </span>
 
-        {/* RECHTS */}
-        <section className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
-          <VeilingKlok
-            veiling={veiling}
-            gebruikerRol={gebruiker?.gebruikerType?.toLowerCase()}
-            onKoop={handleKoopStart}
-          />
+              {rol && (
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700">
+                  Rol: {rol}
+                </span>
+              )}
+            </div>
+          </div>
 
-          {geselecteerdProduct && (
-            <div className="mt-6 p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
-              <h3 className="text-xl font-bold mb-4 text-gray-900 tracking-wide">
+          {/* Right header actions */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-xl bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Layout */}
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+          {/* LINKS: Productenlijst */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">
+                Producten in deze veiling
+              </h2>
+              <span className="text-sm text-slate-500">Selecteer een product</span>
+            </div>
+
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+              <VeilingProductenLijst
+                veilingId={id}
+                onSelect={(vp) => setGeselecteerdProduct(vp)}
+              />
+            </div>
+          </section>
+
+          {/* RECHTS: Klok + details */}
+          <section className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <VeilingKlok
+                veiling={veiling}
+                gebruikerRol={rol}
+                onKoop={handleKoopStart}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900">
                 Geselecteerd product
               </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Klik links een product om details te zien.
+              </p>
 
-              {getFoto() ? (
-                <img
-                  src={getFoto()}
-                  alt={getNaam()}
-                  className="w-full h-56 object-cover rounded-xl shadow-sm mb-5"
-                />
+              {!geselecteerdProduct ? (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-slate-600">
+                  Nog geen product geselecteerd.
+                </div>
               ) : (
-                <div className="w-full h-56 bg-gray-100 rounded-xl mb-5 flex items-center justify-center text-gray-500">
-                  Geen foto beschikbaar
+                <div className="mt-4">
+                  {productInfo.foto ? (
+                    <img
+                      src={productInfo.foto}
+                      alt={productInfo.naam}
+                      className="h-56 w-full rounded-xl object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex h-56 w-full items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                      Geen foto beschikbaar
+                    </div>
+                  )}
+
+                  <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <div className="text-slate-500">Naam</div>
+                      <div className="font-semibold text-slate-900">
+                        {productInfo.naam}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <div className="text-slate-500">Voorraad</div>
+                      <div className="font-semibold text-slate-900">
+                        {productInfo.voorraad}
+                      </div>
+                    </div>
+
+                    <div className="col-span-2 rounded-xl bg-slate-50 p-3">
+                      <div className="text-slate-500">Kenmerken</div>
+                      <div className="font-semibold text-slate-900">
+                        {productInfo.kenmerken}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <div className="text-slate-500">Startprijs</div>
+                      <div className="font-semibold text-slate-900">
+                        €{Number(productInfo.startPrijs || 0).toFixed(2)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <div className="text-slate-500">ProductId</div>
+                      <div className="truncate font-mono text-xs text-slate-700">
+                        {productInfo.productId || "-"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
-
-              <div className="grid grid-cols-2 gap-y-3 text-gray-800 text-sm">
-                <p className="font-semibold">Naam:</p>
-                <p>{getNaam()}</p>
-
-                <p className="font-semibold">Kenmerken:</p>
-                <p>{getKenmerken()}</p>
-
-                <p className="font-semibold">Hoeveelheid:</p>
-                <p>{getVoorraad()}</p>
-
-                <p className="font-semibold">Startprijs:</p>
-                <p>€{getStartPrijs()}</p>
-              </div>
             </div>
-          )}
-        </section>
+          </section>
+        </div>
       </div>
 
       {/* POPUP */}
       {popupOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">
-              Koop {getNaam()}
-            </h2>
-
-            <form onSubmit={handleKoopSubmit} className="space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <h2 className="text-xl font-extrabold text-slate-900">
+                  Koop {productInfo.naam}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Kies je aantal en bevestig je aankoop.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setPopupOpen(false);
+                  setAantal(1);
+                  setKoopPrijs(null);
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-slate-700 hover:bg-slate-50"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleKoopSubmit} className="mt-5 space-y-5">
+              <div className="rounded-xl bg-slate-50 p-4">
+                <label className="block text-sm font-semibold text-slate-700">
                   Aantal
                 </label>
                 <input
                   type="number"
                   min="1"
-                  max={getVoorraad()}
+                  max={productInfo.voorraad}
                   value={aantal}
                   onChange={(e) => setAantal(Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Voorraad: {getVoorraad()}
-                </p>
+                <div className="mt-2 text-xs text-slate-500">
+                  Voorraad: <span className="font-semibold">{productInfo.voorraad}</span>
+                </div>
               </div>
 
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>Prijs per stuk:</span>
-                <strong className="text-gray-900">
-                  €{koopPrijs ? koopPrijs.toFixed(2) : "0.00"}
-                </strong>
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between text-sm text-slate-700">
+                  <span>Prijs per stuk</span>
+                  <span className="font-bold text-slate-900">
+                    €{koopPrijs ? koopPrijs.toFixed(2) : "0.00"}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between text-lg font-extrabold">
+                  <span>Totaal</span>
+                  <span className="text-slate-900">
+                    €{((koopPrijs || 0) * (aantal || 0)).toFixed(2)}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex justify-between text-lg font-bold mt-3">
-                <span>Totaal:</span>
-                <span>€{((koopPrijs || 0) * (aantal || 0)).toFixed(2)}</span>
-              </div>
-
-              <div className="flex justify-end gap-4 pt-4">
+              <div className="flex gap-3">
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
                   onClick={() => {
                     setPopupOpen(false);
                     setAantal(1);
@@ -346,7 +469,7 @@ export default function VeilingDetailPage() {
 
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
+                  className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white shadow hover:bg-emerald-700"
                 >
                   Bevestig aankoop
                 </button>

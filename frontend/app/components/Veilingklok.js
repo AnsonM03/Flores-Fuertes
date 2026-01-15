@@ -1,57 +1,86 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import "../styles/veilingKlok.css";
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") || "http://localhost:5281/api";
 
 export default function VeilingKlok({
   veiling,
   gebruikerRol,
   token,
   setVeiling,
-  actiefProduct, // het actieve veilingproduct met startPrijs
+  actiefProduct,
+  onStarted,
 }) {
+  const veilingId = veiling?.veiling_Id;
+
   const [status, setStatus] = useState("wachten");
   const [huidigePrijs, setHuidigePrijs] = useState(0);
 
-  // Popup
   const [popupOpen, setPopupOpen] = useState(false);
-  const [duur, setDuur] = useState(20);          // seconden
-  const [minPrijs, setMinPrijs] = useState(1);   // veilingmeester kiest dit
+  const [duur, setDuur] = useState(20);
+  const [minPrijs, setMinPrijs] = useState(1);
+  const [busy, setBusy] = useState(false);
 
-  // startprijs komt van actief product
+  // ✅ voorkomt dat oude async responses state updaten na veiling switch
+  const runIdRef = useRef(0);
+
+  // Startprijs komt van actief product (als die er is)
   const startPrijs = useMemo(() => {
     const p = Number(actiefProduct?.startPrijs ?? actiefProduct?.prijs ?? 0);
-    return isFinite(p) ? p : 0;
+    return Number.isFinite(p) ? p : 0;
   }, [actiefProduct]);
 
+  // Reset UI basics bij veiling wissel
   useEffect(() => {
-    if (!veiling?.startTijd || !veiling?.eindTijd) {
+    setPopupOpen(false);
+    setBusy(false);
+  }, [veilingId]);
+
+  // ---------------------------
+  // KLOK LOGICA (robust)
+  // ---------------------------
+  useEffect(() => {
+    const rawStart = veiling?.startTijd ?? veiling?.StartTijd;
+    const rawEind = veiling?.eindTijd ?? veiling?.EindTijd;
+
+    if (!rawStart || !rawEind) {
       setStatus("wachten");
       setHuidigePrijs(startPrijs || 0);
       return;
     }
 
-    const start = new Date(veiling.startTijd);
-    const eind = new Date(veiling.eindTijd);
-    const totaal = Math.max(0.1, (eind - start) / 1000);
+    const start = new Date(rawStart);
+    const eind = new Date(rawEind);
 
-    // minimum prijs moet < start prijs anders lijkt de klok stil te staan
-    const min = Math.max(0, Number(veiling?.minimumPrijs ?? 0)); // als je dit niet opslaat: 0
+    if (Number.isNaN(start.getTime()) || Number.isNaN(eind.getTime())) {
+      setStatus("wachten");
+      setHuidigePrijs(startPrijs || 0);
+      return;
+    }
+
+    const totaal = Math.max(0.1, (eind.getTime() - start.getTime()) / 1000);
+    const min = Math.max(0, Number(veiling?.minimumPrijs ?? veiling?.MinimumPrijs ?? 0));
     const echteStart = Math.max(startPrijs, min);
 
     const dalingPerSeconde = (echteStart - min) / totaal;
 
     function update() {
-      const nu = new Date();
+      const nu = Date.now();
+      const startMs = start.getTime();
+      const eindMs = eind.getTime();
 
-      if (nu < start) {
+      if (nu < startMs) {
         setStatus("wachten");
         setHuidigePrijs(echteStart);
         return;
       }
 
-      if (nu >= start && nu < eind) {
+      if (nu >= startMs && nu < eindMs) {
         setStatus("actief");
-        const verstreken = (nu - start) / 1000;
+        const verstreken = (nu - startMs) / 1000;
         const prijs = Math.max(echteStart - verstreken * dalingPerSeconde, min);
         setHuidigePrijs(prijs);
         return;
@@ -64,53 +93,155 @@ export default function VeilingKlok({
     update();
     const t = setInterval(update, 100);
     return () => clearInterval(t);
-  }, [veiling?.startTijd, veiling?.eindTijd, startPrijs, veiling?.minimumPrijs]);
+  }, [
+    veilingId,
+    veiling?.startTijd,
+    veiling?.eindTijd,
+    veiling?.StartTijd,
+    veiling?.EindTijd,
+    veiling?.minimumPrijs,
+    veiling?.MinimumPrijs,
+    startPrijs,
+  ]);
 
+  // ---------------------------
+  // HELPERS
+  // ---------------------------
+  async function apiFetch(url, opts = {}) {
+    const res = await fetch(url, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    return res;
+  }
+
+  async function fetchWachtlijst(currentVeilingId) {
+    const res = await apiFetch(`${API_BASE}/Veilingen/veiling/${currentVeilingId}/wachtlijst`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function fetchActiefLijst(currentVeilingId) {
+    const res = await apiFetch(`${API_BASE}/Veilingen/veiling/${currentVeilingId}/actief`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function activeerVeilingProduct(vpId) {
+    const res = await apiFetch(`${API_BASE}/Veilingen/${vpId}/activeer`, { method: "PUT" });
+    return res.ok;
+  }
+
+  // ---------------------------
+  // START VEILING (auto-activate binnen dezelfde veiling)
+  // ---------------------------
   async function startVeiling() {
-    if (!veiling?.veiling_Id) return;
+    if (!veilingId) return;
 
-    // simpele checks
+    const thisRun = ++runIdRef.current;
     const duurSec = Math.min(120, Math.max(5, Number(duur) || 20));
     const min = Math.max(0, Number(minPrijs) || 0);
 
-    if (startPrijs <= 0) {
-      alert("Geen startprijs gevonden. Zorg dat er een actief product is met startprijs.");
-      return;
+    setBusy(true);
+    try {
+      const currentVeilingId = veilingId;
+
+      // 1) Zorg dat er een actief product is (alleen voor deze veiling)
+      let actief = actiefProduct;
+
+      if (!actief) {
+        const actiefLijst = await fetchActiefLijst(currentVeilingId);
+        actief = actiefLijst?.[0] ?? null;
+      }
+
+      if (!actief) {
+        const wachtlijst = await fetchWachtlijst(currentVeilingId);
+        const first = wachtlijst?.[0];
+
+        const vpId = first?.veilingProduct_Id ?? first?.VeilingProduct_Id;
+        if (!vpId) {
+          alert("Geen product in wachtlijst. Koppel eerst een product aan deze veiling.");
+          return;
+        }
+
+        const ok = await activeerVeilingProduct(vpId);
+        if (!ok) {
+          alert("Activeren mislukt (autorisatie/backend).");
+          return;
+        }
+
+        const actiefLijst2 = await fetchActiefLijst(currentVeilingId);
+        actief = actiefLijst2?.[0] ?? null;
+      }
+
+      if (!actief) {
+        alert("Kon geen actief product bepalen.");
+        return;
+      }
+
+      // 2) Startprijs check
+      const sp = Number(actief?.startPrijs ?? actief?.prijs ?? 0);
+      const startPrijsLocal = Number.isFinite(sp) ? sp : 0;
+
+      if (startPrijsLocal <= 0) {
+        alert("Actief product heeft geen startprijs.");
+        return;
+      }
+
+      if (min >= startPrijsLocal) {
+        alert("Minimum prijs moet lager zijn dan startprijs.");
+        return;
+      }
+
+      // 3) Start veiling
+      const res = await apiFetch(`${API_BASE}/Veilingen/${currentVeilingId}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ duurInSeconden: duurSec, minimumPrijs: min }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("❌ startVeiling failed:", txt);
+        alert("Kon veiling niet starten. Check backend logs.");
+        return;
+      }
+
+      const data = await res.json();
+
+      // als je intussen van veiling bent gewisseld: negeer
+      if (thisRun !== runIdRef.current) return;
+
+      const startRaw = data.startTijd ?? data.StartTijd;
+      const eindRaw = data.eindTijd ?? data.EindTijd;
+
+      if (!startRaw || !eindRaw) {
+        alert("Backend geeft geen start/eind tijd terug.");
+        return;
+      }
+
+      // force ISO in state
+      const startIso = new Date(startRaw).toISOString();
+      const eindIso = new Date(eindRaw).toISOString();
+
+      setVeiling?.((prev) => ({
+        ...prev,
+        startTijd: startIso,
+        eindTijd: eindIso,
+        status: data.status ?? data.Status ?? "actief",
+        minimumPrijs: data.minimumPrijs ?? data.MinimumPrijs ?? min,
+      }));
+
+      setPopupOpen(false);
+      onStarted?.();
+    } finally {
+      setBusy(false);
     }
-
-    if (min >= startPrijs) {
-      alert("Minimum prijs moet lager zijn dan startprijs.");
-      return;
-    }
-
-    const res = await fetch(`http://localhost:5281/api/Veilingen/${veiling.veiling_Id}/start`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ duurInSeconden: duurSec, minimumPrijs: min }),
-    });
-
-    if (!res.ok) {
-      const txt = await res.text();
-      console.error(txt);
-      alert("Kon veiling niet starten. (Check: actief product?)");
-      return;
-    }
-
-    const data = await res.json();
-
-    // zet tijden (en sla minprijs lokaal op zodat de klok weet waar hij moet stoppen)
-    setVeiling?.((prev) => ({
-      ...prev,
-      startTijd: data.startTijd,
-      eindTijd: data.eindTijd,
-      status: data.status ?? "actief",
-      minimumPrijs: data.minimumPrijs ?? min,
-    }));
-
-    setPopupOpen(false);
   }
 
   return (
@@ -133,8 +264,13 @@ export default function VeilingKlok({
       </div>
 
       {gebruikerRol === "veilingmeester" && status !== "actief" && (
-        <button className="klok-btn klok-btn--start" onClick={() => setPopupOpen(true)}>
-          Start veilen
+        <button
+          className="klok-btn klok-btn--start"
+          onClick={() => setPopupOpen(true)}
+          disabled={busy}
+          style={{ opacity: busy ? 0.7 : 1 }}
+        >
+          {busy ? "Bezig..." : "Start veilen"}
         </button>
       )}
 
@@ -143,7 +279,7 @@ export default function VeilingKlok({
           <div className="popup">
             <h3 className="popup-title">Start veiling</h3>
 
-            <label className="block mb-2 font-medium">Duur (seconden)</label>
+            <label className="popup-label">Duur (seconden)</label>
             <input
               type="number"
               min="5"
@@ -151,9 +287,10 @@ export default function VeilingKlok({
               value={duur}
               onChange={(e) => setDuur(Number(e.target.value))}
               className="popup-input"
+              disabled={busy}
             />
 
-            <label className="block mb-2 font-medium" style={{ marginTop: 12 }}>
+            <label className="popup-label" style={{ marginTop: 12 }}>
               Minimum prijs (€)
             </label>
             <input
@@ -163,15 +300,20 @@ export default function VeilingKlok({
               value={minPrijs}
               onChange={(e) => setMinPrijs(Number(e.target.value))}
               className="popup-input"
+              disabled={busy}
             />
 
             <div className="popup-buttons">
-              <button className="popup-btn cancel" onClick={() => setPopupOpen(false)}>
+              <button
+                className="popup-btn cancel"
+                onClick={() => setPopupOpen(false)}
+                disabled={busy}
+              >
                 Annuleren
               </button>
 
-              <button className="popup-btn confirm" onClick={startVeiling}>
-                Start veilen
+              <button className="popup-btn confirm" onClick={startVeiling} disabled={busy}>
+                {busy ? "Starten..." : "Start veilen"}
               </button>
             </div>
           </div>
