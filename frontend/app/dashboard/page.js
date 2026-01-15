@@ -108,10 +108,10 @@ export default function MijnVeilingenPage() {
                 </div>
 
                 <div className="veilingen-card-content">
-                  <h2>{v.titel || "Naamloze Veiling"}</h2>
-                  <p className="product">
+                  <h2>{v.kloklocatie || "Naamloze Veiling"}</h2>
+                  {/* <p className="product">
                     {v.product?.naam || "Onbekend product"}
-                  </p>
+                  </p> */}
 
                   <p className="tijd">
                     {new Date(v.startTijd).toLocaleString()} <br />

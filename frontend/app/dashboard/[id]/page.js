@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import VeilingKlok from "../../components/VeilingKlok";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
 import WachtlijstPanel from "../../components/WachtlijstPanel";
@@ -9,18 +9,34 @@ import KoperRij from "../../components/Koperrij";
 
 import "../../styles/dashboard.css";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") || "http://localhost:5281/api";
+
 export default function Dashboard() {
   const [veilingen, setVeilingen] = useState([]);
   const [selectedVeiling, setSelectedVeiling] = useState(null);
   const [error, setError] = useState(null);
+
   const [klanten, setKlanten] = useState([]);
   const [gebruiker, setGebruiker] = useState(null);
   const [token, setToken] = useState(null);
+
   const [geselecteerdProduct, setGeselecteerdProduct] = useState(null);
+
+  // ✅ KEY FIX: actiefProduct per veilingId
+  const [actiefPerVeiling, setActiefPerVeiling] = useState({}); // { [veilingId]: actiefVp }
+  const actiefProduct = useMemo(() => {
+    const id = selectedVeiling?.veiling_Id;
+    return id ? actiefPerVeiling[id] ?? null : null;
+  }, [actiefPerVeiling, selectedVeiling?.veiling_Id]);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const veilingIdFromUrl = searchParams.get("veiling");
+
+  // Abort controllers om “oude” responses te negeren
+  const abortVeilingenRef = useRef(null);
+  const abortActiefRef = useRef(null);
 
   // ------------------------------
   // AUTH LADEN
@@ -48,8 +64,13 @@ export default function Dashboard() {
 
     async function fetchVeilingen() {
       try {
-        const res = await fetch("http://localhost:5281/api/Veilingen", {
+        abortVeilingenRef.current?.abort();
+        const ctrl = new AbortController();
+        abortVeilingenRef.current = ctrl;
+
+        const res = await fetch(`${API_BASE}/Veilingen`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: ctrl.signal,
         });
 
         if (!res.ok) throw new Error();
@@ -62,7 +83,9 @@ export default function Dashboard() {
           : data[0];
 
         setSelectedVeiling(match || null);
-      } catch {
+        setError(null);
+      } catch (e) {
+        if (e?.name === "AbortError") return;
         setError("Kon veilingen niet ophalen");
       }
     }
@@ -70,26 +93,62 @@ export default function Dashboard() {
     fetchVeilingen();
   }, [token, veilingIdFromUrl]);
 
-  const [actiefProduct, setActiefProduct] = useState(null);
+  // ------------------------------
+  // ACTIEF PRODUCT OPHALEN (PER VEILING)
+  // ------------------------------
+  async function fetchActiefProduct(veilingId) {
+    if (!veilingId || !token) return;
 
-async function fetchActiefProduct() {
-  if (!selectedVeiling?.veiling_Id || !token) return;
+    try {
+      abortActiefRef.current?.abort();
+      const ctrl = new AbortController();
+      abortActiefRef.current = ctrl;
 
-  const res = await fetch(
-    `http://localhost:5281/api/Veilingen/veiling/${selectedVeiling.veiling_Id}/actief`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+      const res = await fetch(`${API_BASE}/Veilingen/veiling/${veilingId}/actief`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: ctrl.signal,
+      });
 
-  if (!res.ok) return;
+      if (!res.ok) {
+        setActiefPerVeiling((prev) => ({ ...prev, [veilingId]: null }));
+        return;
+      }
 
-  const data = await res.json();
-  // data is lijst, maar er hoort 1 actief te zijn
-  setActiefProduct(data?.[0] ?? null);
-}
+      const data = await res.json();
+      const actief = data?.[0] ?? null;
 
-useEffect(() => {
-  fetchActiefProduct();
-}, [selectedVeiling?.veiling_Id, token]);
+      // ✅ opslaan per veilingId
+      setActiefPerVeiling((prev) => ({ ...prev, [veilingId]: actief }));
+    } catch (e) {
+      if (e?.name === "AbortError") return;
+      setActiefPerVeiling((prev) => ({ ...prev, [veilingId]: null }));
+    }
+  }
+
+  // Bij wissel van selectedVeiling: reset geselecteerd product en haal actief opnieuw op
+  useEffect(() => {
+    const id = selectedVeiling?.veiling_Id;
+    if (!id || !token) return;
+
+    setGeselecteerdProduct(null);
+
+    // ✅ belangrijk: direct “actiefProduct” voor die veiling laden
+    fetchActiefProduct(id);
+  }, [selectedVeiling?.veiling_Id, token]);
+
+  // ------------------------------
+  // (OPTIONEEL) BIEDERS VERWIJDEREN
+  // ------------------------------
+  async function handleKlantVerwijderen(id) {
+    if (!confirm("Weet je zeker?")) return;
+
+    await fetch(`${API_BASE}/Klanten/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setKlanten((prev) => prev.filter((k) => k.gebruiker_Id !== id));
+  }
 
   if (!gebruiker || !token) return <div className="dashboard-loading">Laden...</div>;
 
@@ -103,31 +162,29 @@ useEffect(() => {
         <div className="dashboard-layout">
           {/* ------------------ LINKERKANT ------------------ */}
           <div className="dashboard-column-left">
-            {/* ✅ WACHTLIJST BOVEN PRODUCTEN */}
             {rol === "veilingmeester" && (
               <WachtlijstPanel
                 veilingId={selectedVeiling?.veiling_Id}
                 token={token}
-                onChanged={() => {
-                  // optioneel: als je actieve lijst intern cached, kun je hier refresh triggeren
+                // ✅ jouw WachtlijstPanel gebruikt momenteel "onActivated" i.p.v. "onChanged"
+                onActivated={() => {
+                  if (!selectedVeiling?.veiling_Id) return;
+                  fetchActiefProduct(selectedVeiling.veiling_Id);
                 }}
               />
             )}
 
-            {/* ✅ ACTIEVE PRODUCTEN */}
             <div className="section-card actieve-veiling">
               <div className="section-header">
-                <h2 className="section-title">Actieve producten</h2>
+                <h2 className="section-title">Producten</h2>
               </div>
 
               <VeilingProductenLijst
                 veilingId={selectedVeiling?.veiling_Id}
                 onSelect={(product) => setGeselecteerdProduct(product)}
-                // als jouw component token nodig heeft:
-                // token={token}
               />
             </div>
-            {/* ✅ BIEDERS ONDERAAN */}
+
             {(rol === "veilingmeester" || rol === "aanvoerder") && (
               <div className="section-card bieders-panel">
                 <div className="section-header">
@@ -155,29 +212,39 @@ useEffect(() => {
 
           {/* ------------------ RECHTERKANT ------------------ */}
           <div className="dashboard-column-right">
-            {/* VEILINGKLOK */}
             <div className="klok-wrapper">
               {selectedVeiling ? (
                 <VeilingKlok
-  veiling={selectedVeiling}
-  gebruikerRol={rol}
-  token={token}
-  actiefProduct={actiefProduct}
-  setVeiling={(updater) => {
-    // updater kan functie zijn
-    setSelectedVeiling((prev) => (typeof updater === "function" ? updater(prev) : updater));
-  }}
-/>              ) : (
+                  veiling={selectedVeiling}
+                  gebruikerRol={rol}
+                  token={token}
+                  actiefProduct={actiefProduct}
+                  setVeiling={(updater) => {
+                    setSelectedVeiling((prev) => {
+                      const next = typeof updater === "function" ? updater(prev) : updater;
+
+                      // update ook in lijst
+                      setVeilingen((list) =>
+                        list.map((v) => (v.veiling_Id === next.veiling_Id ? next : v))
+                      );
+
+                      return next;
+                    });
+                  }}
+                  onStarted={() => {
+                    // na start: opnieuw actief product ophalen voor deze veiling
+                    if (!selectedVeiling?.veiling_Id) return;
+                    fetchActiefProduct(selectedVeiling.veiling_Id);
+                  }}
+                />
+              ) : (
                 <p>Geen veiling geselecteerd</p>
               )}
             </div>
 
-            {/* ⭐ GESELECTEERD PRODUCT-KAART */}
             {geselecteerdProduct && (
               <div className="mt-6 p-5 bg-white shadow-md rounded-xl border border-gray-200">
-                <h3 className="text-lg font-bold mb-3 text-gray-800">
-                  Geselecteerd product
-                </h3>
+                <h3 className="text-lg font-bold mb-3 text-gray-800">Geselecteerd product</h3>
 
                 {geselecteerdProduct.foto ? (
                   <img
@@ -191,10 +258,18 @@ useEffect(() => {
                   </div>
                 )}
 
-                <p className="mb-1"><strong>Naam:</strong> {geselecteerdProduct.naam}</p>
-                <p className="mb-1"><strong>Kenmerken:</strong> {geselecteerdProduct.artikelKenmerken}</p>
-                <p className="mb-1"><strong>Hoeveelheid:</strong> {geselecteerdProduct.hoeveelheid}</p>
-                <p className="mb-1"><strong>Startprijs:</strong> €{geselecteerdProduct.startPrijs}</p>
+                <p className="mb-1">
+                  <strong>Naam:</strong> {geselecteerdProduct.naam}
+                </p>
+                <p className="mb-1">
+                  <strong>Kenmerken:</strong> {geselecteerdProduct.artikelKenmerken}
+                </p>
+                <p className="mb-1">
+                  <strong>Hoeveelheid:</strong> {geselecteerdProduct.hoeveelheid}
+                </p>
+                <p className="mb-1">
+                  <strong>Startprijs:</strong> €{geselecteerdProduct.startPrijs}
+                </p>
               </div>
             )}
           </div>

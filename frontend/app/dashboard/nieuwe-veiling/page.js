@@ -6,16 +6,11 @@ import "../../styles/nieuweVeiling.css";
 
 export default function NieuweVeilingPage() {
   const [formData, setFormData] = useState({
-    veilingPrijs: "",
     veilingDatum: "",
-    startTijd: "",
-    eindTijd: "",
     kloklocatie: "",
     status: "wachten",
-    product_Id: "",
   });
 
-  const [producten, setProducten] = useState([]);
   const [gebruiker, setGebruiker] = useState(null);
   const router = useRouter();
 
@@ -38,14 +33,11 @@ export default function NieuweVeilingPage() {
 
     const token = localStorage.getItem("token");
 
+    // ✅ Dutch auction: geen prijs / starttijd / eindtijd bij create
     const payload = {
-      veilingPrijs: parseFloat(formData.veilingPrijs),
-      veilingDatum: formData.veilingDatum,
-      startTijd: new Date(`${formData.veilingDatum}T${formData.startTijd}`),
-      eindTijd: new Date(`${formData.veilingDatum}T${formData.eindTijd}`),
+      veilingDatum: formData.veilingDatum || null,
       kloklocatie: formData.kloklocatie,
-      status: formData.status,
-      product_Id: formData.product_Id,
+      status: "wachten",
       veilingmeester_Id: gebruiker.gebruiker_Id,
     };
 
@@ -76,45 +68,13 @@ export default function NieuweVeilingPage() {
         <h1>Nieuwe Veiling Aanmaken</h1>
 
         <form onSubmit={handleSubmit} className="nv-form">
-          <label>Veiling Prijs (€)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={formData.veilingPrijs}
-            onChange={(e) =>
-              setFormData({ ...formData, veilingPrijs: e.target.value })
-            }
-            required
-          />
-
-          <label>Veilingdatum</label>
+          <label>Veilingdatum (optioneel)</label>
           <input
             type="date"
             value={formData.veilingDatum}
             onChange={(e) =>
               setFormData({ ...formData, veilingDatum: e.target.value })
             }
-            required
-          />
-
-          <label>Starttijd</label>
-          <input
-            type="time"
-            value={formData.startTijd}
-            onChange={(e) =>
-              setFormData({ ...formData, startTijd: e.target.value })
-            }
-            required
-          />
-
-          <label>Eindtijd</label>
-          <input
-            type="time"
-            value={formData.eindTijd}
-            onChange={(e) =>
-              setFormData({ ...formData, eindTijd: e.target.value })
-            }
-            required
           />
 
           <label>Kloklocatie</label>
@@ -125,18 +85,6 @@ export default function NieuweVeilingPage() {
             }
             required
           />
-
-          <label>Status</label>
-          <select
-            value={formData.status}
-            onChange={(e) =>
-              setFormData({ ...formData, status: e.target.value })
-            }
-          >
-            <option value="wachten">Wachten</option>
-            <option value="actief">Actief</option>
-            <option value="afgelopen">Afgelopen</option>
-          </select>
 
           <button type="submit" className="nv-btn">
             Veiling aanmaken
