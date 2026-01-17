@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import VeilingKlok from "../../components/Veilingklok";
+import VeilingKlok from "../../components/VeilingKlok";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
 import * as signalR from "@microsoft/signalr";
 import "../../styles/veiling-detail.css";

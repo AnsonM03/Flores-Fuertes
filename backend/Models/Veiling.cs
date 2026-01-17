@@ -7,7 +7,7 @@ namespace FloresFuertes.Models
         [Key]
         public string Veiling_Id { get; set; } = Guid.NewGuid().ToString();
 
-        // ❌ Dutch auction: prijs hoort bij actief product, niet bij veiling
+        // Dutch auction: prijs hoort bij actief product, niet bij veiling
         // -> je kunt deze verwijderen, OF laten staan maar niet meer gebruiken.
         public float? VeilingPrijs { get; set; }   // nullable (of verwijderen)
 

@@ -28,11 +28,12 @@ export default function VeilingenPage() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        const zichtbareVeilingen = data.filter(
-          (v) => v.status === "actief" || v.status === "wachten"
-        );
+        const actieveVeilingen = (Array.isArray(data) ? data : []).filter((v) => {
+          const status = String(v.status ?? v.Status ?? "").toLowerCase();
+          return status === "actief";
+        });
 
-        setVeilingen(zichtbareVeilingen);
+        setVeilingen(actieveVeilingen);
       } catch (err) {
         console.error("❌ Fout bij ophalen veilingen:", err);
         setError("Kon veilingen niet ophalen.");

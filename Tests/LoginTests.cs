@@ -27,7 +27,6 @@ public class LoginTests
         var result = await controller.Login(model);
 
         // Assert
-        // AANGEPAST: We checken result.Result omdat de return type ActionResult<T> is
         Assert.IsType<UnauthorizedObjectResult>(result.Result);
     }
 
