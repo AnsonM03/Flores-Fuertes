@@ -519,3 +519,24 @@
   margin: 0;
   list-style: none;
 }
+
+.dashboard-veiling-select {
+  margin-bottom: 16px;
+}
+
+.dashboard-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.dashboard-select {
+  width: 100%;
+  max-width: 360px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+}

@@ -117,3 +117,36 @@
 .wachtlijst-btn--weiger:hover {
   background: #b91c1c;
 }
+
+/* ===============================
+   WACHTLIJST – REFRESH KNOP
+================================ */
+
+.wachtlijst-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.wachtlijst-refresh {
+  border: 1px solid #e5e7eb;
+  background: #2563eb;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wachtlijst-refresh:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+.wachtlijst-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
