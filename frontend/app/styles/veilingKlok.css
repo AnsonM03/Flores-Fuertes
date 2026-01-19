@@ -1,128 +1,19 @@
-/* Kaart */
-.dutch-clock-card {
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 18px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
-  max-width: 480px;
-  margin: 0 auto;
-}
+/* =========================
+   LAYOUT
+   ========================= */
 
-/* Titel */
-.clock-title {
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin-bottom: 10px;
-  text-align: center;
-  color: #1e293b;
-}
-
-/* Info */
-.clock-info p {
-  color: #475569;
-  font-size: 0.95rem;
-}
-
-.clock-info strong {
-  color: #0f172a;
-}
-
-/* Prijs */
-.clock-price-box {
-  text-align: center;
-  margin: 25px 0;
-}
-
-.clock-price {
-  font-size: 4rem;
-  font-weight: 900;
-  color: #2563eb;
-  margin: 0;
-}
-
-/* Status badge */
-.status-tag {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 6px 14px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  border-radius: 999px;
-  text-transform: uppercase;
-}
-
-.status-tag.actief {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.status-tag.wachten {
-  background: #fef9c3;
-  color: #854d0e;
-}
-
-.status-tag.afgelopen {
-  background: #f3f4f6;
-  color: #4b5563;
-}
-
-/* Timer */
-.clock-time-left {
-  font-size: 1.2rem;
-  text-align: center;
-  color: #1e293b;
-  font-weight: 600;
-}
-
-.clock-waiting,
-.clock-ended {
-  text-align: center;
-  color: #475569;
-  font-style: italic;
-}
-
-/* Koop-knop */
-.clock-buy-btn {
-  background: #2563eb;
-  color: white;
-  font-size: 1.3rem;
-  font-weight: 700;
-  padding: 16px;
-  width: 100%;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: 0.2s ease-in-out;
-}
-
-.clock-buy-btn:hover {
-  background: #1d4ed8;
-}
-
-/* Note */
-.clock-note {
-  text-align: center;
-  color: #6b7280;
-  font-size: 0.9rem;
-  margin-top: 15px;
-}
-
-/* Wrapper */
 .klok-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* Titel */
 .klok-title {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 10px;
 }
 
-/* Status */
 .klok-status {
   font-size: 18px;
   margin-bottom: 20px;
@@ -140,9 +31,9 @@
   color: #dc2626;
 }
 
-/* ------------------- */
-/* DUTCH AUCTION CLOCK */
-/* ------------------- */
+/* =========================
+   DUTCH AUCTION CLOCK (SVG)
+   ========================= */
 
 .dutch-clock-container {
   display: flex;
@@ -163,6 +54,14 @@
   opacity: 0.35;
 }
 
+/* Let op: jij gebruikt <text className="clock-price"> in SVG */
+.clock-price {
+  font-size: 30px;
+  fill: #1e293b;
+  font-weight: 700;
+}
+
+/* Alleen nodig als je écht een hand gebruikt in SVG */
 .clock-hand {
   stroke: #ef4444;
   stroke-width: 6;
@@ -171,19 +70,15 @@
   transition: transform 0.4s linear;
 }
 
-.clock-price {
-  font-size: 30px;
-  fill: #1e293b;
-  font-weight: 700;
-}
-
 .clock-label {
   margin-top: 10px;
   font-size: 15px;
   color: #475569;
 }
 
-/* Info card */
+/* =========================
+   INFO CARD (optioneel)
+   ========================= */
 
 .klok-info-card {
   background: #f8fafc;
@@ -191,7 +86,7 @@
   border-radius: 12px;
   width: 260px;
   margin-bottom: 20px;
-  box-shadow: 0px 4px 10px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
 .klok-product-name {
@@ -206,11 +101,14 @@
 }
 
 .klok-field-value {
-  font-weight: bold;
+  font-weight: 700;
   color: #1e293b;
 }
 
-/* Buttons */
+/* =========================
+   BUTTONS
+   ========================= */
+
 .klok-buttons {
   display: flex;
   gap: 10px;
@@ -228,19 +126,91 @@
 
 .klok-btn--koop {
   background: #16a34a;
-  color: white;
+  color: #fff;
 }
 
 .klok-btn--koop:disabled {
   background: #9ca3af;
+  cursor: not-allowed;
 }
 
 .klok-btn--start {
   background: #2563eb;
-  color: white;
+  color: #fff;
 }
 
 .klok-btn--stop {
   background: #dc2626;
-  color: white;
+  color: #fff;
+}
+
+/* =========================
+   POPUP
+   ========================= */
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.popup {
+  width: min(420px, 100%);
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+}
+
+.popup-title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.popup-label {
+  display: block;
+  margin: 8px 0 6px;
+  font-weight: 600;
+}
+
+.popup-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+}
+
+.popup-input:focus {
+  border-color: #999;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.popup-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.popup-btn.cancel {
+  background: #eee;
+}
+
+.popup-btn.confirm {
+  background: #111;
+  color: #fff;
 }

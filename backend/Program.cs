@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using FloresFuertes.Hubs;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +17,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:3000",
-                "http://frontend:3000"
+                "https://floresfuertes.nl",
+                "https://www.floresfuertes.nl"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
 // JWT
 // ----------------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
@@ -50,21 +50,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         OnMessageReceived = context =>
         {
-            // JWT via cookies voor normale API calls
-            if (context.Request.Cookies.ContainsKey("token"))
-            {
-                context.Token = context.Request.Cookies["token"];
-            }
-
-            // JWT voor SignalR WebSockets
+            // SignalR: token via querystring (access_token)
             var accessToken = context.Request.Query["access_token"];
-            var path = context.Request.Path;
+            var path = context.HttpContext.Request.Path;
+
             if (!string.IsNullOrEmpty(accessToken) &&
                 path.StartsWithSegments("/hubs/auction"))
             {
                 context.Token = accessToken;
             }
 
+            // Normale API calls: token via Authorization header (Bearer ...)
+            // (dus GEEN cookie nodig)
             return Task.CompletedTask;
         }
     };
@@ -74,12 +71,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // SERVICES
 // ----------------------------
 builder.Services.AddAuthorization();
-builder.Services
-    .AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    });builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
+
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 
@@ -99,22 +97,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 
+// ✅ CORS moet NA UseRouting en VOOR auth
 app.UseCors("AllowMyFrontend");
 
-// ----------------------------
-// STATIC FILES (fotos uit /uploads werken nu altijd)
-// ----------------------------
 app.UseStaticFiles();
 
-// ----------------------------
-// AUTH
-// ----------------------------
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ----------------------------
-// ROUTING
-// ----------------------------
 app.MapControllers();
 app.MapHub<AuctionHub>("/hubs/auction");
 

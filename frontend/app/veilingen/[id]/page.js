@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import VeilingKlok from "../../components/VeilingKlok";
 import VeilingProductenLijst from "../../components/VeilingProductenLijst";
 import * as signalR from "@microsoft/signalr";
+import "../../styles/veiling-detail.css";
 
 export default function VeilingDetailPage() {
   const { id } = useParams();
@@ -12,49 +13,44 @@ export default function VeilingDetailPage() {
 
   const [veiling, setVeiling] = useState(null);
   const [error, setError] = useState(null);
-  const [connection, setConnection] = useState(null);
-  const [gebruiker, setGebruiker] = useState(null);
 
-  // 👇 dit is nu een VeilingProduct (koppeling), niet los Product
+  const [gebruiker, setGebruiker] = useState(null);
+  const rol = gebruiker?.gebruikerType?.toLowerCase();
+
   const [geselecteerdProduct, setGeselecteerdProduct] = useState(null);
 
-  // Koop popup
   const [popupOpen, setPopupOpen] = useState(false);
   const [aantal, setAantal] = useState(1);
   const [koopPrijs, setKoopPrijs] = useState(null);
 
-  // -------------------------
-  // Gebruiker laden
-  // -------------------------
   useEffect(() => {
     const stored = localStorage.getItem("gebruiker");
     if (stored) setGebruiker(JSON.parse(stored));
   }, []);
 
-  // -------------------------
-  // Veiling laden
-  // -------------------------
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchVeiling() {
       try {
         const res = await fetch(`http://localhost:5281/api/Veilingen/${id}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setVeiling(data);
+        if (!cancelled) setVeiling(data);
       } catch (err) {
         console.error(err);
-        setError("Kon deze veiling niet ophalen.");
+        if (!cancelled) setError("Kon deze veiling niet ophalen.");
       }
     }
 
     fetchVeiling();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  // -------------------------
-  // SignalR
-  // -------------------------
   useEffect(() => {
-    if (!veiling) return;
+    if (!veiling?.veiling_Id) return;
 
     const conn = new signalR.HubConnectionBuilder()
       .withUrl("http://localhost:5281/hubs/auction")
@@ -63,31 +59,35 @@ export default function VeilingDetailPage() {
 
     conn.on("VeilingGestart", (veilingId, startTijd, eindTijd) => {
       if (veilingId !== veiling.veiling_Id) return;
-
       setVeiling((prev) => (prev ? { ...prev, startTijd, eindTijd } : prev));
     });
 
-    // 👇 update op basis van productId binnen VeilingProducten
     conn.on("ProductGekocht", (veilingId, productId, nieuweHoeveelheid) => {
       if (veilingId !== veiling.veiling_Id) return;
 
-      // update veiling state als je veilingProducten toevallig in veiling hebt zitten
       setVeiling((prev) => ({
         ...prev,
-        veilingProducten: (prev.veilingProducten || []).map((vp) => {
+        veilingProducten: (prev?.veilingProducten || []).map((vp) => {
           const vpProductId =
-            vp.product_Id || vp.Product_Id || vp.product?.product_Id;
+            vp.product_Id ||
+            vp.Product_Id ||
+            vp.product?.product_Id ||
+            vp.product?.Product_Id;
+
           return vpProductId === productId
             ? { ...vp, hoeveelheid: nieuweHoeveelheid }
             : vp;
         }),
       }));
 
-      // update geselecteerd product
       setGeselecteerdProduct((prevVp) => {
         if (!prevVp) return prevVp;
         const prevId =
-          prevVp.product_Id || prevVp.Product_Id || prevVp.product?.product_Id;
+          prevVp.product_Id ||
+          prevVp.Product_Id ||
+          prevVp.product?.product_Id ||
+          prevVp.product?.Product_Id;
+
         return prevId === productId
           ? { ...prevVp, hoeveelheid: nieuweHoeveelheid }
           : prevVp;
@@ -99,76 +99,49 @@ export default function VeilingDetailPage() {
       .then(() => console.log("✅ SignalR verbonden"))
       .catch((err) => console.error("SignalR error:", err));
 
-    setConnection(conn);
-
     return () => {
       conn.stop();
     };
-  }, [veiling]);
+  }, [veiling?.veiling_Id]);
 
-  // -------------------------
-  // Helpers (VeilingProduct-safe)
-  // -------------------------
-  function getVoorraad() {
-    return (
-      geselecteerdProduct?.hoeveelheid ??
-      geselecteerdProduct?.Hoeveelheid ??
-      0
-    );
-  }
+  const productInfo = useMemo(() => {
+    const voorraad =
+      geselecteerdProduct?.hoeveelheid ?? geselecteerdProduct?.Hoeveelheid ?? 0;
 
-  function getProductId() {
-    return (
+    const productId =
       geselecteerdProduct?.product_Id ||
       geselecteerdProduct?.Product_Id ||
       geselecteerdProduct?.product?.product_Id ||
-      geselecteerdProduct?.product?.Product_Id
-    );
-  }
+      geselecteerdProduct?.product?.Product_Id;
 
-  function getNaam() {
-    return (
+    const naam =
       geselecteerdProduct?.product?.naam ||
       geselecteerdProduct?.naam ||
-      "Product"
-    );
-  }
+      "Product";
 
-  function getKenmerken() {
-    return (
+    const kenmerken =
       geselecteerdProduct?.product?.artikelKenmerken ||
       geselecteerdProduct?.artikelKenmerken ||
-      "-"
-    );
-  }
+      "-";
 
-  function getFoto() {
-    return (
-      geselecteerdProduct?.product?.foto ||
-      geselecteerdProduct?.foto ||
-      null
-    );
-  }
+    const foto =
+      geselecteerdProduct?.product?.foto || geselecteerdProduct?.foto || null;
 
-  function getStartPrijs() {
-    return (
+    const startPrijs =
       geselecteerdProduct?.prijs ??
       geselecteerdProduct?.Prijs ??
       geselecteerdProduct?.product?.startPrijs ??
       geselecteerdProduct?.product?.StartPrijs ??
-      0
-    );
-  }
+      0;
 
-  // -------------------------
-  // Koop
-  // -------------------------
+    return { voorraad, productId, naam, kenmerken, foto, startPrijs };
+  }, [geselecteerdProduct]);
+
   function handleKoopStart(huidigePrijsUitKlok) {
     if (!geselecteerdProduct) {
       alert("Selecteer eerst een product in de lijst.");
       return;
     }
-
     setKoopPrijs(huidigePrijsUitKlok);
     setPopupOpen(true);
   }
@@ -179,16 +152,13 @@ export default function VeilingDetailPage() {
     if (!geselecteerdProduct) return alert("Geen product geselecteerd.");
     if (!gebruiker) return alert("Je moet ingelogd zijn.");
 
-    const voorraad = getVoorraad();
-
     if (aantal <= 0) return alert("Aantal moet minstens 1 zijn.");
-    if (aantal > voorraad)
+    if (aantal > productInfo.voorraad) {
       return alert("Je kunt niet meer kopen dan de voorraad.");
+    }
 
     const totaalPrijs = (koopPrijs || 0) * aantal;
     const token = localStorage.getItem("token");
-
-    const productId = getProductId();
 
     try {
       const res = await fetch("http://localhost:5281/api/Biedingen/koop", {
@@ -202,7 +172,7 @@ export default function VeilingDetailPage() {
           aantal,
           totaal: totaalPrijs,
           klant_Id: gebruiker.gebruiker_Id,
-          product_Id: productId,
+          product_Id: productInfo.productId,
           veiling_Id: veiling.veiling_Id,
         }),
       });
@@ -225,116 +195,187 @@ export default function VeilingDetailPage() {
     }
   }
 
-  // -------------------------
-  // UI guards
-  // -------------------------
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!veiling) return <p className="text-gray-500">Veiling laden...</p>;
+  if (error) {
+    return (
+      <main className="vd-page">
+        <div className="vd-container vd-max-5xl">
+          <button onClick={() => router.back()} className="vd-back-btn">
+            ← Terug
+          </button>
+
+          <div className="vd-error-box">{error}</div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!veiling) {
+    return (
+      <main className="vd-page">
+        <div className="vd-container vd-max-5xl">
+          <div className="vd-loading-card">Veiling laden…</div>
+        </div>
+      </main>
+    );
+  }
+
+  const status = String(veiling.status || "wachtend").toLowerCase();
+  const statusClass =
+    status === "actief"
+      ? "vd-badge vd-badge--actief"
+      : status === "afgelopen"
+      ? "vd-badge vd-badge--afgelopen"
+      : "vd-badge vd-badge--wachtend";
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10 px-10">
-      <h1 className="text-4xl font-bold text-gray-800 mb-2">{veiling.titel}</h1>
-      <p className="text-gray-600 mb-6 text-lg max-w-3xl">
-        {veiling.omschrijving}
-      </p>
+    <main className="vd-page">
+      <div className="vd-container">
+        <div className="vd-header">
+          <div>
+            <button onClick={() => router.back()} className="vd-back-btn">
+              ← Terug
+            </button>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mt-10">
-        {/* LINKS */}
-        <section className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4">Producten in deze veiling</h2>
+            <h1 className="vd-title">{veiling.titel || "Veiling"}</h1>
 
-          <VeilingProductenLijst
-            veilingId={id}
-            onSelect={(vp) => setGeselecteerdProduct(vp)} // 👈 vp is VeilingProduct
-          />
-        </section>
+            <div className="vd-badges">
+              <span className={statusClass}>{status}</span>
+              {rol && <span className="vd-badge vd-badge--role">Rol: {rol}</span>}
+            </div>
+          </div>
+        </div>
 
-        {/* RECHTS */}
-        <section className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
-          <VeilingKlok
-            veiling={veiling}
-            gebruikerRol={gebruiker?.gebruikerType?.toLowerCase()}
-            onKoop={handleKoopStart}
-          />
+        {/* ✅ Layout: LINKS = lijst + details | RECHTS = klok */}
+        <div className="vd-grid">
+          {/* LINKS */}
+          <section className="vd-left">
+            <div className="vd-card">
+              <div className="vd-card-title-row">
+                <h2 className="vd-card-title">Producten in deze veiling</h2>
+                <span className="vd-card-hint">Selecteer een product</span>
+              </div>
 
-          {geselecteerdProduct && (
-            <div className="mt-6 p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
-              <h3 className="text-xl font-bold mb-4 text-gray-900 tracking-wide">
-                Geselecteerd product
-              </h3>
-
-              {getFoto() ? (
-                <img
-                  src={getFoto()}
-                  alt={getNaam()}
-                  className="w-full h-56 object-cover rounded-xl shadow-sm mb-5"
+              <div className="vd-panel">
+                <VeilingProductenLijst
+                  veilingId={id}
+                  onSelect={(vp) => setGeselecteerdProduct(vp)}
                 />
-              ) : (
-                <div className="w-full h-56 bg-gray-100 rounded-xl mb-5 flex items-center justify-center text-gray-500">
-                  Geen foto beschikbaar
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-y-3 text-gray-800 text-sm">
-                <p className="font-semibold">Naam:</p>
-                <p>{getNaam()}</p>
-
-                <p className="font-semibold">Kenmerken:</p>
-                <p>{getKenmerken()}</p>
-
-                <p className="font-semibold">Hoeveelheid:</p>
-                <p>{getVoorraad()}</p>
-
-                <p className="font-semibold">Startprijs:</p>
-                <p>€{getStartPrijs()}</p>
               </div>
             </div>
-          )}
-        </section>
+
+            {/* ✅ detail card nu links */}
+            <div className="vd-card">
+              <h3 className="vd-card-title">Geselecteerd product</h3>
+              <p className="vd-muted">Klik hierboven een product om details te zien.</p>
+
+              {!geselecteerdProduct ? (
+                <div className="vd-empty">Nog geen product geselecteerd.</div>
+              ) : (
+                <div className="vd-selected">
+                  {productInfo.foto ? (
+                    <img src={productInfo.foto} alt={productInfo.naam} className="vd-image" />
+                  ) : (
+                    <div className="vd-image-placeholder">Geen foto beschikbaar</div>
+                  )}
+
+                  <div className="vd-info-grid">
+                    <div className="vd-info-item">
+                      <div className="vd-info-label">Naam</div>
+                      <div className="vd-info-value">{productInfo.naam}</div>
+                    </div>
+
+                    <div className="vd-info-item">
+                      <div className="vd-info-label">Voorraad</div>
+                      <div className="vd-info-value">{productInfo.voorraad}</div>
+                    </div>
+
+                    <div className="vd-info-item vd-info-item--full">
+                      <div className="vd-info-label">Kenmerken</div>
+                      <div className="vd-info-value">{productInfo.kenmerken}</div>
+                    </div>
+
+                    <div className="vd-info-item">
+                      <div className="vd-info-label">Startprijs</div>
+                      <div className="vd-info-value">
+                        €{Number(productInfo.startPrijs || 0).toFixed(2)}
+                      </div>
+                    </div>
+
+                    <div className="vd-info-item">
+                      <div className="vd-info-label">ProductId</div>
+                      <div className="vd-info-value vd-mono">{productInfo.productId || "-"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* RECHTS */}
+          <section className="vd-right">
+            <div className="vd-card">
+              <VeilingKlok
+                veiling={veiling}
+                gebruikerRol={rol}
+                onKoop={handleKoopStart}
+              />
+            </div>
+          </section>
+        </div>
       </div>
 
-      {/* POPUP */}
       {popupOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">
-              Koop {getNaam()}
-            </h2>
-
-            <form onSubmit={handleKoopSubmit} className="space-y-5">
+        <div className="vd-modal-overlay">
+          <div className="vd-modal">
+            <div className="vd-modal-top">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Aantal
-                </label>
+                <h2 className="vd-modal-title">Koop {productInfo.naam}</h2>
+                <p className="vd-modal-desc">Kies je aantal en bevestig je aankoop.</p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setPopupOpen(false);
+                  setAantal(1);
+                  setKoopPrijs(null);
+                }}
+                className="vd-icon-btn"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleKoopSubmit} className="vd-form">
+              <div className="vd-form-block">
+                <label className="vd-label">Aantal</label>
                 <input
                   type="number"
                   min="1"
-                  max={getVoorraad()}
+                  max={productInfo.voorraad}
                   value={aantal}
                   onChange={(e) => setAantal(Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+                  className="vd-input"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Voorraad: {getVoorraad()}
-                </p>
+                <div className="vd-help">
+                  Voorraad: <b>{productInfo.voorraad}</b>
+                </div>
               </div>
 
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>Prijs per stuk:</span>
-                <strong className="text-gray-900">
-                  €{koopPrijs ? koopPrijs.toFixed(2) : "0.00"}
-                </strong>
+              <div className="vd-price-box">
+                <div className="vd-row">
+                  <span>Prijs per stuk</span>
+                  <b>€{koopPrijs ? koopPrijs.toFixed(2) : "0.00"}</b>
+                </div>
+
+                <div className="vd-total">
+                  Totaal: €{((koopPrijs || 0) * (aantal || 0)).toFixed(2)}
+                </div>
               </div>
 
-              <div className="flex justify-between text-lg font-bold mt-3">
-                <span>Totaal:</span>
-                <span>€{((koopPrijs || 0) * (aantal || 0)).toFixed(2)}</span>
-              </div>
-
-              <div className="flex justify-end gap-4 pt-4">
+              <div className="vd-modal-actions">
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+                  className="vd-btn"
                   onClick={() => {
                     setPopupOpen(false);
                     setAantal(1);
@@ -344,10 +385,7 @@ export default function VeilingDetailPage() {
                   Annuleren
                 </button>
 
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
-                >
+                <button type="submit" className="vd-btn vd-btn--success">
                   Bevestig aankoop
                 </button>
               </div>

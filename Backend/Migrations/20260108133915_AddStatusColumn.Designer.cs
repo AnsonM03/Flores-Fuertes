@@ -4,6 +4,7 @@ using FloresFuertes.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FloresFuertes.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260108133915_AddStatusColumn")]
+    partial class AddStatusColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -140,27 +143,24 @@ namespace FloresFuertes.Migrations
                     b.Property<string>("Veiling_Id")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime?>("EindTijd")
+                    b.Property<DateTime>("EindTijd")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Kloklocatie")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("MinimumPrijs")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("StartTijd")
+                    b.Property<DateTime>("StartTijd")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateOnly?>("VeilingDatum")
+                    b.Property<DateOnly>("VeilingDatum")
                         .HasColumnType("date");
 
-                    b.Property<float?>("VeilingPrijs")
+                    b.Property<float>("VeilingPrijs")
                         .HasColumnType("real");
 
                     b.Property<string>("Veilingmeester_Id")
