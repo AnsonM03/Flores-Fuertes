@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../styles/wachtlijstPanel.css";
 
 const API_BASE =
@@ -12,11 +12,18 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  async function load() {
+  // ✅ Fix 2: abort controller ref (zodat oude requests worden afgebroken)
+  const abortRef = useRef(null);
+
+  async function load(signal) {
     if (!veilingId) {
       setItems([]);
+      setError(null);
+      setLoading(false);
       return;
     }
+
+    console.log("✅ Wachtlijst laden voor veiling:", veilingId);
 
     setLoading(true);
     setError(null);
@@ -25,9 +32,10 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `${API_BASE}/Veilingen/veiling/${veilingId}/wachtlijst`,
+        `${API_BASE}/VeilingProducten/veiling/${veilingId}/wachtlijst`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal, // ✅ Fix 2: abortable
         }
       );
 
@@ -36,6 +44,9 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
       const data = await res.json();
       setItems(Array.isArray(data) ? data : []);
     } catch (e) {
+      // ✅ Fix 2: abort errors negeren
+      if (e?.name === "AbortError") return;
+
       console.error("❌ Wachtlijst error:", e);
       setError("Kon wachtlijst niet laden.");
       setItems([]);
@@ -44,8 +55,23 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
     }
   }
 
+  // ✅ Fix 1 + Fix 2: bij veilingId wissel -> reset + abort vorige request + load nieuwe
   useEffect(() => {
-    load();
+    // reset UI direct bij wisselen (voorkomt “oude items blijven staan”)
+    setItems([]);
+    setError(null);
+
+    // abort vorige request (race-condition fix)
+    abortRef.current?.abort();
+
+    if (!veilingId) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    load(controller.signal);
+
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [veilingId]);
 
@@ -55,14 +81,22 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${API_BASE}/Veilingen/${veilingProductId}/activeer`, {
-        method: "PUT",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const res = await fetch(
+        `${API_BASE}/VeilingProducten/${veilingProductId}/activeer`,
+        {
+          method: "PUT",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
 
       if (!res.ok) throw new Error();
 
-      await load();
+      // refresh wachtlijst (ook abort-safe)
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      await load(controller.signal);
+
       onActivated?.();
     } catch {
       alert("Activeren mislukt.");
@@ -75,15 +109,23 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${API_BASE}/Veilingen/${veilingProductId}/weiger`, {
-        method: "PUT",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const res = await fetch(
+        `${API_BASE}/VeilingProducten/${veilingProductId}/weiger`,
+        {
+          method: "PUT",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
 
       if (!res.ok) throw new Error();
 
-      await load();
-      onActivated?.(); // ook na weigeren handig
+      // refresh wachtlijst (ook abort-safe)
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      await load(controller.signal);
+
+      onActivated?.();
     } catch {
       alert("Weigeren mislukt.");
     }
@@ -93,6 +135,19 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
     <div className="wachtlijst-card">
       <div className="wachtlijst-header">
         <h2 className="wachtlijst-title">Wachtlijst</h2>
+
+        <button
+          className="wachtlijst-refresh"
+          onClick={() => {
+            abortRef.current?.abort();
+            const controller = new AbortController();
+            abortRef.current = controller;
+            load(controller.signal);
+          }}
+          disabled={loading || !veilingId}
+        >
+          Refresh
+        </button>
       </div>
 
       {loading && <p className="wachtlijst-loading">Laden...</p>}
@@ -104,15 +159,19 @@ export default function WachtlijstPanel({ veilingId, onActivated }) {
 
       <ul className="wachtlijst-list">
         {items.map((vp) => {
-          const id = vp.veilingProduct_Id ?? vp.VeilingProduct_Id; // ✅ casing fix
+          const id = vp.veilingProduct_Id ?? vp.VeilingProduct_Id;
 
           return (
             <li key={id} className="wachtlijst-item">
               <div className="wachtlijst-info">
-                <div className="wachtlijst-naam">{vp.naam || vp.Naam || "Onbekend product"}</div>
+                <div className="wachtlijst-naam">
+                  {vp.naam || vp.Naam || "Onbekend product"}
+                </div>
+
                 <div className="wachtlijst-kenmerken">
                   {vp.artikelKenmerken || vp.ArtikelKenmerken || "-"}
                 </div>
+
                 <div className="wachtlijst-meta">
                   Aantal: <b>{vp.hoeveelheid ?? vp.Hoeveelheid ?? 0}</b> — Startprijs:{" "}
                   <b>€{vp.startPrijs ?? vp.StartPrijs ?? 0}</b>

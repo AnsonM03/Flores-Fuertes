@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import "../styles/veilingProductenLijst.css";
 
 export default function VeilingProductenLijst({ veilingId, token, onSelect }) {
   const [items, setItems] = useState([]);
@@ -15,20 +16,15 @@ export default function VeilingProductenLijst({ veilingId, token, onSelect }) {
       setError("");
 
       const res = await fetch(
-        `http://localhost:5281/api/Veilingen/veiling/${veilingId}/actief`,
+        `http://localhost:5281/api/VeilingProducten/veiling/${veilingId}/actief`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         }
       );
 
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `HTTP ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error();
       setItems(await res.json());
-    } catch (e) {
-      console.error(e);
+    } catch {
       setError("Kon actieve producten niet ophalen.");
       setItems([]);
     } finally {
@@ -41,19 +37,28 @@ export default function VeilingProductenLijst({ veilingId, token, onSelect }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [veilingId]);
 
-  // helper: pakt velden ongeacht casing
-  const get = (obj, ...keys) => keys.find(k => obj?.[k] !== undefined) ? obj[keys.find(k => obj?.[k] !== undefined)] : undefined;
+  const get = (obj, ...keys) =>
+    keys.find((k) => obj?.[k] !== undefined)
+      ? obj[keys.find((k) => obj?.[k] !== undefined)]
+      : undefined;
 
   return (
-    <div>
-      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
-        <button className="koppel-btn" onClick={load} disabled={loading || !veilingId}>
+    <div className="vpl-card-wrapper">
+      {/* ✅ HEADER ZOALS WACHTLIJST */}
+      <div className="vpl-header">
+        <h3 className="vpl-title">Actieve producten</h3>
+
+        <button
+          className="refresh"
+          onClick={load}
+          disabled={loading || !veilingId}
+        >
           Refresh
         </button>
-        {loading && <span>laden…</span>}
       </div>
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {loading && <p className="vpl-loading">Laden…</p>}
+      {error && <p className="vpl-error">{error}</p>}
 
       {!loading && items.length === 0 ? (
         <p>Geen actieve producten.</p>
@@ -71,7 +76,6 @@ export default function VeilingProductenLijst({ veilingId, token, onSelect }) {
               <li
                 key={id}
                 className="product-card"
-                style={{ cursor: "pointer" }}
                 onClick={() => onSelect?.(vp)}
               >
                 <div className="product-info">
@@ -83,13 +87,7 @@ export default function VeilingProductenLijst({ veilingId, token, onSelect }) {
                   </p>
                 </div>
 
-                {foto ? (
-                  <img
-                    src={foto}
-                    alt={naam}
-                    style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 10 }}
-                  />
-                ) : null}
+                {foto && <img src={foto} alt={naam} className="vpl-foto" />}
               </li>
             );
           })}

@@ -151,7 +151,6 @@ export default function VeilingKlok({
     try {
       const currentVeilingId = veilingId;
 
-      // 1) Zorg dat er een actief product is (alleen voor deze veiling)
       let actief = actiefProduct;
 
       if (!actief) {
@@ -246,7 +245,7 @@ export default function VeilingKlok({
 
   return (
     <div className="klok-wrapper">
-      <h2 className="klok-title">Dutch Auction</h2>
+      <h2 className="klok-title">{actiefProduct?.naam}</h2>
 
       <p className={`klok-status klok-status--${status}`}>
         {status === "wachten" && "Wachten op start..."}

@@ -107,9 +107,11 @@ export default function Nav() {
 
           {isLoggedIn ? (
             <>
-              <Link href="/veilingen" className={`nav-link ${isActive('/veilingen') ? 'is-active' : ''}`} onClick={handleLinkClick}>
-                Veilingen
-              </Link>
+              {["aanvoerder", "klant"].includes(rol) && (
+                <Link href="/veilingen" className={`nav-link ${isActive('/veilingen') ? 'is-active' : ''}`} onClick={handleLinkClick}>
+                  Veilingen
+                </Link>
+              )}
               <Link href="/account" className={`nav-link ${isActive('/account') ? 'is-active' : ''}`} onClick={handleLinkClick}>
                 Account
               </Link>

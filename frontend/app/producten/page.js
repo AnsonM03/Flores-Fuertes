@@ -16,8 +16,8 @@ export default function ProductenPage() {
   const [formData, setFormData] = useState({
     naam: "",
     artikelKenmerken: "",
-    hoeveelheid: 0,
-    startPrijs: 0,
+    hoeveelheid: "",
+    startPrijs: "",
     foto: "",
   });
 
@@ -266,26 +266,27 @@ export default function ProductenPage() {
 
             <label>Hoeveelheid</label>
             <input
-              type="number"
-              min="1"
-              value={formData.hoeveelheid || ""}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={formData.hoeveelheid}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  hoeveelheid: Number(e.target.value),
+                  hoeveelheid: e.target.value,
                 })
               }
             />
 
             <label>Startprijs (€)</label>
             <input
-              type="number"
-              step="0.01"
-              value={formData.startPrijs || ""}
+              type="text"
+              inputMode="decimal"
+              value={formData.startPrijs}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  startPrijs: Number(e.target.value),
+                  startPrijs: e.target.value,
                 })
               }
             />

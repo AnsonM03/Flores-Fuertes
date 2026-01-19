@@ -116,12 +116,15 @@ namespace FloresFuertes.Controllers
                 new { nieuweVeiling.Veiling_Id });
         }
 
-        // ✅ Wachtlijst per veiling
+        // Wachtlijst per veiling
         [HttpGet("veiling/{veilingId}/wachtlijst")]
         public async Task<IActionResult> GetWachtlijst(string veilingId)
         {
             var lijst = await _context.VeilingProducten
-                .Where(vp => vp.Veiling_Id == veilingId && vp.Status == "wachtend")
+                .Where(vp =>
+                    vp.Veiling_Id == veilingId &&
+                    (vp.Status ?? "").Trim().ToLower() == "wachtend"
+                )
                 .Include(vp => vp.Product)
                 .AsNoTracking()
                 .Select(vp => new VeilingProductDto
@@ -131,7 +134,6 @@ namespace FloresFuertes.Controllers
                     Product_Id = vp.Product_Id,
                     Hoeveelheid = vp.Hoeveelheid,
                     Status = vp.Status,
-
                     Naam = vp.Product!.Naam,
                     ArtikelKenmerken = vp.Product!.ArtikelKenmerken,
                     Foto = vp.Product!.Foto,

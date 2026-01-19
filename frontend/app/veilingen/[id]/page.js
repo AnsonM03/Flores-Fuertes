@@ -17,25 +17,17 @@ export default function VeilingDetailPage() {
   const [gebruiker, setGebruiker] = useState(null);
   const rol = gebruiker?.gebruikerType?.toLowerCase();
 
-  // Geselecteerd = VeilingProduct (koppeling)
   const [geselecteerdProduct, setGeselecteerdProduct] = useState(null);
 
-  // Koop popup
   const [popupOpen, setPopupOpen] = useState(false);
   const [aantal, setAantal] = useState(1);
   const [koopPrijs, setKoopPrijs] = useState(null);
 
-  // -------------------------
-  // Gebruiker laden
-  // -------------------------
   useEffect(() => {
     const stored = localStorage.getItem("gebruiker");
     if (stored) setGebruiker(JSON.parse(stored));
   }, []);
 
-  // -------------------------
-  // Veiling laden
-  // -------------------------
   useEffect(() => {
     let cancelled = false;
 
@@ -57,9 +49,6 @@ export default function VeilingDetailPage() {
     };
   }, [id]);
 
-  // -------------------------
-  // SignalR (updates)
-  // -------------------------
   useEffect(() => {
     if (!veiling?.veiling_Id) return;
 
@@ -76,23 +65,29 @@ export default function VeilingDetailPage() {
     conn.on("ProductGekocht", (veilingId, productId, nieuweHoeveelheid) => {
       if (veilingId !== veiling.veiling_Id) return;
 
-      // update lijst in veiling (als die aanwezig is)
       setVeiling((prev) => ({
         ...prev,
         veilingProducten: (prev?.veilingProducten || []).map((vp) => {
           const vpProductId =
-            vp.product_Id || vp.Product_Id || vp.product?.product_Id || vp.product?.Product_Id;
+            vp.product_Id ||
+            vp.Product_Id ||
+            vp.product?.product_Id ||
+            vp.product?.Product_Id;
+
           return vpProductId === productId
             ? { ...vp, hoeveelheid: nieuweHoeveelheid }
             : vp;
         }),
       }));
 
-      // update geselecteerd product
       setGeselecteerdProduct((prevVp) => {
         if (!prevVp) return prevVp;
         const prevId =
-          prevVp.product_Id || prevVp.Product_Id || prevVp.product?.product_Id || prevVp.product?.Product_Id;
+          prevVp.product_Id ||
+          prevVp.Product_Id ||
+          prevVp.product?.product_Id ||
+          prevVp.product?.Product_Id;
+
         return prevId === productId
           ? { ...prevVp, hoeveelheid: nieuweHoeveelheid }
           : prevVp;
@@ -109,14 +104,9 @@ export default function VeilingDetailPage() {
     };
   }, [veiling?.veiling_Id]);
 
-  // -------------------------
-  // Helpers (VeilingProduct-safe)
-  // -------------------------
   const productInfo = useMemo(() => {
     const voorraad =
-      geselecteerdProduct?.hoeveelheid ??
-      geselecteerdProduct?.Hoeveelheid ??
-      0;
+      geselecteerdProduct?.hoeveelheid ?? geselecteerdProduct?.Hoeveelheid ?? 0;
 
     const productId =
       geselecteerdProduct?.product_Id ||
@@ -135,9 +125,7 @@ export default function VeilingDetailPage() {
       "-";
 
     const foto =
-      geselecteerdProduct?.product?.foto ||
-      geselecteerdProduct?.foto ||
-      null;
+      geselecteerdProduct?.product?.foto || geselecteerdProduct?.foto || null;
 
     const startPrijs =
       geselecteerdProduct?.prijs ??
@@ -149,9 +137,6 @@ export default function VeilingDetailPage() {
     return { voorraad, productId, naam, kenmerken, foto, startPrijs };
   }, [geselecteerdProduct]);
 
-  // -------------------------
-  // Koop flow
-  // -------------------------
   function handleKoopStart(huidigePrijsUitKlok) {
     if (!geselecteerdProduct) {
       alert("Selecteer eerst een product in de lijst.");
@@ -203,7 +188,6 @@ export default function VeilingDetailPage() {
       setAantal(1);
       setKoopPrijs(null);
 
-      // simpele refresh
       window.location.reload();
     } catch (err) {
       console.error(err);
@@ -211,23 +195,15 @@ export default function VeilingDetailPage() {
     }
   }
 
-  // -------------------------
-  // UI guards
-  // -------------------------
   if (error) {
     return (
-      <main className="min-h-screen bg-slate-50 px-6 py-10">
-        <div className="mx-auto max-w-5xl">
-          <button
-            onClick={() => router.back()}
-            className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50"
-          >
+      <main className="vd-page">
+        <div className="vd-container vd-max-5xl">
+          <button onClick={() => router.back()} className="vd-back-btn">
             ← Terug
           </button>
 
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
-            {error}
-          </div>
+          <div className="vd-error-box">{error}</div>
         </div>
       </main>
     );
@@ -235,177 +211,126 @@ export default function VeilingDetailPage() {
 
   if (!veiling) {
     return (
-      <main className="min-h-screen bg-slate-50 px-6 py-10">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            Veiling laden…
-          </div>
+      <main className="vd-page">
+        <div className="vd-container vd-max-5xl">
+          <div className="vd-loading-card">Veiling laden…</div>
         </div>
       </main>
     );
   }
 
-  const status = (veiling.status || "wachtend").toLowerCase();
-  const statusBadge =
+  const status = String(veiling.status || "wachtend").toLowerCase();
+  const statusClass =
     status === "actief"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      ? "vd-badge vd-badge--actief"
       : status === "afgelopen"
-      ? "bg-slate-100 text-slate-700 border-slate-200"
-      : "bg-amber-50 text-amber-700 border-amber-200";
+      ? "vd-badge vd-badge--afgelopen"
+      : "vd-badge vd-badge--wachtend";
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10">
-      <div className="mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <main className="vd-page">
+      <div className="vd-container">
+        <div className="vd-header">
           <div>
-            <button
-              onClick={() => router.back()}
-              className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50"
-            >
+            <button onClick={() => router.back()} className="vd-back-btn">
               ← Terug
             </button>
 
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-              {veiling.titel || "Veiling"}
-            </h1>
+            <h1 className="vd-title">{veiling.titel || "Veiling"}</h1>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold ${statusBadge}`}
-              >
-                {status}
-              </span>
-
-              {rol && (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700">
-                  Rol: {rol}
-                </span>
-              )}
+            <div className="vd-badges">
+              <span className={statusClass}>{status}</span>
+              {rol && <span className="vd-badge vd-badge--role">Rol: {rol}</span>}
             </div>
-          </div>
-
-          {/* Right header actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => window.location.reload()}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
-            >
-              Refresh
-            </button>
           </div>
         </div>
 
-        {/* Layout */}
-        <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-          {/* LINKS: Productenlijst */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">
-                Producten in deze veiling
-              </h2>
-              <span className="text-sm text-slate-500">Selecteer een product</span>
+        {/* ✅ Layout: LINKS = lijst + details | RECHTS = klok */}
+        <div className="vd-grid">
+          {/* LINKS */}
+          <section className="vd-left">
+            <div className="vd-card">
+              <div className="vd-card-title-row">
+                <h2 className="vd-card-title">Producten in deze veiling</h2>
+                <span className="vd-card-hint">Selecteer een product</span>
+              </div>
+
+              <div className="vd-panel">
+                <VeilingProductenLijst
+                  veilingId={id}
+                  onSelect={(vp) => setGeselecteerdProduct(vp)}
+                />
+              </div>
             </div>
 
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <VeilingProductenLijst
-                veilingId={id}
-                onSelect={(vp) => setGeselecteerdProduct(vp)}
-              />
-            </div>
-          </section>
-
-          {/* RECHTS: Klok + details */}
-          <section className="space-y-6">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <VeilingKlok
-                veiling={veiling}
-                gebruikerRol={rol}
-                onKoop={handleKoopStart}
-              />
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900">
-                Geselecteerd product
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Klik links een product om details te zien.
-              </p>
+            {/* ✅ detail card nu links */}
+            <div className="vd-card">
+              <h3 className="vd-card-title">Geselecteerd product</h3>
+              <p className="vd-muted">Klik hierboven een product om details te zien.</p>
 
               {!geselecteerdProduct ? (
-                <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-slate-600">
-                  Nog geen product geselecteerd.
-                </div>
+                <div className="vd-empty">Nog geen product geselecteerd.</div>
               ) : (
-                <div className="mt-4">
+                <div className="vd-selected">
                   {productInfo.foto ? (
-                    <img
-                      src={productInfo.foto}
-                      alt={productInfo.naam}
-                      className="h-56 w-full rounded-xl object-cover shadow-sm"
-                    />
+                    <img src={productInfo.foto} alt={productInfo.naam} className="vd-image" />
                   ) : (
-                    <div className="flex h-56 w-full items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                      Geen foto beschikbaar
-                    </div>
+                    <div className="vd-image-placeholder">Geen foto beschikbaar</div>
                   )}
 
-                  <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <div className="text-slate-500">Naam</div>
-                      <div className="font-semibold text-slate-900">
-                        {productInfo.naam}
-                      </div>
+                  <div className="vd-info-grid">
+                    <div className="vd-info-item">
+                      <div className="vd-info-label">Naam</div>
+                      <div className="vd-info-value">{productInfo.naam}</div>
                     </div>
 
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <div className="text-slate-500">Voorraad</div>
-                      <div className="font-semibold text-slate-900">
-                        {productInfo.voorraad}
-                      </div>
+                    <div className="vd-info-item">
+                      <div className="vd-info-label">Voorraad</div>
+                      <div className="vd-info-value">{productInfo.voorraad}</div>
                     </div>
 
-                    <div className="col-span-2 rounded-xl bg-slate-50 p-3">
-                      <div className="text-slate-500">Kenmerken</div>
-                      <div className="font-semibold text-slate-900">
-                        {productInfo.kenmerken}
-                      </div>
+                    <div className="vd-info-item vd-info-item--full">
+                      <div className="vd-info-label">Kenmerken</div>
+                      <div className="vd-info-value">{productInfo.kenmerken}</div>
                     </div>
 
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <div className="text-slate-500">Startprijs</div>
-                      <div className="font-semibold text-slate-900">
+                    <div className="vd-info-item">
+                      <div className="vd-info-label">Startprijs</div>
+                      <div className="vd-info-value">
                         €{Number(productInfo.startPrijs || 0).toFixed(2)}
                       </div>
                     </div>
 
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <div className="text-slate-500">ProductId</div>
-                      <div className="truncate font-mono text-xs text-slate-700">
-                        {productInfo.productId || "-"}
-                      </div>
+                    <div className="vd-info-item">
+                      <div className="vd-info-label">ProductId</div>
+                      <div className="vd-info-value vd-mono">{productInfo.productId || "-"}</div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
           </section>
+
+          {/* RECHTS */}
+          <section className="vd-right">
+            <div className="vd-card">
+              <VeilingKlok
+                veiling={veiling}
+                gebruikerRol={rol}
+                onKoop={handleKoopStart}
+              />
+            </div>
+          </section>
         </div>
       </div>
 
-      {/* POPUP */}
       {popupOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
+        <div className="vd-modal-overlay">
+          <div className="vd-modal">
+            <div className="vd-modal-top">
               <div>
-                <h2 className="text-xl font-extrabold text-slate-900">
-                  Koop {productInfo.naam}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Kies je aantal en bevestig je aankoop.
-                </p>
+                <h2 className="vd-modal-title">Koop {productInfo.naam}</h2>
+                <p className="vd-modal-desc">Kies je aantal en bevestig je aankoop.</p>
               </div>
 
               <button
@@ -414,50 +339,43 @@ export default function VeilingDetailPage() {
                   setAantal(1);
                   setKoopPrijs(null);
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-slate-700 hover:bg-slate-50"
+                className="vd-icon-btn"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleKoopSubmit} className="mt-5 space-y-5">
-              <div className="rounded-xl bg-slate-50 p-4">
-                <label className="block text-sm font-semibold text-slate-700">
-                  Aantal
-                </label>
+            <form onSubmit={handleKoopSubmit} className="vd-form">
+              <div className="vd-form-block">
+                <label className="vd-label">Aantal</label>
                 <input
                   type="number"
                   min="1"
                   max={productInfo.voorraad}
                   value={aantal}
                   onChange={(e) => setAantal(Number(e.target.value))}
-                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="vd-input"
                 />
-                <div className="mt-2 text-xs text-slate-500">
-                  Voorraad: <span className="font-semibold">{productInfo.voorraad}</span>
+                <div className="vd-help">
+                  Voorraad: <b>{productInfo.voorraad}</b>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex items-center justify-between text-sm text-slate-700">
+              <div className="vd-price-box">
+                <div className="vd-row">
                   <span>Prijs per stuk</span>
-                  <span className="font-bold text-slate-900">
-                    €{koopPrijs ? koopPrijs.toFixed(2) : "0.00"}
-                  </span>
+                  <b>€{koopPrijs ? koopPrijs.toFixed(2) : "0.00"}</b>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between text-lg font-extrabold">
-                  <span>Totaal</span>
-                  <span className="text-slate-900">
-                    €{((koopPrijs || 0) * (aantal || 0)).toFixed(2)}
-                  </span>
+                <div className="vd-total">
+                  Totaal: €{((koopPrijs || 0) * (aantal || 0)).toFixed(2)}
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="vd-modal-actions">
                 <button
                   type="button"
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                  className="vd-btn"
                   onClick={() => {
                     setPopupOpen(false);
                     setAantal(1);
@@ -467,10 +385,7 @@ export default function VeilingDetailPage() {
                   Annuleren
                 </button>
 
-                <button
-                  type="submit"
-                  className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white shadow hover:bg-emerald-700"
-                >
+                <button type="submit" className="vd-btn vd-btn--success">
                   Bevestig aankoop
                 </button>
               </div>

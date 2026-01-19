@@ -157,10 +157,6 @@ namespace FloresFuertes.Controllers
 
             return Ok(new { message = "Product geweigerd", veilingProductId });
         }
-
-        // -----------------------------
-        // Mapper (1 plek, consistent)
-        // -----------------------------
         private static VeilingProductDto MapToDto(VeilingProduct vp)
         {
             return new VeilingProductDto
