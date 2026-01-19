@@ -97,32 +97,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
+
 app.UseCors("AllowMyFrontend");
-
-// ----------------------------
-// PRE-FLIGHT FIX (jouw versie – gewoon verbeterd)
-// ----------------------------
-app.Use(async (context, next) =>
-{
-    var origin = context.Request.Headers["Origin"];
-
-    if (origin == "http://localhost:3000")
-    {
-        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-        context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
-        context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
-        context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
-    }
-
-    // OPTIONS stopt hier correct → GEEN 405 meer
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.StatusCode = 204;
-        return;
-    }
-
-    await next();
-});
 
 // ----------------------------
 // STATIC FILES (fotos uit /uploads werken nu altijd)
